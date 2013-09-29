@@ -1,0 +1,13 @@
+{
+  "controller": {
+    "port": 5001
+  },
+  "station": {
+    "port": 3000
+  },
+  "event": {
+    "id": "demo",
+    "title": "Demo Event",
+    "description": "Demo Event is a test event to see how eventstreamr works."
+  }
+}
