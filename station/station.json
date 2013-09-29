@@ -1,0 +1,7 @@
+# config-file-type: JSON 1
+
+{ 
+  "roles" : [],
+  "nickname" : "",
+  "room" : ""
+}
