@@ -60,7 +60,7 @@ var updateIp = function(mac, ip) {
 
 var Station = function(mac, roles, room, nickname) {
   return {
-    mac: mac,
+    macaddress: mac,
     roles: roles || [],
     room: room || null,
     nickname: nickname || null
@@ -74,7 +74,7 @@ var getStation = function(mac, ip) {
       console.log(response.statusCode)
       if (response.statusCode == 200) {
         console.log(response.body)
-        storeStation(response.body, ip)
+        storeStation(JSON.parse(response.body).config, ip)
       }
       if (response.statusCode == 204) {
         
