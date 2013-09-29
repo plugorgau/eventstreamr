@@ -2,6 +2,35 @@ doctype 5
 html
   head
     title= title
+    link(href="/bootstrap-3.0.0/dist/css/bootstrap.min.css" rel="stylesheet")
     link(rel='stylesheet', href='/stylesheets/style.css')
   body
     block content
+    script(src="/javascripts/jquery-2.0.3.min.js")
+    script(src="/bootstrap-3.0.0/dist/js/bootstrap.min.js" rel="stylesheet")
+    script(src="/javascripts/knockout-3.0.0beta.js")
+    script(src="/javascripts/knockout.mapping-latest.js")
+    script(src="/javascripts/StringInterpolatingBindingProvider.js")
+    
+    script.
+      ko.bindingProvider.instance = new StringInterpolatingBindingProvider();
+      var viewModel = {
+        stations: ko.mapping.fromJS([])
+      }
+      ko.applyBindings(viewModel);
+      $.get( "/api/stations", function( data ) {
+      })
+        .done(function(data) {
+          console.log( "loaded stations", JSON.stringify(data) );
+          ko.mapping.fromJS(data, viewModel.stations)
+        })
+      var removeStation = function(data, event) {
+        $.ajax({
+            url: "/api/station/"+ data._id(),
+            type: 'DELETE'
+        })
+          .done(function(data) {
+            console.log( "removed station", JSON.stringify(data) );
+          })
+      }
+    block scripts

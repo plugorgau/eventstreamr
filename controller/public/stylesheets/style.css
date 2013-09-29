@@ -1,8 +1,6 @@
-body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
-}
-
-a {
-  color: #00B7FF;
+.btn-panel-edge {
+  border-top: 0px;
+  border-right: 0px;
+  border-bottom-right-radius: 0;
+  border-top-left-radius: 0;
 }
