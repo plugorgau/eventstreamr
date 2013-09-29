@@ -1,5 +1,5 @@
 {
-  "name": "eventstreamr",
+  "name": "eventstreamr controller",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "express": "3.3.5",
-    "request": "2.27.0",
-    "getmac": "1.0.5"
+    "jade": "*",
+    "request": "2.27.0"
   }
 }
