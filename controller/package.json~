@@ -1,5 +1,5 @@
 {
-  "name": "application-name",
+  "name": "eventstreamr controller",
   "version": "0.0.1",
   "private": true,
   "scripts": {
