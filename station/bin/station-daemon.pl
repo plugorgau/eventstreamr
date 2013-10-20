@@ -5,10 +5,16 @@ use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use Proc::Daemon; # libproc-daemon-perl
 use IPC::Shareable; # libipc-shareable-perl
-use Data::Dumper;
 use JSON; # libjson-perl
 use Config::JSON; # libconfig-json-perl
 use HTTP::Tiny;
+
+# EventStremr Modules
+use EventStreamr::Devices;
+our $devices = EventStreamr::Devices->new();
+
+# Dev
+use Data::Dumper;
 
 # Load Local Config
 my $localconfig = Config::JSON->new("$Bin/../settings.json");
@@ -32,6 +38,8 @@ tie $config, 'IPC::Shareable', $glue, { %options } or
 
 $config = $stationconfig->{config};
 $config->{macaddress} = getmac();
+$devices->list();
+
 
 my $response = HTTP::Tiny->new->get("http://$localconfig->{controller}:5001/station/$config->{macaddress}");
 #my $response = HTTP::Tiny->new->get("http://localhost:3000/settings/$config->{macaddress}");
@@ -60,6 +68,7 @@ while ($continue) {
   sleep 10;
 }
 
+## Routines
 sub updateconfig {
 
 }
@@ -68,6 +77,7 @@ sub getconfig {
 
 }
 
+# Get Mac Address
 sub getmac {
   # this is horrible, find a better way!
   my $macaddress = `/sbin/ifconfig|grep "wlan"|grep ..:..:..:..:..:..|awk '{print \$NF}'`;
