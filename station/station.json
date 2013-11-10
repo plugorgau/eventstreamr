@@ -1,7 +1,9 @@
 # config-file-type: JSON 1
 
 { 
-  "roles" : [],
+  "roles" : [{"role":"ingest"}],
   "nickname" : "",
-  "room" : ""
+  "room" : "",
+  "mixer" : {"port":"1234", "host":"localhost"},
+  "devices" : [ {"device":"alsa", "id":"1"}, {"device":"v4l","id":"video0"} ] 
 }

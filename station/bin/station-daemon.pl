@@ -8,10 +8,13 @@ use IPC::Shareable; # libipc-shareable-perl
 use JSON; # libjson-perl
 use Config::JSON; # libconfig-json-perl
 use HTTP::Tiny;
+use feature qw(switch);
 
 # EventStremr Modules
 use EventStreamr::Devices;
 our $devices = EventStreamr::Devices->new();
+use EventStreamr::Utils;
+our $utils = EventStreamr::Utils->new();
 
 # Dev
 use Data::Dumper;
@@ -38,7 +41,7 @@ tie $config, 'IPC::Shareable', $glue, { %options } or
 
 $config = $stationconfig->{config};
 $config->{macaddress} = getmac();
-$devices->list();
+$devices->all();
 
 
 my $response = HTTP::Tiny->new->get("http://$localconfig->{controller}:5001/station/$config->{macaddress}");
@@ -57,13 +60,21 @@ if ($response->{success} && $response->{status} == 200 ) {
 
 
 # Start Daemon
-my $daemon = Proc::Daemon->new;
-my $pid = $daemon->Init();
+our $daemons->{main}{proc} = Proc::Daemon->new;
+$daemons->{main}{pid} = $daemons->{main}{proc}->Init();
   
-my $continue = 1;
-$SIG{TERM} = sub { $continue = 0 };
+$daemons->{main}{run} = 1;
+$SIG{TERM} = sub { $daemons->{main}{run} = 0; IPC::Shareable->clean_up_all; };
 
-while ($continue) {
+while ($daemons->{main}{run}) {
+  foreach my $role (@{$config->{roles}}) {
+    given ( $role->{role} ) {
+      when ("ingest")   { ingest(); }
+      when ("mixer")    { mixer();  }
+      when ("stream")   { stream(); }
+    }
+  }
+
   print Dumper($config);
   sleep 10;
 }
@@ -85,4 +96,30 @@ sub getmac {
   chomp $macaddress;
   return $macaddress;
 }
+
+## Ingest
+sub ingest {
+  if ( $utils->port($config->{mixer}{host},$config->{mixer}{port}) ) {
+    $config->{status}{ingest} = "DV Switch host found";
+  } else {
+    $config->{status}{ingest} = "DV Switch host not found";
+    return
+  }
+
+  return;
+}
+
+## Mixer
+sub mixer {
+
+  return;
+}
+
+## Stream
+sub stream {
+
+  return;
+}
+
+
 __END__
