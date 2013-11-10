@@ -5,14 +5,18 @@ use File::Slurp 'read_file'; #libfile-slurp-perl
 
 use Data::Dumper;
 
-sub list {
+sub all {
   my $self = shift;
-  @{$self->{v4l_devices}} = v4l_devices();
-  @{$self->{dv_devices}} = dv_devices();
+  my $v4l = v4l();
+  my $dv = dv();
+  my $alsa = alsa();
+  if ($v4l) { $self->{devices}{v4l} = $v4l;       }
+  if ($dv)  { $self->{devices}{dv} = $dv;         }
+  if ($alsa)  { $self->{devices}{alsa} = $alsa;   }
   return;
 }
 
-sub v4l_devices {
+sub v4l {
   my @v4ldevices = </dev/video*>;
   my $v4l_devices;
   foreach my $device (@v4ldevices) {
@@ -25,7 +29,7 @@ sub v4l_devices {
   return $v4l_devices;
 }
 
-sub dv_devices {
+sub dv {
   my @dvs = </sys/bus/firewire/devices/*>;
   my $dv_devices;
 
@@ -48,9 +52,25 @@ sub dv_devices {
   return $dv_devices;
 }
 
-sub alsa_devices {
-    # From Original Scripts: cat /proc/asound/cards | grep "]" | grep -E "USB Audio CODEC|Device" | awk '{ print $1 }'
+sub alsa { # Only Does USB devices currently
+  my $alsa_devices;
+  my @devices = read_file("/proc/asound/cards");
+  @devices = grep { /].+USB Audio CODEC|Device/ } @devices;
+  chomp @devices;
 
+  foreach my $device (@devices) {
+    $device =~ m/^.+(?<card> \d+).*/x;
+    my $card = $+{card};
+    my $usbid = read_file("/proc/asound/card$card/usbid");
+    my $name = name_lsusb($usbid);
+    chomp $usbid;
+
+    $alsa_devices->{$card}{usbid} = $usbid;
+    $alsa_devices->{$card}{name} = $name;
+    $alsa_devices->{$card}{card} = $card;
+    $alsa_devices->{$card}{type} = "alsa";
+  }
+  return $alsa_devices;
 }
 
 sub get_v4l_name {
@@ -91,7 +111,7 @@ sub get_v4l_name {
 
 sub name_lsusb {
   my ($name) = @_;
-  $name =~ m/^(?<vid> [^+s]{4})_(?<did> [^+s]{4})$/ix;
+  $name =~ m/^(?<vid> [^+s]{4}).(?<did> [^+s]{4})$/ix;
   $name = `lsusb | grep \"$+{vid}:$+{did}\"`;
   $name =~ m/^Bus.\d+.Device.\d+:.ID.[^+s]{4}:[^+s]{4}.(?<name>.+)/ix;
   $name = $+{name};
