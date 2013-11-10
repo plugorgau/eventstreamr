@@ -1,12 +1,14 @@
 package EventStreamr::Devices;
 use Moo; # libmoo-perl
 use Cwd 'realpath';
+use File::Slurp 'read_file'; #libfile-slurp-perl
 
 use Data::Dumper;
 
 sub list {
   my $self = shift;
   @{$self->{v4l_devices}} = v4l_devices();
+  @{$self->{dv_devices}} = dv_devices();
   return;
 }
 
@@ -18,8 +20,32 @@ sub v4l_devices {
     my $index = $+{index};
     $v4l_devices->{$index}{path} = $device;
     $v4l_devices->{$index}{name} = get_v4l_name($index);
+    $v4l_devices->{$index}{type} = "v4l";
   }
   return $v4l_devices;
+}
+
+sub dv_devices {
+  my @dvs = </sys/bus/firewire/devices/*>;
+  my $dv_devices;
+
+  foreach my $dv (@dvs) { # suffers from Big0 notation, but should only be a limited number of devices
+    if (-e "$dv/vendor_name") {
+      my $vendor_name = read_file("$dv/vendor_name");
+      chomp $vendor_name;
+      
+      unless ($vendor_name eq "Linux Firewire") {
+        my $guid = read_file("$dv/guid");
+        my $model = read_file("$dv/model_name");
+        chomp $guid;
+        chomp $model;
+        $dv_devices->{$guid}{guid} = $guid;
+        $dv_devices->{$guid}{model} = $model;
+        $dv_devices->{$guid}{vendor} = $vendor_name;
+      }
+    }
+  }
+  return $dv_devices;
 }
 
 sub get_v4l_name {
@@ -34,7 +60,7 @@ sub get_v4l_name {
       $usb =~ m/\/dev\/v4l\/by-id\/usb-(?<name> .+)-video-index\d/ix;
       $name = $+{name};
 
-      # Some older devices don't present a name in the path but an ID
+      # Some lesser known devices don't present a name in the path but an ID
       if ( $name =~ /^[^+s]{4}_[^+s]{4}$/ ) {
         $name = name_lsusb($name);
       } else {
