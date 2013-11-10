@@ -11,5 +11,5 @@ my $devices = EventStreamr::Devices->new();
 # Dev
 use Data::Dumper;
 
-$devices->list();
+$devices->all();
 print Dumper($devices);
