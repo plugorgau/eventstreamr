@@ -48,6 +48,11 @@ sub dv_devices {
   return $dv_devices;
 }
 
+sub alsa_devices {
+    # From Original Scripts: cat /proc/asound/cards | grep "]" | grep -E "USB Audio CODEC|Device" | awk '{ print $1 }'
+
+}
+
 sub get_v4l_name {
   my ($device) = @_;
   my $name;
