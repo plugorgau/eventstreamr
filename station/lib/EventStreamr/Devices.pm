@@ -56,7 +56,7 @@ sub dv {
 sub alsa { # Only Does USB devices currently
   my $alsa_devices;
   my @devices = read_file("/proc/asound/cards");
-  @devices = grep { /].+USB Audio CODEC|Device/ } @devices;
+  @devices = grep { /].+USB Audio (CODEC|Device)/ } @devices;
   chomp @devices;
 
   foreach my $device (@devices) {
