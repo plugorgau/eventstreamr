@@ -1,7 +1,7 @@
 # config-file-type: JSON 1
 
 { 
+  "dv" : "dvsource-firewire -h $host -p $port -c $device", 
   "v4l" : "ffmpeg -f video4linux2 -s vga -r 25 -i $device -target pal-dv - | dvsource-file /dev/stdin -h $host -p $port",
-  "alsa" : "dvsource-alsa -h $host -p $port hw:$device",
-  "dv" : "dvsource-firewire -h $host -p $port $device" 
+  "alsa" : "dvsource-alsa -h $host -p $port hw:$device"
 }
