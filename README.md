@@ -19,4 +19,4 @@ stream - stream mixed video
 Station Script Requirements
 ===========================
 Apt Packages:
-libdancer-perl libipc-shareable-perl libproc-daemon-perl libipc-shareable-perl libjson-perl libconfig-json-perl libproc-processtable-perl
+libdancer-perl libipc-shareable-perl libproc-daemon-perl libipc-shareable-perl libjson-perl libconfig-json-perl libproc-processtable-perl libfile-slurp-perl
