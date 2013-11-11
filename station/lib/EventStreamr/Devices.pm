@@ -13,7 +13,7 @@ sub all {
   if ($v4l) { $self->{devices}{v4l} = $v4l;       }
   if ($dv)  { $self->{devices}{dv} = $dv;         }
   if ($alsa)  { $self->{devices}{alsa} = $alsa;   }
-  return;
+  return $self->{devices};
 }
 
 sub v4l {
@@ -22,7 +22,7 @@ sub v4l {
   foreach my $device (@v4ldevices) {
     $device =~ m/\/dev\/(?<index>.+)/;
     my $index = $+{index};
-    $v4l_devices->{$index}{path} = $device;
+    $v4l_devices->{$index}{device} = $device;
     $v4l_devices->{$index}{name} = get_v4l_name($index);
     $v4l_devices->{$index}{type} = "v4l";
   }
@@ -43,9 +43,10 @@ sub dv {
         my $model = read_file("$dv/model_name");
         chomp $guid;
         chomp $model;
-        $dv_devices->{$guid}{guid} = $guid;
+        $dv_devices->{$guid}{device} = $guid;
         $dv_devices->{$guid}{model} = $model;
         $dv_devices->{$guid}{vendor} = $vendor_name;
+        $dv_devices->{$guid}{type} = "dv";
       }
     }
   }
@@ -67,7 +68,7 @@ sub alsa { # Only Does USB devices currently
 
     $alsa_devices->{$card}{usbid} = $usbid;
     $alsa_devices->{$card}{name} = $name;
-    $alsa_devices->{$card}{card} = $card;
+    $alsa_devices->{$card}{device} = $card;
     $alsa_devices->{$card}{type} = "alsa";
   }
   return $alsa_devices;
