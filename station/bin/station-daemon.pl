@@ -43,6 +43,8 @@ $shared->{config} = $stationconfig->{config};
 $shared->{config}{macaddress} = getmac();
 $shared->{devices} = $devices->all();
 $shared->{commands} = $commands->{config};
+$shared->{dvswitch}{check} = 1; # check until dvswitch is found
+
 # Dev
 use Data::Dumper;
 
@@ -61,6 +63,7 @@ $SIG{INT} = $SIG{TERM} = sub {
       IPC::Shareable->clean_up_all; 
 };
 
+print "Checking for controller\n";
 my $response = HTTP::Tiny->new->get("http://$localconfig->{controller}:5001/station/$shared->{config}{macaddress}");
 #my $response = HTTP::Tiny->new->get("http://localhost:3000/settings/$shared->{config}->{macaddress}");
 print Dumper($response);
@@ -76,7 +79,13 @@ if ($response->{success} && $response->{status} == 200 ) {
 }
 
 while ($daemons->{main}{run}) {
-  #print Dumper($shared);
+  # If we're restarting, we should trigger check for dvswitch
+  if ($shared->{config}{run} == 2) {
+    print "Restart Triggered\n";
+    $shared->{dvswitch}{check} = 1;
+  }
+
+  # Process the roles
   foreach my $role (@{$shared->{config}->{roles}}) {
     given ( $role->{role} ) {
       when ("mixer")    { mixer();  }
@@ -90,7 +99,17 @@ while ($daemons->{main}{run}) {
   if ($shared->{config}{run} == 2) {
     $shared->{config}{run} = 1;
   }
-  sleep 5;
+
+  # Until found check for dvswitch - continuously hitting dvswitch with an unknown client caused high cpu load
+  unless ( $shared->{dvswitch}{running} && ! $shared->{dvswitch}{check} ) {
+    if ( $utils->port($shared->{config}->{mixer}{host},$shared->{config}->{mixer}{port}) ) {
+      print "DVswitch found Running\n";
+      $shared->{dvswitch}{running} = 1;
+      $shared->{dvswitch}{check} = 0; # We can set this to 1 and it will check dvswitch again.
+    }
+  }
+   
+  sleep 1;
 }
 
 # Get Mac Address
@@ -104,41 +123,39 @@ sub getmac {
 
 ## Ingest
 sub ingest {
-  # Check if DVSWITCH running, else return
-  if ( $utils->port($shared->{config}->{mixer}{host},$shared->{config}->{mixer}{port}) ) {
-    $shared->{ingest}{status} = "DV Switch host found";
-  } else {
-    $shared->{ingest}{status} = "DV Switch host not found";
-    return
-  }
-   
   foreach my $device (@{$shared->{config}{devices}}) {
-    # Build command for execution
-    my $command = commands($device->{id},$device->{type});
+    # Build command for execution and save it for future use
+    unless ($daemons->{$device->{id}}{command}) {
+      $daemons->{$device->{id}}{command} = commands($device->{id},$device->{type});
+    }
 
     # If we're supposed to be running, run.
     if ($shared->{config}{run} == 1) {
       # Get the running state + pid if it exists
-      my $state = $utils->get_pid_command($device->{id},$command,$device->{type}); 
+      my $state = $utils->get_pid_command($device->{id},$daemons->{$device->{id}}{command},$device->{type}); 
 
       unless ($state->{running}) {
+        print "Connect $device->{id} to DVswitch\n";
         # Spawn the Ingest Command
         my $proc = $daemon->Init( {  
-             exec_command => $command,
+             exec_command => $daemons->{$device->{id}}{command},
         } );
         # Set the running state + pid
-        $state = $utils->get_pid_command($device->{id},$command,$device->{type}); 
+        $state = $utils->get_pid_command($device->{id},$daemons->{$device->{id}}{command},$device->{type}); 
       }
       
       # Need to find the child of the shell, as killing the shell does not stop the command
       $daemons->{$device->{id}} = $state;
       
-    } else {
-        # Kill The Child
-        if ($daemon->Kill_Daemon($daemons->{$device->{id}}{pid})) { $daemons->{$device->{id}}{running} = 0; }
+    } elsif (defined $daemons->{$device->{id}}{pid}) {
+      # Kill The Child
+      if ($daemon->Kill_Daemon($daemons->{$device->{id}}{pid})) { 
+        print "Stop $device->{id}\n";
+        $daemons->{$device->{id}}{running} = 0;  
+        $daemons->{$device->{id}}{pid} = undef; 
+      }
     }
-  }
-  
+  } 
   return;
 }
 
@@ -168,18 +185,6 @@ sub commands {
 
   return $command;
 } 
-
-sub daemon_spawn {
-
-}
-
-sub daemon_status {
-
-}
-
-sub daemon_stop {
-
-}
 
 __END__
 
