@@ -5,6 +5,6 @@
   "nickname" : "",
   "room" : "",
   "mixer" : {"port":"1234", "host":"localhost"},
-  "devices" : [ {"type":"v4l","id":"video0"} ],
+  "devices" : "all", 
   "run" : "0"
 }
