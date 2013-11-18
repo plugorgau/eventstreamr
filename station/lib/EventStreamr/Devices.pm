@@ -2,7 +2,7 @@ package EventStreamr::Devices;
 use Moo; # libmoo-perl
 use Cwd 'realpath';
 use File::Slurp 'read_file'; #libfile-slurp-perl
-
+use Hash::Merge::Simple; # libhash-merge-simple-perl
 use Data::Dumper;
 
 sub all {
@@ -10,9 +10,14 @@ sub all {
   my $v4l = v4l();
   my $dv = dv();
   my $alsa = alsa();
+
   if ($v4l) { $self->{devices}{v4l} = $v4l;       }
   if ($dv)  { $self->{devices}{dv} = $dv;         }
   if ($alsa)  { $self->{devices}{alsa} = $alsa;   }
+  if ($v4l || $dv || $alsa) {
+    $self->{devices}{all} = Hash::Merge::Simple->merge($v4l,$dv,$alsa);
+  }
+
   return $self->{devices};
 }
 
