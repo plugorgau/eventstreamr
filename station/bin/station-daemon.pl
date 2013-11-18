@@ -54,7 +54,7 @@ our $daemon = Proc::Daemon->new(
 );
 
 our $daemons;
-#$daemons->{main} = $daemon->Init;
+#$daemons->{main} = $daemon->Init; # comment to run on cli
   
 $daemons->{main}{run} = 1;
 $SIG{INT} = $SIG{TERM} = sub { 
@@ -65,7 +65,6 @@ $SIG{INT} = $SIG{TERM} = sub {
 
 print "Checking for controller\n";
 my $response = HTTP::Tiny->new->get("http://$localconfig->{controller}:5001/station/$shared->{config}{macaddress}");
-#my $response = HTTP::Tiny->new->get("http://localhost:3000/settings/$shared->{config}->{macaddress}");
 print Dumper($response);
 
 if ($response->{success} && $response->{status} == 200 ) {
@@ -77,6 +76,11 @@ if ($response->{success} && $response->{status} == 200 ) {
     $stationconfig->write;
   }
 }
+
+## Run all connected devices - need to get devices to return an array
+#if ($shared->{config}{devices} eq 'all') {
+#  @{$shared->{config}{devices}} = $devices->array();
+#}
 
 while ($daemons->{main}{run}) {
   # If we're restarting, we should trigger check for dvswitch
@@ -110,15 +114,6 @@ while ($daemons->{main}{run}) {
   }
    
   sleep 1;
-}
-
-# Get Mac Address
-sub getmac {
-  # this is horrible, find a better way!
-  my $macaddress = `/sbin/ifconfig|grep "wlan"|grep ..:..:..:..:..:..|awk '{print \$NF}'`;
-  $macaddress =~ s/:/-/g;
-  chomp $macaddress;
-  return $macaddress;
 }
 
 ## Ingest
@@ -185,6 +180,14 @@ sub commands {
 
   return $command;
 } 
+
+# Get Mac Address
+sub getmac {
+  # This is better, but can break if no eth0. We are only using it as a UID - think of something better.
+  my $macaddress = `ip -o link show dev eth0 | grep -Po 'ether \\K[^ ]+'`;
+  chomp $macaddress;
+  return $macaddress;
+}
 
 __END__
 
