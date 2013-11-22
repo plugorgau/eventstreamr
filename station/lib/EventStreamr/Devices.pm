@@ -10,12 +10,16 @@ sub all {
   my $v4l = v4l();
   my $dv = dv();
   my $alsa = alsa();
+  @{$self->{devices}{v4l}{all}} = ();
+  @{$self->{devices}{dv}{all}} = ();
+  @{$self->{devices}{alsa}{all}} = ();
 
   if ($v4l) { $self->{devices}{v4l} = $v4l;       }
   if ($dv)  { $self->{devices}{dv} = $dv;         }
   if ($alsa)  { $self->{devices}{alsa} = $alsa;   }
   if ($v4l || $dv || $alsa) {
     $self->{devices}{all} = Hash::Merge::Simple->merge($v4l,$dv,$alsa);
+    @{$self->{devices}{array}} = (@{$self->{devices}{v4l}{all}}, @{$self->{devices}{dv}{all}},@{$self->{devices}{alsa}{all}});
   }
 
   return $self->{devices};
@@ -30,6 +34,7 @@ sub v4l {
     $v4l_devices->{$index}{device} = $device;
     $v4l_devices->{$index}{name} = get_v4l_name($index);
     $v4l_devices->{$index}{type} = "v4l";
+    push (@{$v4l_devices->{all}}, $v4l_devices->{$index});
   }
   return $v4l_devices;
 }
@@ -52,6 +57,7 @@ sub dv {
         $dv_devices->{$guid}{model} = $model;
         $dv_devices->{$guid}{vendor} = $vendor_name;
         $dv_devices->{$guid}{type} = "dv";
+        push (@{$dv_devices->{all}}, $dv_devices->{$guid}); ;
       }
     }
   }
@@ -75,6 +81,7 @@ sub alsa { # Only Does USB devices currently
     $alsa_devices->{$card}{name} = $name;
     $alsa_devices->{$card}{device} = $card;
     $alsa_devices->{$card}{type} = "alsa";
+    push (@{$alsa_devices->{all}}, $alsa_devices->{$card});
   }
   return $alsa_devices;
 }
