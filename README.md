@@ -26,6 +26,7 @@ station.json
 
 Config file can appear as below and take fixed array of devices:
 
+```json
 { 
   "roles" : [{"role":"ingest"}],
   "nickname" : "",
@@ -38,9 +39,10 @@ Config file can appear as below and take fixed array of devices:
               ],
   "run" : "0"
 }
-
+```
 or set to pickup all attached devices:
 
+```json
 { 
   "roles" : [{"role":"ingest"}],
   "nickname" : "",
@@ -49,4 +51,4 @@ or set to pickup all attached devices:
   "devices" : "all" 
   "run" : "0"
 }
-
+```
