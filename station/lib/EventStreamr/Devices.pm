@@ -34,6 +34,7 @@ sub v4l {
     $v4l_devices->{$index}{device} = $device;
     $v4l_devices->{$index}{name} = get_v4l_name($index);
     $v4l_devices->{$index}{type} = "v4l";
+    $v4l_devices->{$index}{id} = $index;
     push (@{$v4l_devices->{all}}, $v4l_devices->{$index});
   }
   return $v4l_devices;
@@ -57,6 +58,7 @@ sub dv {
         $dv_devices->{$guid}{model} = $model;
         $dv_devices->{$guid}{vendor} = $vendor_name;
         $dv_devices->{$guid}{type} = "dv";
+        $dv_devices->{$guid}{id} = $guid;
         push (@{$dv_devices->{all}}, $dv_devices->{$guid}); ;
       }
     }
@@ -81,6 +83,7 @@ sub alsa { # Only Does USB devices currently
     $alsa_devices->{$card}{name} = $name;
     $alsa_devices->{$card}{device} = $card;
     $alsa_devices->{$card}{type} = "alsa";
+    $alsa_devices->{$card}{id} = $card;
     push (@{$alsa_devices->{all}}, $alsa_devices->{$card});
   }
   return $alsa_devices;
