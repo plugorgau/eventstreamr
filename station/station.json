@@ -1,10 +1,23 @@
 # config-file-type: JSON 1
 
 { 
-  "roles" : [{"role":"ingest"}],
-  "nickname" : "",
-  "room" : "",
-  "mixer" : {"port":"1234", "host":"localhost"},
+  "roles" : 
+    [
+      {"role":"ingest"},
+      {"role":"mixer"},
+      {"role":"stream"}
+    ],
+  "nickname" : "test",
+  "room" : "room1",
+  "mixer" : 
+    {
+      "port":"1234", 
+      "host":"localhost"
+    },
   "devices" : "all", 
+  "device_control" : 
+    {
+      "video0" : {"run":"0"}
+    },
   "run" : "0"
 }
