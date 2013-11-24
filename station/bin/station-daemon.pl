@@ -218,8 +218,8 @@ sub ingest_commands {
   my $command = $self->{commands}{$type};
   my %cmd_vars =  ( 
                     device  => $self->{devices}{$type}{$id}{device},
-                    host    => $shared->{config}->{mixer}{host},
-                    port    => $shared->{config}->{mixer}{port},
+                    host    => $shared->{config}{mixer}{host},
+                    port    => $shared->{config}{mixer}{port},
                   );
 
   $command =~ s/\$(\w+)/$cmd_vars{$1}/g;
@@ -230,13 +230,30 @@ sub ingest_commands {
 sub mixer_command {
   my $command = $self->{commands}{dvswitch};
   my %cmd_vars =  ( 
-                    port    => $shared->{config}->{mixer}{port},
+                    port    => $shared->{config}{mixer}{port},
                   );
 
   $command =~ s/\$(\w+)/$cmd_vars{$1}/g;
 
   return $command;
 } 
+
+sub stream_command {
+  my $command = $self->{commands}{stream};
+  my %cmd_vars =  ( 
+                    host      => $shared->{config}{mixer}{host},
+                    port      => $shared->{config}{mixer}{port},
+                    shost     => $shared->{config}{stream}{host},
+                    sport     => $shared->{config}{stream}{port},
+                    spassword => $shared->{config}{stream}{password},
+                    stream    => $shared->{config}{stream}{stream},
+                  );
+
+  $command =~ s/\$(\w+)/$cmd_vars{$1}/g;
+
+  return $command;
+} 
+
 # Get Mac Address
 sub getmac {
   # This is better, but can break if no eth0. We are only using it as a UID - think of something better.
