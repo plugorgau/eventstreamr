@@ -32,7 +32,7 @@ my %options = (
     create    => 'yes',
     exclusive => 0,
     mode      => 0644,
-    destroy   => 'yes',
+    destroy   => 1,
 );
 
 my $shared;
