@@ -119,38 +119,8 @@ while ($daemons->{main}{run}) {
 ## Ingest
 sub ingest {
   foreach my $device (@{$shared->{config}{devices}}) {
-    # Build command for execution and save it for future use
-    unless ($daemons->{$device->{id}}{command}) {
-      $daemons->{$device->{id}}{command} = commands($device->{id},$device->{type});
-    }
-
-    # If we're supposed to be running, run.
-    if ($shared->{config}{run} == 1) {
-      # Get the running state + pid if it exists
-      my $state = $utils->get_pid_command($device->{id},$daemons->{$device->{id}}{command},$device->{type}); 
-
-      unless ($state->{running}) {
-        print "Connect $device->{id} to DVswitch\n";
-        # Spawn the Ingest Command
-        my $proc = $daemon->Init( {  
-             exec_command => $daemons->{$device->{id}}{command},
-        } );
-        # Set the running state + pid
-        $state = $utils->get_pid_command($device->{id},$daemons->{$device->{id}}{command},$device->{type}); 
-      }
-      
-      # Need to find the child of the shell, as killing the shell does not stop the command
-      $daemons->{$device->{id}} = $state;
-      
-    } elsif (defined $daemons->{$device->{id}}{pid}) {
-      # Kill The Child
-      if ($daemon->Kill_Daemon($daemons->{$device->{id}}{pid})) { 
-        print "Stop $device->{id}\n";
-        $daemons->{$device->{id}}{running} = 0;  
-        $daemons->{$device->{id}}{pid} = undef; 
-      }
-    }
-  } 
+    run_stop($device);
+  }
   return;
 }
 
@@ -166,8 +136,51 @@ sub stream {
   return;
 }
 
+# run, stop or restart a process 
+sub run_stop {
+  my ($device) = @_;
+  # Build command for execution and save it for future use
+  unless ($shared->{config}{device_control}{$device->{id}}{command}) {
+    $shared->{config}{device_control}{$device->{id}}{command} = ingest_commands($device->{id},$device->{type});
+  }
+
+  # If we're supposed to be running, run.
+  if ($shared->{config}{run} == 1 && 
+    (! defined $shared->{config}{device_control}{$device->{id}}{run} || $shared->{config}{device_control}{$device->{id}}{run} == 1)) {
+    # Get the running state + pid if it exists
+    my $state = $utils->get_pid_command($device->{id},$shared->{config}{device_control}{$device->{id}}{command},$device->{type}); 
+
+    unless ($state->{running}) {
+      print "Connect $device->{id} to DVswitch\n";
+      # Spawn the Ingest Command
+      my $proc = $daemon->Init( {  
+           exec_command => $shared->{config}{device_control}{$device->{id}}{command},
+      } );
+      # Set the running state + pid
+      $state = $utils->get_pid_command($device->{id},$shared->{config}{device_control}{$device->{id}}{command},$device->{type}); 
+    }
+    
+    # Need to find the child of the shell, as killing the shell does not stop the command
+    $shared->{config}{device_control}{$device->{id}} = $state;
+    
+  } elsif (defined $shared->{config}{device_control}{$device->{id}}{pid}) {
+    # Kill The Child
+    if ($daemon->Kill_Daemon($shared->{config}{device_control}{$device->{id}}{pid})) { 
+      print "Stop $device->{id}\n";
+      $shared->{config}{device_control}{$device->{id}}{running} = 0;  
+      $shared->{config}{device_control}{$device->{id}}{pid} = undef; 
+    }
+
+    # Set device back to running if a restart was triggered
+    if ($shared->{config}{device_control}{$device->{id}}{run} == 2) {
+      $shared->{config}{device_control}{$device->{id}}{run} = 1;
+    }
+  }
+  return;
+}
+
 ## Commands
-sub commands {
+sub ingest_commands {
   my ($id,$type) = @_;
   my $command = $shared->{commands}{$type};
   my %cmd_vars =  ( 
