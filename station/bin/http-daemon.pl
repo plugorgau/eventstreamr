@@ -61,6 +61,20 @@ get '/command/:command' => sub {
   return qq({"result":"200"});
 };
 
+post '/command/:command' => sub {
+  my $command = params->{command};
+  my $data = from_json(request->body);
+  
+  given ($command) {
+    when ("stop")     { $shared->{config}{device_control}{$data->{id}}{run} = 0; }
+    when ("start")    { $shared->{config}{device_control}{$data->{id}}{run} = 1; }
+    when ("restart")  { $shared->{config}{device_control}{$data->{id}}{run} = 2; }
+    default { return qq({"result":"400", "status":"unkown command"}); }
+  }
+
+  return qq({"result":"200"});
+};
+
 dance;
 
 __END__
