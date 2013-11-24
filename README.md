@@ -14,6 +14,7 @@ controller - Web based frontend for managing stations
 ingest - alsa/dv/v4l capture for sending to mixer
 mixer - DVswitch/streaming live mixed video. With the intention for this to be easily replaced by gstswitch
 stream - stream mixed video
+record - stream mixed video
 
 
 Station Script Requirements
