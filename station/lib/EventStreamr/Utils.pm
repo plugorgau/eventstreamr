@@ -37,7 +37,7 @@ sub get_pid_command {
   
   given ($type) {
     when ("v4l")  { $regex = "ffmpeg.+\\/dev\\/$id.*"; }
-    when ("dv")   { $regex = "dvgrab.+0x080046010368430a.*"; }
+    when ("dv")   { $regex = "dvgrab.+$id.*"; }
     default       { $regex = $command }
   }
 
