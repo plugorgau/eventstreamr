@@ -120,6 +120,7 @@ while ($daemons->{main}{run}) {
 ## Ingest
 sub ingest {
   foreach my $device (@{$shared->{config}{devices}}) {
+    $device->{role} = "ingest";
     run_stop($device);
   }
   return;
@@ -127,7 +128,11 @@ sub ingest {
 
 ## Mixer
 sub mixer {
-
+  my $device;
+  $device->{role} = "mixer";
+  $device->{id} = "dvswitch";
+  $device->{type} = "mixer";
+  run_stop($device);
   return;
 }
 
@@ -148,7 +153,10 @@ sub run_stop {
   my ($device) = @_;
   # Build command for execution and save it for future use
   unless ($shared->{config}{device_control}{$device->{id}}{command}) {
-    $shared->{config}{device_control}{$device->{id}}{command} = ingest_commands($device->{id},$device->{type});
+    given ($device->{role}) {
+      when ("ingest")   { $shared->{config}{device_control}{$device->{id}}{command} = ingest_commands($device->{id},$device->{type}); }
+      when ("mixer")   { $shared->{config}{device_control}{$device->{id}}{command} = mixer_command(); }
+    }
   }
 
   # If we're supposed to be running, run.
@@ -179,7 +187,7 @@ sub run_stop {
     }
 
     # Set device back to running if a restart was triggered
-    if ($shared->{config}{device_control}{$device->{id}}{run} == 2) {
+    if (! defined $shared->{config}{device_control}{$device->{id}}{run} || $shared->{config}{device_control}{$device->{id}}{run} == 2) {
       $shared->{config}{device_control}{$device->{id}}{run} = 1;
     }
   }
@@ -201,6 +209,16 @@ sub ingest_commands {
   return $command;
 } 
 
+sub mixer_command {
+  my $command = $shared->{commands}{dvswitch};
+  my %cmd_vars =  ( 
+                    port    => $shared->{config}->{mixer}{port},
+                  );
+
+  $command =~ s/\$(\w+)/$cmd_vars{$1}/g;
+
+  return $command;
+} 
 # Get Mac Address
 sub getmac {
   # This is better, but can break if no eth0. We are only using it as a UID - think of something better.
