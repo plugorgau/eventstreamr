@@ -145,13 +145,21 @@ sub mixer {
 
 ## Stream
 sub stream {
-
+#  my $device;
+#  $device->{role} = "stream";
+#  $device->{id} = $shared->{config}{stream}{stream};
+#  $device->{type} = "stream";
+#  run_stop($device);
   return;
 }
 
 ## Stream
 sub record {
-
+#  my $device;
+#  $device->{role} = "record";
+#  $device->{id} = "record";
+#  $device->{type} = "record";
+#  run_stop($device);
   return;
 }
 
