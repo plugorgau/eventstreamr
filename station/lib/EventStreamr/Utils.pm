@@ -36,9 +36,10 @@ sub get_pid_command {
   my $return;
   
   given ($type) {
-    when ("v4l")  { $regex = "ffmpeg.+\\/dev\\/$id.*"; }
-    when ("dv")   { $regex = "dvgrab.+$id.*"; }
-    default       { $regex = $command }
+    when ("v4l")      { $regex = "ffmpeg.+\\/dev\\/$id.*"; }
+    when ("dv")       { $regex = "dvgrab.+$id.*"; }
+    when ("stream")   { $regex = "ffmpeg2theora.*"; } # This needs fixing, but will do for testing
+    default           { $regex = $command }
   }
 
   my $pt = Proc::ProcessTable->new;
