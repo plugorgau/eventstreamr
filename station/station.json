@@ -5,6 +5,7 @@
     [
       {"role":"ingest"},
       {"role":"mixer"},
+      {"role":"record"},
       {"role":"stream"}
     ],
   "nickname" : "test",
@@ -19,5 +20,12 @@
     {
       "video0" : {"run":"0"}
     },
-  "run" : "0"
+  "run" : "0",
+  "stream" :
+    {
+      "host" : "icecast.plug.org.au",
+      "port" : "",
+      "password" : "not on git :)",
+      "stream" : "test"
+    }
 }
