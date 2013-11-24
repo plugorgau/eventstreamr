@@ -212,37 +212,135 @@ leon     20725  0.1  0.0  10796   860 ?        S    12:27   0:00 dvsource-file /
 leon     20735  0.0  0.0   9396   920 pts/16   S+   12:28   0:00 grep --color=auto dv
 
 $VAR1 = {
-          'ingest' => {
-                        'status' => 'DV Switch host not found'
-                      },
+          'commands' => {
+                          'alsa' => 'dvsource-alsa -h $host -p $port hw:$device',
+                          'dv' => 'dvsource-firewire -h $host -p $port -c $device',
+                          'record' => 'dvsink-files $device',
+                          'v4l' => 'ffmpeg -f video4linux2 -s vga -r 25 -i $device -target pal-dv - | dvsource-file /dev/stdin -h $host -p $port',
+                          'stream' => 'dvsink-command -- ffmpeg2theora - -f dv -F 25:2 --speedlevel 0 -v 4  --optimize -V 420 --soft-target -a 4 -c 1 -H 44100 -o - | oggfwd $host $port 8000 $password /$stream',
+                          'file' => 'dvsource-file -l $device',
+                          'dvswitch' => 'dvswitch -h 0.0.0.0 -p $port'
+                        },
           'config' => {
                         'roles' => [
                                      {
                                        'role' => 'ingest'
+                                     },
+                                     {
+                                       'role' => 'mixer'
+                                     },
+                                     {
+                                       'role' => 'stream'
                                      }
                                    ],
-                        'nickname' => '',
-                        'macaddress' => '60-67-20-66-81-24',
+                        'nickname' => 'test',
+                        'room' => 'room1',
+                        'devices' => [
+                                       {
+                                         'name' => 'Chicony Electronics Co.  Ltd. ASUS USB2.0 Webcam',
+                                         'id' => 'video0',
+                                         'type' => 'v4l',
+                                         'device' => '/dev/video0'
+                                       },
+                                       {
+                                         'name' => 'C-Media Electronics, Inc. ',
+                                         'usbid' => '0d8c:0008',
+                                         'id' => '2',
+                                         'type' => 'alsa',
+                                         'device' => '2'
+                                       }
+                                     ],
+                        'device_control' => {
+                                              'video0' => {
+                                                            'run' => '0'
+                                                          }
+                                            },
+                        'run' => '0',
+                        'macaddress' => '00:15:58:d8:85:c7',
                         'mixer' => {
                                      'port' => '1234',
                                      'host' => 'localhost'
-                                   },
-                        'room' => '',
-                        'devices' => [
-                                       {
-                                         'id' => 'video0',
-                                         'device' => 'v4l'
-                                       }
-                                     ]
+                                   }
                       },
+          'dvswitch' => {
+                          'check' => 1
+                        },
           'devices' => {
+                         'array' => [
+                                      {
+                                        'name' => 'Chicony Electronics Co.  Ltd. ASUS USB2.0 Webcam',
+                                        'id' => 'video0',
+                                        'type' => 'v4l',
+                                        'device' => '/dev/video0'
+                                      },
+                                      {
+                                        'name' => 'C-Media Electronics, Inc. ',
+                                        'usbid' => '0d8c:0008',
+                                        'id' => '2',
+                                        'type' => 'alsa',
+                                        'device' => '2'
+                                      }
+                                    ],
+                         'dv' => {
+                                   'all' => []
+                                 },
+                         'alsa' => {
+                                     '2' => {
+                                              'name' => 'C-Media Electronics, Inc. ',
+                                              'usbid' => '0d8c:0008',
+                                              'id' => '2',
+                                              'type' => 'alsa',
+                                              'device' => '2'
+                                            },
+                                     'all' => [
+                                                {
+                                                  'name' => 'C-Media Electronics, Inc. ',
+                                                  'usbid' => '0d8c:0008',
+                                                  'id' => '2',
+                                                  'type' => 'alsa',
+                                                  'device' => '2'
+                                                }
+                                              ]
+                                   },
                          'v4l' => {
                                     'video0' => {
-                                                  'name' => 'Ricoh Company Ltd. Integrated Camera',
-                                                  'path' => '/dev/video0',
-                                                  'type' => 'v4l'
-                                                }
+                                                  'name' => 'Chicony Electronics Co.  Ltd. ASUS USB2.0 Webcam',
+                                                  'id' => 'video0',
+                                                  'type' => 'v4l',
+                                                  'device' => '/dev/video0'
+                                                },
+                                    'all' => [
+                                               {
+                                                 'name' => 'Chicony Electronics Co.  Ltd. ASUS USB2.0 Webcam',
+                                                 'id' => 'video0',
+                                                 'type' => 'v4l',
+                                                 'device' => '/dev/video0'
+                                               }
+                                             ]
+                                  },
+                         'all' => {
+                                    'video0' => {
+                                                  'name' => 'Chicony Electronics Co.  Ltd. ASUS USB2.0 Webcam',
+                                                  'id' => 'video0',
+                                                  'type' => 'v4l',
+                                                  'device' => '/dev/video0'
+                                                },
+                                    'all' => [
+                                               {
+                                                 'name' => 'C-Media Electronics, Inc. ',
+                                                 'usbid' => '0d8c:0008',
+                                                 'id' => '2',
+                                                 'type' => 'alsa',
+                                                 'device' => '2'
+                                               }
+                                             ],
+                                    '2' => {
+                                             'name' => 'C-Media Electronics, Inc. ',
+                                             'usbid' => '0d8c:0008',
+                                             'id' => '2',
+                                             'type' => 'alsa',
+                                             'device' => '2'
+                                           }
                                   }
                        }
         };
-
