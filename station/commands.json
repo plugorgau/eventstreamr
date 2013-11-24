@@ -5,7 +5,7 @@
   "v4l" : "ffmpeg -f video4linux2 -s vga -r 25 -i $device -target pal-dv - | dvsource-file /dev/stdin -h $host -p $port",
   "alsa" : "dvsource-alsa -h $host -p $port hw:$device",
   "file" :  "dvsource-file -l $device",
-  "dvswitch" : "dvswitch",
+  "dvswitch" : "dvswitch -h 0.0.0.0 -p $port",
   "record" : "dvsink-files $device",
   "stream" : "dvsink-command -- ffmpeg2theora - -f dv -F 25:2 --speedlevel 0 -v 4  --optimize -V 420 --soft-target -a 4 -c 1 -H 44100 -o - | oggfwd $host $port 8000 $password /$stream"
 }
