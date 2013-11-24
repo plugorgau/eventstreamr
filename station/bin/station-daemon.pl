@@ -80,8 +80,6 @@ if ($response->{success} && $response->{status} == 200 ) {
 # Run all connected devices - need to get devices to return an array
 if ($shared->{config}{devices} eq 'all') {
   $shared->{config}{devices} = $shared->{devices}{array};
-  print Dumper($shared->{config}{devices});
-
 }
 
 while ($daemons->{main}{run}) {
