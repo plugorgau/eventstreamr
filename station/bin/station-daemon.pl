@@ -39,11 +39,16 @@ my $shared;
 tie $shared, 'IPC::Shareable', $glue, { %options } or
     die "server: tie failed\n";
 
+# Shared Interprocess storage
 $shared->{config} = $stationconfig->{config};
 $shared->{config}{macaddress} = getmac();
-$shared->{devices} = $devices->all();
-$shared->{commands} = $commands->{config};
-$shared->{dvswitch}{check} = 1; # check until dvswitch is found
+
+# Personal Storage - need to limit shared data
+our $self;
+$self->{devices} = $devices->all();
+$self->{commands} = $commands->{config};
+$self->{dvswitch}{check} = 1; # check until dvswitch is found
+$self->{dvswitch}{running} = 0;
 
 # Dev
 use Data::Dumper;
@@ -79,14 +84,14 @@ if ($response->{success} && $response->{status} == 200 ) {
 
 # Run all connected devices - need to get devices to return an array
 if ($shared->{config}{devices} eq 'all') {
-  $shared->{config}{devices} = $shared->{devices}{array};
+  $shared->{config}{devices} = $self->{devices}{array};
 }
 
 while ($daemons->{main}{run}) {
   # If we're restarting, we should trigger check for dvswitch
   if ($shared->{config}{run} == 2) {
     print "Restart Triggered\n";
-    $shared->{dvswitch}{check} = 1;
+    $self->{dvswitch}{check} = 1;
   }
 
   # Process the roles
@@ -106,11 +111,11 @@ while ($daemons->{main}{run}) {
   }
 
   # Until found check for dvswitch - continuously hitting dvswitch with an unknown client caused high cpu load
-  unless ( $shared->{dvswitch}{running} && ! $shared->{dvswitch}{check} ) {
+  unless ( $self->{dvswitch}{running} && ! $self->{dvswitch}{check} ) {
     if ( $utils->port($shared->{config}->{mixer}{host},$shared->{config}->{mixer}{port}) ) {
       print "DVswitch found Running\n";
-      $shared->{dvswitch}{running} = 1;
-      $shared->{dvswitch}{check} = 0; # We can set this to 1 and it will check dvswitch again.
+      $self->{dvswitch}{running} = 1;
+      $self->{dvswitch}{check} = 0; # We can set this to 1 and it will check dvswitch again.
     }
   }
    
@@ -119,9 +124,11 @@ while ($daemons->{main}{run}) {
 
 ## Ingest
 sub ingest {
-  foreach my $device (@{$shared->{config}{devices}}) {
-    $device->{role} = "ingest";
-    run_stop($device);
+  if ($self->{dvswitch}{running} == 1) {
+    foreach my $device (@{$shared->{config}{devices}}) {
+      $device->{role} = "ingest";
+      run_stop($device);
+    }
   }
   return;
 }
@@ -152,10 +159,10 @@ sub record {
 sub run_stop {
   my ($device) = @_;
   # Build command for execution and save it for future use
-  unless ($shared->{config}{device_control}{$device->{id}}{command}) {
+  unless ($self->{device_control}{$device->{id}}{command}) {
     given ($device->{role}) {
-      when ("ingest")   { $shared->{config}{device_control}{$device->{id}}{command} = ingest_commands($device->{id},$device->{type}); }
-      when ("mixer")   { $shared->{config}{device_control}{$device->{id}}{command} = mixer_command(); }
+      when ("ingest")   { $self->{device_control}{$device->{id}}{command} = ingest_commands($device->{id},$device->{type}); }
+      when ("mixer")   { $self->{device_control}{$device->{id}}{command} = mixer_command(); }
     }
   }
 
@@ -163,27 +170,30 @@ sub run_stop {
   if ($shared->{config}{run} == 1 && 
     (! defined $shared->{config}{device_control}{$device->{id}}{run} || $shared->{config}{device_control}{$device->{id}}{run} == 1)) {
     # Get the running state + pid if it exists
-    my $state = $utils->get_pid_command($device->{id},$shared->{config}{device_control}{$device->{id}}{command},$device->{type}); 
+    my $state = $utils->get_pid_command($device->{id},$self->{device_control}{$device->{id}}{command},$device->{type}); 
 
     unless ($state->{running}) {
       print "Connect $device->{id} to DVswitch\n";
       # Spawn the Ingest Command
       my $proc = $daemon->Init( {  
-           exec_command => $shared->{config}{device_control}{$device->{id}}{command},
+           exec_command => $self->{device_control}{$device->{id}}{command},
       } );
+      
+      # give the process some time to settle
+      sleep 1;
       # Set the running state + pid
-      $state = $utils->get_pid_command($device->{id},$shared->{config}{device_control}{$device->{id}}{command},$device->{type}); 
+      $state = $utils->get_pid_command($device->{id},$self->{device_control}{$device->{id}}{command},$device->{type}); 
     }
     
     # Need to find the child of the shell, as killing the shell does not stop the command
-    $shared->{config}{device_control}{$device->{id}} = $state;
+    $self->{device_control}{$device->{id}} = $state;
     
-  } elsif (defined $shared->{config}{device_control}{$device->{id}}{pid}) {
+  } elsif (defined $self->{device_control}{$device->{id}}{pid}) {
     # Kill The Child
-    if ($daemon->Kill_Daemon($shared->{config}{device_control}{$device->{id}}{pid})) { 
+    if ($daemon->Kill_Daemon($self->{device_control}{$device->{id}}{pid})) { 
       print "Stop $device->{id}\n";
-      $shared->{config}{device_control}{$device->{id}}{running} = 0;  
-      $shared->{config}{device_control}{$device->{id}}{pid} = undef; 
+      $self->{device_control}{$device->{id}}{running} = 0;  
+      $self->{device_control}{$device->{id}}{pid} = undef; 
     }
 
     # Set device back to running if a restart was triggered
@@ -197,9 +207,9 @@ sub run_stop {
 ## Commands
 sub ingest_commands {
   my ($id,$type) = @_;
-  my $command = $shared->{commands}{$type};
+  my $command = $self->{commands}{$type};
   my %cmd_vars =  ( 
-                    device  => $shared->{devices}{$type}{$id}{device},
+                    device  => $self->{devices}{$type}{$id}{device},
                     host    => $shared->{config}->{mixer}{host},
                     port    => $shared->{config}->{mixer}{port},
                   );
@@ -210,7 +220,7 @@ sub ingest_commands {
 } 
 
 sub mixer_command {
-  my $command = $shared->{commands}{dvswitch};
+  my $command = $self->{commands}{dvswitch};
   my %cmd_vars =  ( 
                     port    => $shared->{config}->{mixer}{port},
                   );
