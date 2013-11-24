@@ -95,6 +95,7 @@ while ($daemons->{main}{run}) {
       when ("mixer")    { mixer();  }
       when ("ingest")   { ingest(); }
       when ("stream")   { stream(); }
+      when ("record")   { record(); }
     }
   }
 
@@ -132,6 +133,12 @@ sub mixer {
 
 ## Stream
 sub stream {
+
+  return;
+}
+
+## Stream
+sub record {
 
   return;
 }
