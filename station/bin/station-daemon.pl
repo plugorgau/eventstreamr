@@ -167,10 +167,10 @@ sub record {
 sub run_stop {
   my ($device) = @_;
   # Build command for execution and save it for future use
-  unless ($self->{device_control}{$device->{id}}{command}) {
+  unless ($self->{device_commands}{$device->{id}}{command}) {
     given ($device->{role}) {
-      when ("ingest")   { $self->{device_control}{$device->{id}}{command} = ingest_commands($device->{id},$device->{type}); }
-      when ("mixer")   { $self->{device_control}{$device->{id}}{command} = mixer_command(); }
+      when ("ingest")   { $self->{device_commands}{$device->{id}}{command} = ingest_commands($device->{id},$device->{type}); }
+      when ("mixer")   { $self->{device_commands}{$device->{id}}{command} = mixer_command(); }
     }
   }
 
@@ -178,19 +178,19 @@ sub run_stop {
   if ($shared->{config}{run} == 1 && 
     (! defined $shared->{config}{device_control}{$device->{id}}{run} || $shared->{config}{device_control}{$device->{id}}{run} == 1)) {
     # Get the running state + pid if it exists
-    my $state = $utils->get_pid_command($device->{id},$self->{device_control}{$device->{id}}{command},$device->{type}); 
+    my $state = $utils->get_pid_command($device->{id},$self->{device_commands}{$device->{id}}{command},$device->{type}); 
 
     unless ($state->{running}) {
       print "Connect $device->{id} to DVswitch\n";
       # Spawn the Ingest Command
       my $proc = $daemon->Init( {  
-           exec_command => $self->{device_control}{$device->{id}}{command},
+           exec_command => $self->{device_commands}{$device->{id}}{command},
       } );
       
       # give the process some time to settle
       sleep 1;
       # Set the running state + pid
-      $state = $utils->get_pid_command($device->{id},$self->{device_control}{$device->{id}}{command},$device->{type}); 
+      $state = $utils->get_pid_command($device->{id},$self->{device_commands}{$device->{id}}{command},$device->{type}); 
     }
     
     # Need to find the child of the shell, as killing the shell does not stop the command
