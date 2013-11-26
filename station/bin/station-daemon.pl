@@ -145,11 +145,11 @@ sub mixer {
 
 ## Stream
 sub stream {
-#  my $device;
-#  $device->{role} = "stream";
-#  $device->{id} = $shared->{config}{stream}{stream};
-#  $device->{type} = "stream";
-#  run_stop($device);
+  my $device;
+  $device->{role} = "stream";
+  $device->{id} = $shared->{config}{stream}{stream};
+  $device->{type} = "stream";
+  run_stop($device);
   return;
 }
 
