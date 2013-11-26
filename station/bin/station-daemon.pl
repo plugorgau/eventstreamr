@@ -170,7 +170,8 @@ sub run_stop {
   unless ($self->{device_commands}{$device->{id}}{command}) {
     given ($device->{role}) {
       when ("ingest")   { $self->{device_commands}{$device->{id}}{command} = ingest_commands($device->{id},$device->{type}); }
-      when ("mixer")   { $self->{device_commands}{$device->{id}}{command} = mixer_command(); }
+      when ("mixer")    { $self->{device_commands}{$device->{id}}{command} = mixer_command(); }
+      when ("stream")   { $self->{device_commands}{$device->{id}}{command} = stream_command($device->{id},$device->{type}); }
     }
   }
 
