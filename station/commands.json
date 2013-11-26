@@ -4,8 +4,8 @@
   "dv" : "dvsource-firewire -h $host -p $port -c $device", 
   "v4l" : "ffmpeg -f video4linux2 -s vga -r 25 -i $device -target pal-dv - | dvsource-file /dev/stdin -h $host -p $port",
   "alsa" : "dvsource-alsa -h $host -p $port hw:$device",
-  "file" :  "dvsource-file -l $device",
+  "file" :  "dvsource-file -h $host -p $port -l $device",
   "dvswitch" : "dvswitch -h 0.0.0.0 -p $port",
   "record" : "dvsink-files -h $host -p $port $room",
-  "stream" : "dvsink-command -h $host -p $port -- ffmpeg2theora - -f dv -F 25:2 --speedlevel 0 -v 4  --optimize -V 420 --soft-target -a 4 -c 1 -H 44100 -o - | oggfwd $shost $sport $password /$stream"
+  "stream" : "dvsink-command -h $host -p $port -- ffmpeg2theora - -f dv -F 25:2 --speedlevel 0 -v 4  --optimize -V 420 --soft-target -a 4 -c 1 -H 44100 -o --title $id - | oggfwd $shost $sport $spassword /$stream"
 }
