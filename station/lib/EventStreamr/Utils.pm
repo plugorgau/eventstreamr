@@ -38,7 +38,7 @@ sub get_pid_command {
   given ($type) {
     when ("v4l")      { $regex = "ffmpeg.+\\/dev\\/$id.*"; }
     when ("dv")       { $regex = "dvgrab.+$id.*"; }
-    when ("stream")   { $regex = "ffmpeg2theora.*"; } # This needs fixing, but will do for testing
+    when ("stream")   { $regex = "ffmpeg2theora.+--title.$id.+"; }
     default           { $regex = $command }
   }
 
