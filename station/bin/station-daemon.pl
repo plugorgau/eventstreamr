@@ -217,33 +217,47 @@ sub run_stop {
 sub ingest_commands {
   my ($id,$type) = @_;
   my $command = $self->{commands}{$type};
+  my $did;
+
+  # Files aren't part of the device list returned by Devices.pm
+  unless ($type eq "file") {
+    $did = $self->{devices}{$type}{$id}{device};
+  } else {
+    $did = $id;
+  }
+
   my %cmd_vars =  ( 
-                    device  => $self->{devices}{$type}{$id}{device},
+                    device  => $did,
                     host    => $shared->{config}{mixer}{host},
                     port    => $shared->{config}{mixer}{port},
                   );
 
   $command =~ s/\$(\w+)/$cmd_vars{$1}/g;
+  # debug log command here
 
   return $command;
 } 
 
 sub mixer_command {
+  my ($id,$type) = @_;
   my $command = $self->{commands}{dvswitch};
   my %cmd_vars =  ( 
                     port    => $shared->{config}{mixer}{port},
                   );
 
   $command =~ s/\$(\w+)/$cmd_vars{$1}/g;
+  # debug log command here
 
   return $command;
 } 
 
 sub stream_command {
+  my ($id,$type) = @_;
   my $command = $self->{commands}{stream};
   my %cmd_vars =  ( 
                     host      => $shared->{config}{mixer}{host},
                     port      => $shared->{config}{mixer}{port},
+                    id        => $id,
                     shost     => $shared->{config}{stream}{host},
                     sport     => $shared->{config}{stream}{port},
                     spassword => $shared->{config}{stream}{password},
@@ -251,6 +265,7 @@ sub stream_command {
                   );
 
   $command =~ s/\$(\w+)/$cmd_vars{$1}/g;
+  # debug log command here
 
   return $command;
 } 
