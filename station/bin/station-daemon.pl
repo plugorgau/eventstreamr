@@ -8,7 +8,12 @@ use IPC::Shareable; # libipc-shareable-perl
 use JSON; # libjson-perl
 use Config::JSON; # libconfig-json-perl
 use HTTP::Tiny;
+use Log::Log4perl;
 use feature qw(switch);
+
+# Dev
+use Data::Dumper;
+my $DEBUG = 1; # Set to one for console output and debug logging
 
 # EventStremr Modules
 use EventStreamr::Devices;
@@ -50,8 +55,29 @@ $self->{commands} = $commands->{config};
 $self->{dvswitch}{check} = 1; # check until dvswitch is found
 $self->{dvswitch}{running} = 0;
 
-# Dev
-use Data::Dumper;
+# Logging
+unless ( $DEBUG ) {
+  $self->{loglevel} = 'INFO, LOG1' ;
+} else {
+  $self->{loglevel} = 'DEBUG, LOG1, SCREEN' ;
+}
+
+my $log_conf = qq(
+  log4perl.rootLogger              = $self->{loglevel}
+  log4perl.appender.SCREEN         = Log::Log4perl::Appender::Screen
+  log4perl.appender.SCREEN.stderr  = 0
+  log4perl.appender.SCREEN.layout  = Log::Log4perl::Layout::PatternLayout
+  log4perl.appender.SCREEN.layout.ConversionPattern = %m %n
+  log4perl.appender.LOG1           = Log::Log4perl::Appender::File
+  log4perl.appender.LOG1.utf8      = 1
+  log4perl.appender.LOG1.filename  = $localconfig->{logpath} 
+  log4perl.appender.LOG1.mode      = append
+  log4perl.appender.LOG1.layout    = Log::Log4perl::Layout::PatternLayout
+  log4perl.appender.LOG1.layout.ConversionPattern = %d %p %m %n
+);
+
+Log::Log4perl::init(\$log_conf);
+our $logger = Log::Log4perl->get_logger();
 
 # Start Daemon
 our $daemon = Proc::Daemon->new(
@@ -59,28 +85,47 @@ our $daemon = Proc::Daemon->new(
 );
 
 our $daemons;
-#$daemons->{main} = $daemon->Init; # comment to run on cli
+unless ($DEBUG) {
+  my $pid = $daemon->Init();
+  $logger->info("My PID: $pid");
+}
   
 $daemons->{main}{run} = 1;
-$SIG{INT} = $SIG{TERM} = sub { 
+$SIG{INT} = $SIG{TERM} = sub {
+      $logger->debug("Cleaning up memory and terminating") if ($logger->is_debug()); 
       $shared->{config}{run} = 0;
       $daemons->{main}{run} = 0; 
       IPC::Shareable->clean_up_all; 
 };
 
-print "Checking for controller\n";
+#$logger->debug("") if ($logger->is_debug());
+$logger->debug("Checking for controller http://$localconfig->{controller}:5001/station/$shared->{config}{macaddress}") if ($logger->is_debug());
 my $response = HTTP::Tiny->new->get("http://$localconfig->{controller}:5001/station/$shared->{config}{macaddress}");
-print Dumper($response);
 
 if ($response->{success} && $response->{status} == 200 ) {
   my $content = from_json($response->{content});
-  print Dumper($content);
+  $logger->debug({filter => \&Data::Dumper::Dumper,
+                  value  => $content}) if ($logger->is_debug());
+  
   if ($content->{result} == 200 && defined $content->{config}) {
     $shared->{config}->{station} = $content->{config};
     $stationconfig->{config} = $shared->{config};
     $stationconfig->write;
   }
+} else {
+  chomp $response->{content};
+  $logger->warn("Failed to connect: $response->{content}");
+  $logger->info("Falling back to local config.");
+  $logger->debug({filter => \&Data::Dumper::Dumper,
+                  value  => $response}) if ($logger->is_debug());
 }
+
+# Debug logging of data
+$logger->debug({filter => \&Data::Dumper::Dumper,
+                value  => $shared}) if ($logger->is_debug());
+
+$logger->debug({filter => \&Data::Dumper::Dumper,
+                value  => $self}) if ($logger->is_debug());
 
 # Run all connected devices - need to get devices to return an array
 if ($shared->{config}{devices} eq 'all') {
@@ -90,7 +135,7 @@ if ($shared->{config}{devices} eq 'all') {
 while ($daemons->{main}{run}) {
   # If we're restarting, we should trigger check for dvswitch
   if ($shared->{config}{run} == 2) {
-    print "Restart Triggered\n";
+    $logger->info("Restart Trigged");
     $self->{dvswitch}{check} = 1;
   }
 
@@ -113,13 +158,13 @@ while ($daemons->{main}{run}) {
   # Until found check for dvswitch - continuously hitting dvswitch with an unknown client caused high cpu load
   unless ( $self->{dvswitch}{running} && ! $self->{dvswitch}{check} ) {
     if ( $utils->port($shared->{config}->{mixer}{host},$shared->{config}->{mixer}{port}) ) {
-      print "DVswitch found Running\n";
+      $logger->info("DVswitch found Running");
       $self->{dvswitch}{running} = 1;
       $self->{dvswitch}{check} = 0; # We can set this to 1 and it will check dvswitch again.
     }
   }
    
-  sleep 1;
+  sleep 5;
 }
 
 ## Ingest
@@ -169,9 +214,18 @@ sub run_stop {
   # Build command for execution and save it for future use
   unless ($self->{device_commands}{$device->{id}}{command}) {
     given ($device->{role}) {
-      when ("ingest")   { $self->{device_commands}{$device->{id}}{command} = ingest_commands($device->{id},$device->{type}); }
-      when ("mixer")    { $self->{device_commands}{$device->{id}}{command} = mixer_command(); }
-      when ("stream")   { $self->{device_commands}{$device->{id}}{command} = stream_command($device->{id},$device->{type}); }
+      when ("ingest")   { 
+        $self->{device_commands}{$device->{id}}{command} = ingest_commands($device->{id},$device->{type});
+        $logger->debug("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}") if ($logger->is_debug());
+      }
+      when ("mixer")    { 
+        $self->{device_commands}{$device->{id}}{command} = mixer_command(); 
+        $logger->debug("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}") if ($logger->is_debug());
+      }
+      when ("stream")   { 
+        $self->{device_commands}{$device->{id}}{command} = stream_command($device->{id},$device->{type}); 
+        $logger->debug("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}") if ($logger->is_debug());
+      }
     }
   }
 
@@ -182,9 +236,11 @@ sub run_stop {
     my $state = $utils->get_pid_command($device->{id},$self->{device_commands}{$device->{id}}{command},$device->{type}); 
 
     unless ($state->{running}) {
-      print "Connect $device->{id} to DVswitch\n";
+      $logger->info("Connect $device->{id} to DVswitch");
       # Spawn the Ingest Command
-      my $proc = $daemon->Init( {  
+      my $proc = $daemon->Init( { 
+           child_STDOUT => "/tmp/$device->{id}-STDOUT.log",
+           child_STDERR => "/tmp/$device->{id}-STDERR.log", 
            exec_command => $self->{device_commands}{$device->{id}}{command},
       } );
       
@@ -192,6 +248,8 @@ sub run_stop {
       sleep 1;
       # Set the running state + pid
       $state = $utils->get_pid_command($device->{id},$self->{device_commands}{$device->{id}}{command},$device->{type}); 
+      $logger->debug({filter => \&Data::Dumper::Dumper,
+                      value  => $state}) if ($logger->is_debug());
     }
     
     # Need to find the child of the shell, as killing the shell does not stop the command
@@ -200,13 +258,14 @@ sub run_stop {
   } elsif (defined $self->{device_control}{$device->{id}}{pid}) {
     # Kill The Child
     if ($daemon->Kill_Daemon($self->{device_control}{$device->{id}}{pid})) { 
-      print "Stop $device->{id}\n";
+      $logger->info("Stop $device->{id}");
       $self->{device_control}{$device->{id}}{running} = 0;  
       $self->{device_control}{$device->{id}}{pid} = undef; 
     }
 
     # Set device back to running if a restart was triggered
     if (! defined $shared->{config}{device_control}{$device->{id}}{run} || $shared->{config}{device_control}{$device->{id}}{run} == 2) {
+      $logger->info("Restarted $device->{id}");
       $shared->{config}{device_control}{$device->{id}}{run} = 1;
     }
   }
@@ -233,7 +292,6 @@ sub ingest_commands {
                   );
 
   $command =~ s/\$(\w+)/$cmd_vars{$1}/g;
-  # debug log command here
 
   return $command;
 } 
@@ -246,7 +304,6 @@ sub mixer_command {
                   );
 
   $command =~ s/\$(\w+)/$cmd_vars{$1}/g;
-  # debug log command here
 
   return $command;
 } 
@@ -265,7 +322,6 @@ sub stream_command {
                   );
 
   $command =~ s/\$(\w+)/$cmd_vars{$1}/g;
-  # debug log command here
 
   return $command;
 } 
