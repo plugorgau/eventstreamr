@@ -6,6 +6,6 @@
   "alsa" : "dvsource-alsa -h $host -p $port hw:$device",
   "file" :  "dvsource-file -h $host -p $port -l $device",
   "dvswitch" : "dvswitch -h 0.0.0.0 -p $port",
-  "record" : "dvsink-files -h $host -p $port $room",
+  "record" : "dvsink-files -h $host -p $port $path/$room",
   "stream" : "dvsink-command -h $host -p $port -- ffmpeg2theora - -f dv -F 25:2 --speedlevel 0 -v 4  --optimize -V 420 --soft-target -a 4 -c 1 -H 44100 --title $id -o - | oggfwd $shost $sport $spassword /$stream"
 }
