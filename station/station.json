@@ -18,14 +18,15 @@
   "devices" : "all", 
   "device_control" : 
     {
-      "video0" : {"run":"0"}
+      "video0" : {"run":"0"},
+      "2" : {"run":"0"}
     },
   "run" : "0",
   "stream" :
     {
       "host" : "icecast.plug.org.au",
-      "port" : "",
-      "password" : "not on git :)",
-      "stream" : "test"
+      "port" : "8000",
+      "password" : "sseeccrreett",
+      "stream" : "test.ogg"
     }
 }
