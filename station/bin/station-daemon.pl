@@ -200,11 +200,11 @@ sub stream {
 
 ## Stream
 sub record {
-#  my $device;
-#  $device->{role} = "record";
-#  $device->{id} = "record";
-#  $device->{type} = "record";
-#  run_stop($device);
+  my $device;
+  $device->{role} = "record";
+  $device->{id} = "record";
+  $device->{type} = "record";
+  run_stop($device);
   return;
 }
 
@@ -224,6 +224,10 @@ sub run_stop {
       }
       when ("stream")   { 
         $self->{device_commands}{$device->{id}}{command} = stream_command($device->{id},$device->{type}); 
+        $logger->debug("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}") if ($logger->is_debug());
+      }
+      when ("record")   { 
+        $self->{device_commands}{$device->{id}}{command} = record_command($device->{id},$device->{type}); 
         $logger->debug("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}") if ($logger->is_debug());
       }
     }
@@ -301,6 +305,21 @@ sub mixer_command {
   my $command = $self->{commands}{dvswitch};
   my %cmd_vars =  ( 
                     port    => $shared->{config}{mixer}{port},
+                  );
+
+  $command =~ s/\$(\w+)/$cmd_vars{$1}/g;
+
+  return $command;
+} 
+
+sub record_command {
+  my ($id,$type) = @_;
+  my $command = $self->{commands}{record};
+  my %cmd_vars =  ( 
+                    host      => $shared->{config}{mixer}{host},
+                    port      => $shared->{config}{mixer}{port},
+                    room      => $shared->{config}{room},
+                    path      => $shared->{config}{record_path},
                   );
 
   $command =~ s/\$(\w+)/$cmd_vars{$1}/g;
