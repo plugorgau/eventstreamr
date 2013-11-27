@@ -10,6 +10,7 @@
     ],
   "nickname" : "test",
   "room" : "room1",
+  "record_path" : "/tmp",
   "mixer" : 
     {
       "port":"1234", 
@@ -24,9 +25,9 @@
   "run" : "0",
   "stream" :
     {
-      "host" : "icecast.plug.org.au",
-      "port" : "8000",
-      "password" : "sseeccrreett",
+      "host" : "",
+      "port" : "",
+      "password" : "not on git :-)",
       "stream" : "test.ogg"
     }
 }
