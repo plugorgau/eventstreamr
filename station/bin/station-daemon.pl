@@ -9,6 +9,7 @@ use JSON; # libjson-perl
 use Config::JSON; # libconfig-json-perl
 use HTTP::Tiny;
 use Log::Log4perl;
+use File::Path qw(make_path);
 use feature qw(switch);
 
 # Dev
@@ -198,9 +199,12 @@ sub stream {
   return;
 }
 
-## Stream
+## Record
 sub record {
   my $device;
+  unless(-d "$shared->{config}{record_path}") {
+    make_path("$shared->{config}{record_path}");
+  }
   $device->{role} = "record";
   $device->{id} = "record";
   $device->{type} = "record";
