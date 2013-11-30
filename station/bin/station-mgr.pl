@@ -100,7 +100,7 @@ $SIG{INT} = $SIG{TERM} = sub {
 };
 
 #$logger->debug("") if ($logger->is_debug());
-$logger->debug("Checking for controller http://$localconfig->{controller}:5001/station/$shared->{config}{macaddress}") if ($logger->is_debug());
+$logger->info("Checking for controller http://$localconfig->{controller}:5001/station/$shared->{config}{macaddress}");
 my $response = HTTP::Tiny->new->get("http://$localconfig->{controller}:5001/station/$shared->{config}{macaddress}");
 
 if ($response->{success} && $response->{status} == 200 ) {
