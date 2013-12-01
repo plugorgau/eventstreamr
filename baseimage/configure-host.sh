@@ -2,6 +2,7 @@
 
 newname=$1
 existing=`hostname`
+gitdone=$2
 ipaddr=`ifdata -pa eth0`
 homedir="/home/av"
 confdir="$homedir/eventstreamr/baseimage"
@@ -29,6 +30,20 @@ if [ "$newname" == "$existing" ]; then
 	echo "WARNING: new hostname is the same as the old name!"
 fi 
 
+if [ -z "$gitdone" ]; then
+    echo -n "update eventstreamr from git (y/n) [n]? "
+    read REPLY
+    if [ "$REPLY" == "y" ]; then
+        su - av -c "cd $confdir; git pull"
+        echo "restarting script in 3 seconds ..."
+        sleep 3
+        reset
+        exec $0 $newname gitdone
+    else
+        echo "- skipping git update"
+    fi
+fi
+
 
 # finally verify user wants to continue
 echo -n "continue (y/n) [n]? "
@@ -40,11 +55,8 @@ fi
 echo ""
 
 
-echo "changing hostname ($existing) to $newname"
-
-
 echo "- clearing desktop icons"
-rm -f $homedir/Desktop/*.desktop
+rm -f $homedir/Desktop/*
 
 
 echo "- updating /etc/hosts"
@@ -59,6 +71,10 @@ service hostname start
 
 echo "- updating background image"
 $confdir/update-wallpaper.sh
+
+
+echo "- updating /etc/rc.local to start eventstreamr bits"
+cp $confdir/rc.local /etc/rc.local
 
 
 echo "- done, should probably reboot just in case"

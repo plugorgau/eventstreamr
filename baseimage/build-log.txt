@@ -1,33 +1,34 @@
-TODO:
-	- packages: added tmux
-	- packages: expand list for ffmpeg pre-reqs
-	- packages: additional packages for eventstreamr
-	- add mount for USB storage (/passport)
-	  and way to auto-mount if present
+2013-12-01:
+    - packages: added some utils: tmux, iotop
+    - packages: expand list for ffmpeg pre-reqs
+    - packages: additional packages for eventstreamr
+    - add mount for USB storage (/localbackup), and mounted on boot
     - migration to new location (~/eventstreamr vs BUILD/...)
-	
+    - from now on changes to eventstreamr itself not covered here which
+      includes all the previous BUILD scripts and stuff
+
 2013-11-16:
-	- rename avguy.avguy to av.av and update scripts
-	- remove indicator-messages
-	- disable bluetooth menu
-	- set root password (same as av user)
-	- disable suspend on lid close
+    - rename avguy.avguy to av.av and update scripts
+    - remove indicator-messages
+    - disable bluetooth menu
+    - set root password (same as av user)
+    - disable suspend on lid close
 
 2013-11-13:
-	- upgrade to 13.10
-	- fix dv_menu to auto-detect alsa audio feed when running the
- 	  alsa-in command (in addition to on startup)
-	- make dv_menu "ontop"
-	- prevent dv_menu from responding to ESC key
-	- removed whoopsie
-	- rebuilt dvswitch
-	- removed old kernel
-	- cleaned up upgrade packages
-	- rebuilt ffmpeg (stable 2.1 from git)
-	- update plug-encode to use new ffmpeg
-	- update plug-encode to take -noplug option (skip intro/exit bits)
-	- remove old stuff from OLD_PLUG/bin/
-	- added required packages for eventstreamr (so far)
-	- did a git clone for eventstreamr (to BUILD/eventstreamr)
-	  and switch to "dev" branch
-	- updated set-hostname.sh to update the background image with host/ip
+    - upgrade to 13.10
+    - fix dv_menu to auto-detect alsa audio feed when running the
+      alsa-in command (in addition to on startup)
+    - make dv_menu "ontop"
+    - prevent dv_menu from responding to ESC key
+    - removed whoopsie
+    - rebuilt dvswitch
+    - removed old kernel
+    - cleaned up upgrade packages
+    - rebuilt ffmpeg (stable 2.1 from git)
+    - update plug-encode to use new ffmpeg
+    - update plug-encode to take -noplug option (skip intro/exit bits)
+    - remove old stuff from OLD_PLUG/bin/
+    - added required packages for eventstreamr (so far)
+    - did a git clone for eventstreamr (to BUILD/eventstreamr)
+      and switch to "dev" branch
+    - updated set-hostname.sh to update the background image with host/ip
