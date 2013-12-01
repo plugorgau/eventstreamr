@@ -5,6 +5,7 @@ use feature 'switch';
 set serializer => 'JSON';
 set logger => 'console';
 set log => 'core';
+#set daemon => '1';
 
 # Create shared memory object
 my $glue = 'station-data';

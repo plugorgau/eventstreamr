@@ -16,6 +16,17 @@ use feature qw(switch);
 use Data::Dumper;
 my $DEBUG = 1; # Set to one for console output and debug logging
 
+# Start Daemon
+our $daemon = Proc::Daemon->new(
+  work_dir => "$Bin/../",
+);
+
+our $daemons;
+unless ($DEBUG) {
+  $daemon->Init();
+  $logger->info("My PID: $PID");
+}
+
 # EventStremr Modules
 use EventStreamr::Devices;
 our $devices = EventStreamr::Devices->new();
@@ -80,17 +91,7 @@ my $log_conf = qq(
 Log::Log4perl::init(\$log_conf);
 our $logger = Log::Log4perl->get_logger();
 
-# Start Daemon
-our $daemon = Proc::Daemon->new(
-  work_dir => "$Bin/../",
-);
 
-our $daemons;
-unless ($DEBUG) {
-  my $pid = $daemon->Init();
-  $logger->info("My PID: $pid");
-}
-  
 $daemons->{main}{run} = 1;
 $SIG{INT} = $SIG{TERM} = sub {
       $logger->debug("Cleaning up memory and terminating") if ($logger->is_debug()); 
@@ -107,7 +108,7 @@ if ($response->{success} && $response->{status} == 200 ) {
   my $content = from_json($response->{content});
   $logger->debug({filter => \&Data::Dumper::Dumper,
                   value  => $content}) if ($logger->is_debug());
-  
+
   if ($content->{result} == 200 && defined $content->{config}) {
     $shared->{config}->{station} = $content->{config};
     $stationconfig->{config} = $shared->{config};
@@ -251,7 +252,7 @@ sub run_stop {
            child_STDERR => "/tmp/$device->{id}-STDERR.log", 
            exec_command => $self->{device_commands}{$device->{id}}{command},
       } );
-      
+
       # give the process some time to settle
       sleep 1;
       # Set the running state + pid
@@ -259,15 +260,15 @@ sub run_stop {
       $logger->debug({filter => \&Data::Dumper::Dumper,
                       value  => $state}) if ($logger->is_debug());
     }
-    
+
     # Need to find the child of the shell, as killing the shell does not stop the command
     $self->{device_control}{$device->{id}} = $state;
-    
+
   } elsif (defined $self->{device_control}{$device->{id}}{pid}) {
     # Kill The Child
     if ($daemon->Kill_Daemon($self->{device_control}{$device->{id}}{pid})) { 
       $logger->info("Stop $device->{id}");
-      $self->{device_control}{$device->{id}}{running} = 0;  
+      $self->{device_control}{$device->{id}}{running} = 0;
       $self->{device_control}{$device->{id}}{pid} = undef; 
     }
 
@@ -352,7 +353,7 @@ sub stream_command {
 # Get Mac Address
 sub getmac {
   # This is better, but can break if no eth0. We are only using it as a UID - think of something better.
-  my $macaddress = `ip -o link show dev eth0 | grep -Po 'ether \\K[^ ]+'`;
+  my $macaddress = `ifdata -ph eth0`;
   chomp $macaddress;
   return $macaddress;
 }
