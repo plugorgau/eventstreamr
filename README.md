@@ -6,15 +6,21 @@ Single and multi room audio visual stream management.
 Concepts
 ========
 
-A station can have one or all rolls. Only one controller can manage stations.
+A station can have one or more roles. Only one controller can manage stations.
 
-Rolls
+Roles
 =====
-controller - Web based frontend for managing stations
-ingest - alsa/dv/v4l capture for sending to mixer
-mixer - DVswitch/streaming live mixed video. With the intention for this to be easily replaced by gstswitch
-stream - stream mixed video
-record - stream mixed video
+* controller - Web based frontend for managing stations
+* ingest - alsa/dv/v4l capture for sending to mixer
+* mixer - DVswitch/streaming live mixed video. With the intention for this to be easily replaced by gstswitch
+* stream - stream mixed video
+* record - stream mixed video
+
+Directories
+===========
+* baseimage - docs, notes, and tools for the base (OS) image
+* station - station management scripts
+* controller - controller stack
 
 
 Station Script Requirements
