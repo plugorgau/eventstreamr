@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Name=dvsource-firewire
+Comment=start dvsource-firewire command 
+Exec=/usr/bin/dvsource-firewire -h avmaster.local -p 1234
+Icon=/usr/share/icons/HighContrast/scalable/devices/camera-video.svg
+Terminal=true
+Type=Application
+Categories=Utility;Application;

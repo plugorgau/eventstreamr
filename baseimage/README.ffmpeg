@@ -1,0 +1,20 @@
+
+- 2013-12-01: CURRENTLY USING STABLE 2.1 RELEASE
+
+  NOTE: the base image already includes a build which is installed
+  locally for the av user.
+
+- basic instructions come from here:
+  https://trac.ffmpeg.org/wiki/UbuntuCompilationGuide
+
+- as of Ubuntu 13.10 all the required dependency libraries are available
+  as standard packages, and should already be installed as part of base
+  image. The configure step will fail is something is missing so you can
+  work it out from there.
+
+- if above taken care of then skip to ffmpeg section
+	- don't restrict git checkout with depth (i.e. get whole repo)
+	- switch to latest stable branch (2.1?)
+		- to list tags: git tag -l
+		- git checkout <tag>
+		  e.g. git checkout n2.1

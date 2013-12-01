@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Name=AV Menu
+Comment=start dv menu
+Exec=/home/av/OLD_PLUG/bin/dv_menu.sh
+Icon=/usr/share/icons/HighContrast/scalable/apps-extra/totem.svg
+Terminal=false
+Type=Application
+Categories=Utility;Application;

@@ -1,0 +1,35 @@
+
+- 2013-12-01: CURRENTLY USING STABLE 0.9.1-1 RELEASE
+
+  NOTE: the base image already includes a build and the debs directory
+  includes the ubuntu 13.10 64bit packages.
+
+- Packaged dvswitch is too old (pre 0.9.x) so need to build from source
+- follow steps below to build deb packages:
+
+
+1. grab dvswitch git repo:
+	git clone git://git.debian.org/git/dvswitch/dvswitch.git
+
+2. switch to latest stable release (0.9.1-1 at this time)
+	cd dvswitch
+	git checkout 0.9.1-1
+
+3. on ubuntu 13.10 we need to fix the deb control file due to the change in
+   in default boost libraries
+
+        vim debian/control
+        change "libboost-dev" to "libboost1.49-dev"
+        change "libboost-thread-dev" to "libboost-thread1.49-dev"
+
+4. build it! hopefully all required libs and headers already installed!
+
+	make clean
+	dpkg-buildpackage
+
+   this should put down a bunch of .deb files in ../
+
+5. move these .deb files into the built-debs/ directory just in case
+
+6. install the packages!
+

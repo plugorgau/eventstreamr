@@ -1,0 +1,113 @@
+- upgraded to 13.10
+- install extra packages:
+	- openssh-server
+	- mesa-utils
+	- build-essential
+	- openshot
+	- mplayer
+	- vlc
+	- xchat
+	- mumble
+	- mumble-server
+	- melt
+	- ffmpeg
+	- vim
+	- emacs
+	- libdbd-mysql-perl 
+	- libdbd-pg-perl
+	- gimp
+	- indicator-multiload
+	- guake
+	- gparted
+	- unity-tweak-tool
+	- cheese
+	- dvgrab
+	- libavcodec-extra-53
+
+	(for building dvswitch)
+	- git
+	- cmake
+	- libgtkmm-2.4-dev
+	- libavutil-dev
+	- libavcodec-dev
+	- libboost1.49-all-dev (can't use default 1.53 from ubuntu 13.10)
+	- libjack-dev
+	- liblivemedia-dev (need from ubuntu 12.10 - dvswitch 0.9.x won't build against 13.04)
+	- liblo-dev
+	- libasound2-dev
+	- libraw1394-dev
+	- libxv-dev
+	- subversion
+	- gxmessage
+	- ffmpeg2theora
+	- oggfwd
+	- imagemagick
+	- curl
+
+	(for ffmpeg)
+	- autoconf
+	- automake
+	- build-essential
+	- git
+	- libass-dev
+	- libgpac-dev
+	- libsdl1.2-dev
+	- libtheora-dev
+	- libtool
+	- libva-dev
+	- libvdpau-dev
+	- libvorbis-dev
+	- libx11-dev
+	- libxext-dev
+	- libxfixes-dev
+	- pkg-config
+	- texi2html
+	- zlib1g-dev
+	- yasm
+	- libx264-dev
+	- libfdk-aac-dev
+	- libmp3lame-dev
+	- libopus-dev
+	- libvpx-dev
+
+	(for our new management stuff)
+	- libdancer-perl 
+	- libipc-shareable-perl
+	- libproc-daemon-perl
+	- libipc-shareable-perl
+	- libjson-perl
+	- libconfig-json-perl
+	- libproc-processtable-perl
+	- libfile-slurp-perl
+	- libmoo-perl
+	- libhash-merge-simple-perl
+	- liblog-log4perl-perl
+	- moreutils
+
+	- tmux
+
+- remove packages:
+	- thunderbird*	
+	- unity-lens-shopping
+	- unity-scope-musicstores
+	- whoopsie
+	
+- extra files:
+	- Pictures/av-background.png
+
+- customizations:
+	- set launcher size to smallest (32px)
+	- set Pictures/av-background.png as background image
+	- start guake on login
+	- start indicator-multiload on login
+	- add avclone keys and authorized keys for ssh
+	- locally built dvswitch (from git repo)
+	- disable ubuntu guest: /etc/lightdm/lightdm.conf, add:
+	  allow-guest=false
+	- add avguy to video group
+	- networking configuration (DHCP default)
+	- disable "Check for updates daily" to never (software & updates)
+	- settings -> security & privacy 
+		-> search: disable online searches
+		-> files & applications: disable app usage
+	- power settings: "do nothing" when closing lid
