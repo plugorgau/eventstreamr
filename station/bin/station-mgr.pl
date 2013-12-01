@@ -1,6 +1,6 @@
 #!/usr/bin/perl
-use strict;
-use warnings;
+
+use v5.14;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use Proc::Daemon; # libproc-daemon-perl
@@ -11,20 +11,36 @@ use HTTP::Tiny;
 use Log::Log4perl;
 use File::Path qw(make_path);
 use feature qw(switch);
+use Getopt::Long;
 
-# Dev
 use Data::Dumper;
-my $DEBUG = 1; # Set to one for console output and debug logging
 
-# Start Daemon
+
+
+my $DEBUG  = 0;
+my $DAEMON = 1;
+
+my $getopts_rc = GetOptions(
+    "debug!"        => \$DEBUG,
+    "daemon!"       => \$DAEMON,
+
+    "help|?"        => \&print_usage,
+);
+
+
+# setup signal handlers and daemon stuff
+$SIG{INT}  = \&sig_exit;
+$SIG{TERM} = \&sig_exit;
+$SIG{PIPE} = \&sig_pipe;
+$SIG{CHLD} = 'IGNORE';
+
 our $daemon = Proc::Daemon->new(
   work_dir => "$Bin/../",
 );
 
 our $daemons;
-unless ($DEBUG) {
+if ( $DAEMON ) {
   $daemon->Init();
-  $logger->info("My PID: $PID");
 }
 
 # EventStremr Modules
@@ -90,15 +106,9 @@ my $log_conf = qq(
 
 Log::Log4perl::init(\$log_conf);
 our $logger = Log::Log4perl->get_logger();
-
+$logger->info("manager starting: pid=$$, station_id=$shared->{config}->{macaddress}");
 
 $daemons->{main}{run} = 1;
-$SIG{INT} = $SIG{TERM} = sub {
-      $logger->debug("Cleaning up memory and terminating") if ($logger->is_debug()); 
-      $shared->{config}{run} = 0;
-      $daemons->{main}{run} = 0; 
-      IPC::Shareable->clean_up_all; 
-};
 
 #$logger->debug("") if ($logger->is_debug());
 $logger->info("Checking for controller http://$localconfig->{controller}:5001/station/$shared->{config}{macaddress}");
@@ -165,8 +175,36 @@ while ($daemons->{main}{run}) {
       $self->{dvswitch}{check} = 0; # We can set this to 1 and it will check dvswitch again.
     }
   }
-   
+
   sleep 1;
+}
+
+
+
+# ---- SUBROUTINES ----------------------------------------------------------
+
+sub sig_exit {
+      $logger->info("manager exiting...");
+      $shared->{config}{run} = 0;
+      $daemons->{main}{run} = 0; 
+      IPC::Shareable->clean_up_all; 
+}
+
+sub sig_pipe {
+    $logger->debug( "caught SIGPIPE" ) if ( $logger->is_debug() );
+}
+
+sub print_usage {
+  say "
+Usage: station-mgr.pl [OPTIONS]
+
+Options:
+  --no-deaemon  disable daemon
+
+  --debug       turn on debugging
+  --help        this help text
+";
+  exit 0;
 }
 
 ## Ingest
