@@ -1,7 +1,11 @@
 #!/usr/bin/perl
 use Dancer; # libdancer-perl 
+use v5.14;
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
 use IPC::Shareable; # libipc-shareable-perl
 use feature 'switch';
+use Config::JSON; # libconfig-json-perl
 set serializer => 'JSON';
 set logger => 'console';
 set log => 'core';
