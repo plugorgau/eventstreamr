@@ -12,10 +12,7 @@ use Log::Log4perl;
 use File::Path qw(make_path);
 use feature qw(switch);
 use Getopt::Long;
-
 use Data::Dumper;
-
-
 
 my $DEBUG  = 0;
 my $DAEMON = 1;
