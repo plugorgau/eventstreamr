@@ -43,7 +43,7 @@ sub get_pid_command {
   }
 
   my $pt = Proc::ProcessTable->new;
-  my @procs = grep { $_->cmndline =~ /^$regex/ } @{ $pt->table };
+  my @procs = grep { $_->cmndline =~ /$regex/ } @{ $pt->table };
   if (@procs) {
     $return->{pid} = $procs[0]->pid;
     $return->{running} = 1;
