@@ -7,9 +7,15 @@ use IPC::Shareable; # libipc-shareable-perl
 use feature 'switch';
 use Config::JSON; # libconfig-json-perl
 set serializer => 'JSON';
-set logger => 'console';
-set log => 'core';
-#set daemon => '1';
+
+# logging
+set logger => 'file';
+set log => 'info';
+
+unless ( config->{environment} eq 'production' ) {
+  set logger => 'console';
+  set log => 'core';
+}
 
 # Create shared memory object
 my $glue = 'station-data';
