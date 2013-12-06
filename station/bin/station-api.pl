@@ -30,6 +30,11 @@ my $shared;
 tie $shared, 'IPC::Shareable', $glue, { %options } or
     die "server: tie failed\n";
 
+# EventStreamr Modules
+use EventStreamr::Devices;
+our $devices = EventStreamr::Devices->new();
+
+# routes
 get '/settings/:mac' => sub {
   my $data->{mac} = params->{mac};
   # status 200 config exists
@@ -46,6 +51,13 @@ get '/settings' => sub {
   my $data->{config} = $shared->{config};
   $data->{result} = '200';
   return $data;
+};
+
+get '/devices' => sub {
+  my $result;
+  $result->{devices} = $devices->all();
+  $result->{result} = 200;
+  return $result;
 };
 
 post '/settings/:mac' => sub {
