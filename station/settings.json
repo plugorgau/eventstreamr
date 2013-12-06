@@ -2,5 +2,5 @@
 
 {
    "controller" : "10.4.1.196",
-   "logpath" : "/tmp/station.log",
+   "logpath" : "/tmp/station-mgr.log",
 }
