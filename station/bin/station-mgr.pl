@@ -151,6 +151,9 @@ while ($daemons->{main}{run}) {
     $self->{dvswitch}{check} = 1;
   }
 
+  # Process the internal commands
+  api();
+
   # Process the roles
   foreach my $role (@{$shared->{config}->{roles}}) {
     given ( $role->{role} ) {
@@ -186,7 +189,8 @@ while ($daemons->{main}{run}) {
 sub sig_exit {
       $logger->info("manager exiting...");
       $shared->{config}{run} = 0;
-      $daemons->{main}{run} = 0; 
+      $daemons->{main}{run} = 0;
+      $daemon->Kill_Daemon($self->{device_control}{api}{pid}); 
       IPC::Shareable->clean_up_all; 
 }
 
@@ -205,6 +209,17 @@ Options:
   --help        this help text
 ";
   exit 0;
+}
+
+## api 
+sub api {
+  my $device;
+  $self->{device_commands}{api}{command} = "$Bin/station-api.pl --daemon --environment production";
+  $device->{role} = "api";
+  $device->{id} = "api";
+  $device->{type} = "internal";
+  run_stop($device);
+  return;
 }
 
 ## Ingest
@@ -277,8 +292,9 @@ sub run_stop {
   }
 
   # If we're supposed to be running, run.
-  if ($shared->{config}{run} == 1 && 
-    (! defined $shared->{config}{device_control}{$device->{id}}{run} || $shared->{config}{device_control}{$device->{id}}{run} == 1)) {
+  if (($shared->{config}{run} == 1 && 
+  (! defined $shared->{config}{device_control}{$device->{id}}{run} || $shared->{config}{device_control}{$device->{id}}{run} == 1)) ||
+  $device->{type} eq 'internal') {
     # Get the running state + pid if it exists
     my $state = $utils->get_pid_command($device->{id},$self->{device_commands}{$device->{id}}{command},$device->{type}); 
 
