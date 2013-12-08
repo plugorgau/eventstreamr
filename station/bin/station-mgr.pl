@@ -297,12 +297,21 @@ sub run_stop {
 
     unless ($state->{running}) {
       $logger->info("Connect $device->{id} to DVswitch");
+      
       # Spawn the Ingest Command
-      my $proc = $daemon->Init( { 
+      my %proc_opts;
+      unless ($logger->is_debug()) {
+        %proc_opts = (
+           exec_command => $self->{device_commands}{$device->{id}}{command},
+        );
+      } else {
+        %proc_opts = (
            child_STDOUT => "/tmp/$device->{id}-STDOUT.log",
            child_STDERR => "/tmp/$device->{id}-STDERR.log", 
            exec_command => $self->{device_commands}{$device->{id}}{command},
-      } );
+        );
+      }       
+      my $proc = $daemon->Init( \%proc_opts );
 
       # give the process some time to settle
       sleep 1;
