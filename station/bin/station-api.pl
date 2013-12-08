@@ -3,9 +3,7 @@ use Dancer; # libdancer-perl
 use v5.14;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
-use IPC::Shareable; # libipc-shareable-perl
 use feature 'switch';
-use Config::JSON; # libconfig-json-perl
 set serializer => 'JSON';
 
 # logging
@@ -17,38 +15,25 @@ unless ( config->{environment} eq 'production' ) {
   set log => 'core';
 }
 
-# Create shared memory object
-my $glue = 'station-data';
-my %options = (
-    create    => 'yes',
-    exclusive => 0,
-    mode      => 0644,
-    destroy   => 'yes',
-);
-
-my $shared;
-tie $shared, 'IPC::Shareable', $glue, { %options } or
-    die "server: tie failed\n";
-
 # EventStreamr Modules
 use EventStreamr::Devices;
 our $devices = EventStreamr::Devices->new();
+
+# API Data
+our $self;
 
 # routes
 get '/settings/:mac' => sub {
   my $data->{mac} = params->{mac};
   # status 200 config exists
   # status 204 config not exists
-  $data->{config} = $shared->{config};
+  $data->{config} = $self->{config};
   $data->{result} = '200';
   return $data;
 };
 
 get '/settings' => sub {
-
-# status 200 config exists
-# status 204 config not exists
-  my $data->{config} = $shared->{config};
+  my $data->{config} = $self->{config};
   $data->{result} = '200';
   return $data;
 };
@@ -63,8 +48,9 @@ get '/devices' => sub {
 post '/settings/:mac' => sub {
   my $data->{mac} = params->{mac};
   $data->{body} = request->body;
-  if ($data->{mac} == $shared->{config}{macaddress}) {
+  if ($data->{mac} == $self->{config}{macaddress}) {
     debug($data);
+    kill '10', $self->{config}{manager}{pid}; 
     return qq({"result":"200"});
   } else {
     return qq({"result":"400"});
@@ -75,12 +61,13 @@ get '/command/:command' => sub {
   my $command = params->{command};
 
   given ($command) {
-    when ("stop")     { $shared->{config}{run} = 0; }
-    when ("start")    { $shared->{config}{run} = 1; }
-    when ("restart")  { $shared->{config}{run} = 2; }
+    when ("stop")     { $self->{config}{run} = 0; }
+    when ("start")    { $self->{config}{run} = 1; }
+    when ("restart")  { $self->{config}{run} = 2; }
     default { return qq({"result":"400", "status":"unkown command"}); }
   }
 
+  kill '10', $self->{config}{manager}{pid}; 
   return qq({"result":"200"});
 };
 
@@ -89,13 +76,29 @@ post '/command/:command' => sub {
   my $data = from_json(request->body);
   
   given ($command) {
-    when ("stop")     { $shared->{config}{device_control}{$data->{id}}{run} = 0; }
-    when ("start")    { $shared->{config}{device_control}{$data->{id}}{run} = 1; }
-    when ("restart")  { $shared->{config}{device_control}{$data->{id}}{run} = 2; }
+    when ("stop")     { $self->{config}{device_control}{$data->{id}}{run} = 0; }
+    when ("start")    { $self->{config}{device_control}{$data->{id}}{run} = 1; }
+    when ("restart")  { $self->{config}{device_control}{$data->{id}}{run} = 2; }
     default { return qq({"result":"400", "status":"unkown command"}); }
   }
-
+  kill '10', $self->{config}{manager}{pid}; 
   return qq({"result":"200"});
+};
+
+# Internal Communication with Manager
+post '/internal/settings' => sub {
+  my $data = from_json(request->body);
+  $self = $data;
+  info("Config data posted");
+  debug($self);
+  return qq({"result":"200"});
+};
+
+get '/internal/settings' => sub {
+  my $result->{config} = $self->{config};
+  info("Config data requested");
+  debug($result);
+  return $result;
 };
 
 dance;

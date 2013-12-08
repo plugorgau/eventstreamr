@@ -4,7 +4,6 @@ use v5.14;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use Proc::Daemon; # libproc-daemon-perl
-use IPC::Shareable; # libipc-shareable-perl
 use JSON; # libjson-perl
 use Config::JSON; # libconfig-json-perl
 use HTTP::Tiny;
@@ -52,34 +51,20 @@ my $localconfig = Config::JSON->new("$Bin/../settings.json");
 $localconfig = $localconfig->{config};
 
 # Station Config
-my $stationconfig = Config::JSON->new("$Bin/../station.json");
+our $stationconfig = Config::JSON->new("$Bin/../station.json");
 
 # Commands
 my $commands = Config::JSON->new("$Bin/../commands.json");
 
-# Create shared memory object
-my $glue = 'station-data';
-my %options = (
-    create    => 'yes',
-    exclusive => 0,
-    mode      => 0644,
-    destroy   => 1,
-);
-
-my $shared;
-tie $shared, 'IPC::Shareable', $glue, { %options } or
-    die "server: tie failed\n";
-
-# Shared Interprocess storage
-$shared->{config} = $stationconfig->{config};
-$shared->{config}{macaddress} = getmac();
-
-# Personal Storage - need to limit shared data
+# Own data 
 our $self;
+$self->{config} = $stationconfig->{config};
+$self->{config}{macaddress} = getmac();
 $self->{devices} = $devices->all();
 $self->{commands} = $commands->{config};
 $self->{dvswitch}{check} = 1; # check until dvswitch is found
 $self->{dvswitch}{running} = 0;
+if ($self->{config}{run} = 2) {$self->{config}{run} = 1;}
 
 # Logging
 unless ( $DEBUG ) {
@@ -104,13 +89,19 @@ my $log_conf = qq(
 
 Log::Log4perl::init(\$log_conf);
 our $logger = Log::Log4perl->get_logger();
-$logger->info("manager starting: pid=$$, station_id=$shared->{config}->{macaddress}");
+$logger->info("manager starting: pid=$$, station_id=$self->{config}->{macaddress}");
 
 $daemons->{main}{run} = 1;
 
-#$logger->debug("") if ($logger->is_debug());
-$logger->info("Checking for controller http://$localconfig->{controller}:5001/station/$shared->{config}{macaddress}");
-my $response = HTTP::Tiny->new->get("http://$localconfig->{controller}:5001/station/$shared->{config}{macaddress}");
+# HTTP
+our $http = HTTP::Tiny->new(timeout => 15);
+
+# Start the API
+api();
+
+# Request config from the controller
+$logger->info("Checking for controller http://$localconfig->{controller}:5001/station/$self->{config}{macaddress}");
+my $response =  $http->get("http://$localconfig->{controller}:5001/station/$self->{config}{macaddress}");
 
 if ($response->{success} && $response->{status} == 200 ) {
   my $content = from_json($response->{content});
@@ -118,33 +109,40 @@ if ($response->{success} && $response->{status} == 200 ) {
                   value  => $content}) if ($logger->is_debug());
 
   if ($content->{result} == 200 && defined $content->{config}) {
-    $shared->{config}->{station} = $content->{config};
-    $stationconfig->{config} = $shared->{config};
-    $stationconfig->write;
+    $self->{config} = $content->{config};
+    write_config();
   }
+
+  # Run all connected devices - need to get devices to return an array
+  if ($self->{config}{devices} eq 'all') {
+    $self->{config}{devices} = $self->{devices}{array};
+  }
+
+  $self->{config}{manager}{pid} = $$;
+  post_config();
 } else {
   chomp $response->{content};
+  $self->{config}{manager}{pid} = $$;
   $logger->warn("Failed to connect: $response->{content}");
   $logger->info("Falling back to local config.");
   $logger->debug({filter => \&Data::Dumper::Dumper,
                   value  => $response}) if ($logger->is_debug());
+
+  # Run all connected devices - need to get devices to return an array
+  if ($self->{config}{devices} eq 'all') {
+    $self->{config}{devices} = $self->{devices}{array};
+  }
+  post_config();
 }
 
 # Debug logging of data
 $logger->debug({filter => \&Data::Dumper::Dumper,
-                value  => $shared}) if ($logger->is_debug());
-
-$logger->debug({filter => \&Data::Dumper::Dumper,
                 value  => $self}) if ($logger->is_debug());
 
-# Run all connected devices - need to get devices to return an array
-if ($shared->{config}{devices} eq 'all') {
-  $shared->{config}{devices} = $self->{devices}{array};
-}
-
+# Main Daemon Loop
 while ($daemons->{main}{run}) {
   # If we're restarting, we should trigger check for dvswitch
-  if ($shared->{config}{run} == 2) {
+  if ($self->{config}{run} == 2) {
     $logger->info("Restart Trigged");
     $self->{dvswitch}{check} = 1;
   }
@@ -153,7 +151,7 @@ while ($daemons->{main}{run}) {
   api();
 
   # Process the roles
-  foreach my $role (@{$shared->{config}->{roles}}) {
+  foreach my $role (@{$self->{config}->{roles}}) {
     given ( $role->{role} ) {
       when ("mixer")    { mixer();  }
       when ("ingest")   { ingest(); }
@@ -164,13 +162,13 @@ while ($daemons->{main}{run}) {
 
   # 2 is the restart all processes trigger
   # $daemon->Kill_Daemon does a Kill -9, so if we get here they procs should be dead. 
-  if ($shared->{config}{run} == 2) {
-    $shared->{config}{run} = 1;
+  if ($self->{config}{run} == 2) {
+    $self->{config}{run} = 1;
   }
 
   # Until found check for dvswitch - continuously hitting dvswitch with an unknown client caused high cpu load
   unless ( $self->{dvswitch}{running} && ! $self->{dvswitch}{check} ) {
-    if ( $utils->port($shared->{config}->{mixer}{host},$shared->{config}->{mixer}{port}) ) {
+    if ( $utils->port($self->{config}->{mixer}{host},$self->{config}->{mixer}{port}) ) {
       $logger->info("DVswitch found Running");
       $self->{dvswitch}{running} = 1;
       $self->{dvswitch}{check} = 0; # We can set this to 1 and it will check dvswitch again.
@@ -186,10 +184,9 @@ while ($daemons->{main}{run}) {
 
 sub sig_exit {
       $logger->info("manager exiting...");
-      $shared->{config}{run} = 0;
+      $self->{config}{run} = 0;
       $daemons->{main}{run} = 0;
       $daemon->Kill_Daemon($self->{device_control}{api}{pid}); 
-      IPC::Shareable->clean_up_all; 
 }
 
 sub sig_pipe {
@@ -248,7 +245,11 @@ sub write_config {
 ## api 
 sub api {
   my $device;
-  $self->{device_commands}{api}{command} = "$Bin/station-api.pl --daemon --environment production";
+  unless ($logger->is_debug()) {
+    $self->{device_commands}{api}{command} = "$Bin/station-api.pl --daemon --environment production";
+  } else{
+    $self->{device_commands}{api}{command} = "$Bin/station-api.pl";
+  }
   $device->{role} = "api";
   $device->{id} = "api";
   $device->{type} = "internal";
@@ -259,7 +260,7 @@ sub api {
 ## Ingest
 sub ingest {
   if ($self->{dvswitch}{running} == 1) {
-    foreach my $device (@{$shared->{config}{devices}}) {
+    foreach my $device (@{$self->{config}{devices}}) {
       $device->{role} = "ingest";
       run_stop($device);
     }
@@ -290,8 +291,8 @@ sub stream {
 ## Record
 sub record {
   my $device;
-  unless(-d "$shared->{config}{record_path}") {
-    make_path("$shared->{config}{record_path}");
+  unless(-d "$self->{config}{record_path}") {
+    make_path("$self->{config}{record_path}");
   }
   $device->{role} = "record";
   $device->{id} = "record";
@@ -326,8 +327,8 @@ sub run_stop {
   }
 
   # If we're supposed to be running, run.
-  if (($shared->{config}{run} == 1 && 
-  (! defined $shared->{config}{device_control}{$device->{id}}{run} || $shared->{config}{device_control}{$device->{id}}{run} == 1)) ||
+  if (($self->{config}{run} == 1 && 
+  (! defined $self->{config}{device_control}{$device->{id}}{run} || $self->{config}{device_control}{$device->{id}}{run} == 1)) ||
   $device->{type} eq 'internal') {
     # Get the running state + pid if it exists
     my $state = $utils->get_pid_command($device->{id},$self->{device_commands}{$device->{id}}{command},$device->{type}); 
@@ -356,6 +357,7 @@ sub run_stop {
       $state = $utils->get_pid_command($device->{id},$self->{device_commands}{$device->{id}}{command},$device->{type}); 
       $logger->debug({filter => \&Data::Dumper::Dumper,
                       value  => $state}) if ($logger->is_debug());
+      post_config();
     }
 
     # Need to find the child of the shell, as killing the shell does not stop the command
@@ -370,9 +372,10 @@ sub run_stop {
     }
 
     # Set device back to running if a restart was triggered
-    if (! defined $shared->{config}{device_control}{$device->{id}}{run} || $shared->{config}{device_control}{$device->{id}}{run} == 2) {
+    if ($self->{config}{device_control}{$device->{id}}{run} == 2) {
       $logger->info("Restarted $device->{id}");
-      $shared->{config}{device_control}{$device->{id}}{run} = 1;
+      $self->{config}{device_control}{$device->{id}}{run} = 1;
+      post_config();
     }
   }
   return;
@@ -393,8 +396,8 @@ sub ingest_commands {
 
   my %cmd_vars =  ( 
                     device  => $did,
-                    host    => $shared->{config}{mixer}{host},
-                    port    => $shared->{config}{mixer}{port},
+                    host    => $self->{config}{mixer}{host},
+                    port    => $self->{config}{mixer}{port},
                   );
 
   $command =~ s/\$(\w+)/$cmd_vars{$1}/g;
@@ -406,7 +409,7 @@ sub mixer_command {
   my ($id,$type) = @_;
   my $command = $self->{commands}{dvswitch};
   my %cmd_vars =  ( 
-                    port    => $shared->{config}{mixer}{port},
+                    port    => $self->{config}{mixer}{port},
                   );
 
   $command =~ s/\$(\w+)/$cmd_vars{$1}/g;
@@ -418,10 +421,10 @@ sub record_command {
   my ($id,$type) = @_;
   my $command = $self->{commands}{record};
   my %cmd_vars =  ( 
-                    host      => $shared->{config}{mixer}{host},
-                    port      => $shared->{config}{mixer}{port},
-                    room      => $shared->{config}{room},
-                    path      => $shared->{config}{record_path},
+                    host      => $self->{config}{mixer}{host},
+                    port      => $self->{config}{mixer}{port},
+                    room      => $self->{config}{room},
+                    path      => $self->{config}{record_path},
                   );
 
   $command =~ s/\$(\w+)/$cmd_vars{$1}/g;
@@ -433,13 +436,13 @@ sub stream_command {
   my ($id,$type) = @_;
   my $command = $self->{commands}{stream};
   my %cmd_vars =  ( 
-                    host      => $shared->{config}{mixer}{host},
-                    port      => $shared->{config}{mixer}{port},
+                    host      => $self->{config}{mixer}{host},
+                    port      => $self->{config}{mixer}{port},
                     id        => $id,
-                    shost     => $shared->{config}{stream}{host},
-                    sport     => $shared->{config}{stream}{port},
-                    spassword => $shared->{config}{stream}{password},
-                    stream    => $shared->{config}{stream}{stream},
+                    shost     => $self->{config}{stream}{host},
+                    sport     => $self->{config}{stream}{port},
+                    spassword => $self->{config}{stream}{password},
+                    stream    => $self->{config}{stream}{stream},
                   );
 
   $command =~ s/\$(\w+)/$cmd_vars{$1}/g;
