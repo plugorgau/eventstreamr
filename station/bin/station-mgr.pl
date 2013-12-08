@@ -24,12 +24,13 @@ my $getopts_rc = GetOptions(
     "help|?"        => \&print_usage,
 );
 
-
 # setup signal handlers and daemon stuff
 $SIG{INT}  = \&sig_exit;
 $SIG{TERM} = \&sig_exit;
 $SIG{PIPE} = \&sig_pipe;
 $SIG{CHLD} = 'IGNORE';
+$SIG{USR1} = \&get_config;
+$SIG{USR2} = \&post_config;
 
 our $daemon = Proc::Daemon->new(
   work_dir => "$Bin/../",
@@ -208,6 +209,42 @@ Options:
   exit 0;
 }
 
+# Config triggers
+sub post_config {
+  my $json = to_json($self);
+  my %post_data = ( 
+        content => $json, 
+        'content-type' => 'application/json', 
+        'content-length' => length($json),
+  );
+
+  my $post = $http->post("http://127.0.0.1:3000/internal/settings", \%post_data);
+  $logger->info("Config Posted to API");
+  $logger->debug({filter => \&Data::Dumper::Dumper,
+                value  => $post}) if ($logger->is_debug());
+  return;
+}
+
+sub get_config {
+  my $get = $http->get("http://127.0.0.1:3000/internal/settings");
+  my $content = from_json($get->{content});
+  $self->{config} = $content->{config};
+  $logger->debug({filter => \&Data::Dumper::Dumper,
+                value  => $get}) if ($logger->is_debug());
+  $logger->debug({filter => \&Data::Dumper::Dumper,
+                value  => $self}) if ($logger->is_debug());
+  $logger->info("Config recieved from API");
+  write_config();
+  return;
+}
+
+sub write_config {
+  $stationconfig->{config} = $self->{config};
+  $stationconfig->write;
+  $logger->info("Config written to disk");
+  return;
+}
+
 ## api 
 sub api {
   my $device;
@@ -244,7 +281,7 @@ sub mixer {
 sub stream {
   my $device;
   $device->{role} = "stream";
-  $device->{id} = $shared->{config}{stream}{stream};
+  $device->{id} = $self->{config}{stream}{stream};
   $device->{type} = "stream";
   run_stop($device);
   return;
