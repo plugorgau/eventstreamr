@@ -130,12 +130,13 @@ fi
 echo "
 --- CONFIM SETTINGS ---
 
-   Hostname: $hostname
- IP Address: $ipaddress"
+   Hostname: $hostname"
 if [ "$ipaddress" != "<dhcp>" ]; then
-    echo "    Netmask: $netmask
+    echo " IP Address: $ipaddress / $netmask
     Gateway: $gateway
         DNS: $dns"
+else
+    echo " IP Address: $ipaddress"
 fi
 echo " Controller: $controller
 "
@@ -156,7 +157,7 @@ echo "
 "
 
 echo "- clearing desktop icons"
-#rm -f $homedir/Desktop/*
+rm -f $homedir/Desktop/*
 
 echo "- writing controller config"
 echo "{
