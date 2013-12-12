@@ -11,9 +11,9 @@
 #
 # By default this script does nothing.
 
-su - av -c 'cd /home/av/eventstreamr/baseimage; ./update-wallpaper.sh'
-#export DISPLAY=":0"
-#su - av -c 'perl /home/av/eventstreamr/station/bin/station-mgr.pl'
-#su - av -c 'perl /home/av/eventstreamr/station/bin/station-api.pl'
+export EVENTSTREAMR="/home/av/eventstreamr"
+export DISPLAY=":0"
+su - av -c "cd $EVENTSTREAMR/baseimage; ./update-wallpaper.sh"
+su - av -c "perl $EVENTSTREAMR/station/bin/station-mgr.pl"
 
 exit 0
