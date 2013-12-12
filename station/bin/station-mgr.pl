@@ -65,7 +65,7 @@ $self->{commands} = $commands->{config};
 $self->{dvswitch}{check} = 1; # check until dvswitch is found
 $self->{dvswitch}{running} = 0;
 $self->{settings} = $localconfig;
-if ($self->{config}{run} = 2) {$self->{config}{run} = 1;}
+if ($self->{config}{run} == 2) {$self->{config}{run} = 1;}
 
 # Logging
 unless ( $DEBUG ) {
