@@ -4,6 +4,8 @@ use v5.14;
 use FindBin qw($Bin);
 use lib "$Bin/../lib";
 use feature 'switch';
+use File::ReadBackwards;
+
 set serializer => 'JSON';
 
 # logging
@@ -83,6 +85,28 @@ post '/command/:command' => sub {
   }
   kill '10', $self->{config}{manager}{pid}; 
   return qq({"result":"200"});
+};
+
+get '/log/manager' => sub {
+  my @log;
+  my $count = 0;
+  my $result;
+  my $bw = File::ReadBackwards->new( $self->{settings}{'logpath'} );
+
+  while( defined( my $log_line = $bw->readline ) && $count < 101) {
+    $count++;
+    chomp $log_line;
+    push(@log, $log_line);
+  }
+
+  if ($log[0]) {
+    $result->{result} = 200;
+    @{$result->{log}} = @log;
+  } else {
+    $result->{result} = 400
+  }
+
+  return $result;
 };
 
 # Internal Communication with Manager
