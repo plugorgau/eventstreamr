@@ -1,3 +1,9 @@
+2013-12-14:
+    - packages: update
+    - packages: add new eventstreamr reqs
+    - packages: remove ipc-sharable
+    - update eventstreamr from git
+
 2013-12-01:
     - packages: added some utils: tmux, iotop
     - packages: expand list for ffmpeg pre-reqs
