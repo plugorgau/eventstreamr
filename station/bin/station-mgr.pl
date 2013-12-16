@@ -358,8 +358,13 @@ sub run_stop {
         $logger->warn("$device->{id} failed to start, incrementing run count. Current count $self->{device_control}{$device->{id}}{runcount}");
         $self->{device_control}{$device->{id}}{runcount}++;
       }
-
-      $logger->info("Connect $device->{id} to DVswitch");
+      
+      # log dvswitch start or  device connecting 
+      unless ($device->{type} eq "mixer") {
+        $logger->info("Connect $device->{id} to DVswitch");
+      } else {
+        $logger->info("Starting DVswitch");
+      }
       
       # Spawn the Ingest Command
       my %proc_opts;
