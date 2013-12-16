@@ -330,28 +330,33 @@ sub run_stop {
   }
 
   # Prevent the service from running if failed to many times in a short period of time
-  if ( $self->{config}{device_control}{$device->{id}}{run} && (($time - $self->{config}{device_control}{$device->{id}}{timestamp} < 30) && $self->{config}{device_control}{$device->{id}}{runcount} > 5 )) {
-    $logger->warn("$device->{id} failed to start too many times, stopping for 2 minutes.");
+  if ( $self->{config}{device_control}{$device->{id}}{run} && (($time - $self->{device_control}{$device->{id}}{timestamp} < 30) && $self->{device_control}{$device->{id}}{runcount} > 5 )) {
+    $logger->warn("$device->{id} failed to start too many times, stopping.");
     $self->{config}{device_control}{$device->{id}}{run} = 0;
     $logger->warn("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}");
+    # status flag
+    post_config();
   }
   
   # If we're supposed to be running, run.
   if (($self->{config}{run} == 1 && 
   (! defined $self->{config}{device_control}{$device->{id}}{run} || $self->{config}{device_control}{$device->{id}}{run} == 1)) ||
   $device->{type} eq 'internal') {
+    # The failed service check depends on a run flag being set, if we got here it should be 1.
+    $self->{config}{device_control}{$device->{id}}{run} = 1;
+
     # Get the running state + pid if it exists
     my $state = $utils->get_pid_command($device->{id},$self->{device_commands}{$device->{id}}{command},$device->{type}); 
 
     unless ($state->{running}) {
       # Run Count and timestamp to prevent failing services going undected
-      if ( ! defined $self->{config}{device_control}{$device->{id}}{timestamp} || ($time - $self->{config}{device_control}{$device->{id}}{timestamp} > 120)) {
-        $self->{config}{device_control}{$device->{id}}{timestamp} = $time;
-        $self->{config}{device_control}{$device->{id}}{runcount} = 1;
+      if ( ! defined $self->{device_control}{$device->{id}}{timestamp} ) {
+        $self->{device_control}{$device->{id}}{timestamp} = $time;
+        $self->{device_control}{$device->{id}}{runcount} = 1;
         $logger->debug("Timestamp and Run Count initialised for $device->{id}");
       } else {
-        $logger->warn("$device->{id} failed to start, incrementing run count. Current count $self->{config}{device_control}{$device->{id}}{runcount}");
-        $self->{config}{device_control}{$device->{id}}{runcount}++;
+        $logger->warn("$device->{id} failed to start, incrementing run count. Current count $self->{device_control}{$device->{id}}{runcount}");
+        $self->{device_control}{$device->{id}}{runcount}++;
       }
 
       $logger->info("Connect $device->{id} to DVswitch");
@@ -377,6 +382,7 @@ sub run_stop {
       $state = $utils->get_pid_command($device->{id},$self->{device_commands}{$device->{id}}{command},$device->{type}); 
       $logger->debug({filter => \&Data::Dumper::Dumper,
                       value  => $state}) if ($logger->is_debug());
+    }
     
       # Set the state and post the config
       $self->{device_control}{$device->{id}} = $state;
@@ -398,6 +404,19 @@ sub run_stop {
       $self->{config}{device_control}{$device->{id}}{run} = 1;
       post_config();
     }
+
+    # Restart Run count and timestamp
+    $self->{device_control}{$device->{id}}{timestamp} = undef;
+    $self->{device_control}{$device->{id}}{runcount} = 0;
+
+  }
+
+  # Set device back to running if a restart was triggered
+  if ($self->{config}{device_control}{$device->{id}}{run} == 2) {
+    $logger->info("Restarting $device->{id}");
+    $self->{config}{device_control}{$device->{id}}{run} = 1;
+    write_config();
+    post_config();
   }
 
   return;
