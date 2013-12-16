@@ -384,24 +384,20 @@ sub run_stop {
                       value  => $state}) if ($logger->is_debug());
     }
     
-      # Set the state and post the config
-      $self->{device_control}{$device->{id}} = $state;
+    # If state has changed set it and post the config
+    if (! defined $self->{device_control}{$device->{id}}{running} || 
+      ($self->{device_control}{$device->{id}}{running} != $state->{running})) {
+      $self->{device_control}{$device->{id}}{pid} = $state->{pid};
+      $self->{device_control}{$device->{id}}{running} = $state->{running};
       post_config();
     }
+
   } elsif (defined $self->{device_control}{$device->{id}}{pid}) {
     # Kill The Child
     if ($daemon->Kill_Daemon($self->{device_control}{$device->{id}}{pid})) { 
       $logger->info("Stop $device->{id}");
       $self->{device_control}{$device->{id}}{running} = 0;
       $self->{device_control}{$device->{id}}{pid} = undef; 
-      $self->{config}{device_control}{$device->{id}}{timestamp} = undef;
-      $self->{config}{device_control}{$device->{id}}{runcount} = 0;
-    }
-
-    # Set device back to running if a restart was triggered
-    if ($self->{config}{device_control}{$device->{id}}{run} == 2) {
-      $logger->info("Restarted $device->{id}");
-      $self->{config}{device_control}{$device->{id}}{run} = 1;
       post_config();
     }
 
