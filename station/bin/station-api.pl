@@ -40,6 +40,12 @@ get '/settings' => sub {
   return $data;
 };
 
+get '/dump' => sub {
+  my $data->{dump} = $self;
+  $data->{result} = '200';
+  return $data;
+};
+
 get '/devices' => sub {
   my $result;
   $result->{devices} = $devices->all();
