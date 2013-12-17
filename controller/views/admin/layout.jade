@@ -11,8 +11,26 @@ html
     script(src="/javascripts/knockout-3.0.0beta.js")
     script(src="/javascripts/knockout.mapping-latest.js")
     script(src="/javascripts/StringInterpolatingBindingProvider.js")
+    script(src="/socket.io/socket.io.js")
     
     script.
+      var socket = io.connect('//:5001')
+      socket.on('change', function (data) {
+        console.log(data);
+        if (data.type == 'remove') {
+          viewModel.stations.remove(function(item) { 
+            return item._id() == data.content
+          })
+        }
+        if (data.type == 'insert') {
+          viewModel.stations.push(ko.mapping.fromJS(data.content))
+        }
+      });
+    
+    script.
+      var macRewrite = function(macaddress) {
+      return macaddress.replace(/-\s*/g, ":")
+      }
       ko.bindingProvider.instance = new StringInterpolatingBindingProvider();
       var viewModel = {
         stations: ko.mapping.fromJS([])
