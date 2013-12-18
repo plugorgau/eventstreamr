@@ -2,10 +2,14 @@ Controller
 ==========
 
 API
-===
+---
 
-Get Stations
-------------
+
+### Stations
+
+Station related resources of *Eventstreamr controller API*.
+
+#### Get Stations
 
 * `GET /api/stations` will return all stations.
 
@@ -25,8 +29,8 @@ Get Stations
 ]
 ```
 
-Get Station
------------
+#### Get Station
+
 * `GET /api/station/[MACADDRESS]` will return the specified station.
 
 ```json
@@ -43,8 +47,8 @@ Get Station
 }
 ```
 
-Create Station
---------------
+#### Create Station
+
 
 * `POST /api/station` will create a new station from the parameters passed
 
@@ -60,8 +64,8 @@ Create Station
 ```
 This will return `201 Created` along with the current JSON representation of the station if the creation was a success.
 
-Register Station
-----------------
+#### Register Station
+
 * `PUT /api/station/[MACADDRESS]` will update a station with the parameters passed.
 
 ```json
@@ -73,8 +77,8 @@ Register Station
 This will return a `200 OK` if the update was a success along with the current JSON representation of the station.
     
     
-Delete Station
---------------
+#### Delete Station
+
 
 * `DELETE /api/station/[MACADDRESS]`
 
