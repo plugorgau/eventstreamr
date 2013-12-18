@@ -24,36 +24,65 @@ block content
     p Welcome to #{title}
     hr
     .row
-      .col-sm-6
-        button.btn.btn-default.btn-sm.pull-right(data-toggle="collapse", data-target="#add-station", type="button")
-          | Add Station
-        h3 Stations
-        .collapse#add-station
-          .panel.panel-default
-            .panel-heading
-              h3.panel-title New Station
-            .panel-body
-              form.form-horizontal(role="form", method="post", action="/api/station")
-                legend Station Details
-                mixin form-group-standard("Mac Address", "mac", "text", "##:##:##:##:##:##")
-                mixin form-group-checkbox("Roles", "roles", ["capture","mixer"])
-                mixin form-group-standard("Nickname", "nickname", "text", "podium camera")
-                mixin form-group-standard("Room", "room", "text", "")
-                .form-group
-                  .col-lg-offset-2.col-lg-10.col-md-offset-3.col-md-9.col-sm-offset-4.col-sm-8
-                    button.btn.btn-default(type="submit") Submit
-        ul.list-unstyled(data-bind="foreach: stations")
-          li.panel.panel-default
-            button.btn.btn-default.btn-xs.pull-right.btn-panel-edge(data-bind="click: removeStation")
+      .col-sm-8
+      .col-sm-4
+        .form
+          button.btn.btn-default.btn-sm.pull-right(data-toggle="collapse", data-target="#add-station", type="button", form-toggle)
+            | Add Station
+          h3 Stations
+          .collapse#add-station
+            .panel.panel-default
+              .panel-heading
+                h3.panel-title New Station
+              .panel-body
+                form.form-horizontal.data-async(role="form", method="post", action="/api/station")
+                  legend Station Details
+                  mixin form-group-standard("Mac Address", "macaddress", "text", "##:##:##:##:##:##")
+                  mixin form-group-checkbox("Roles", "roles", ["capture","mixer"])
+                  mixin form-group-standard("Nickname", "nickname", "text", "podium camera")
+                  mixin form-group-standard("Room", "room", "text", "")
+                  .form-group
+                    .col-lg-offset-2.col-lg-10.col-md-offset-3.col-md-9.col-sm-offset-4.col-sm-8
+                      button.btn.btn-default(type="submit") Submit
+        ul.list-unstyled(data-bind="foreach: stations, visible: true" style="display: none;")
+          li
+            button.btn.btn-default.btn-xs.pull-right(data-bind="click: removeStation", title="Forget Station")
               small
                i.glyphicon.glyphicon-remove
-              |  Remove
-            .panel-body
-              dl.dl-horizontal
-                mixin dl-item('Mac Address', 'settings.macaddress')
-                mixin dl-item('Roles', 'settings.roles')
-                mixin dl-item('Nickname', 'settings.nickname')
-                mixin dl-item('Room', 'settings.room')
+            button.btn.btn-default.btn-xs.pull-right(data-bind="click: removeStation", title="Edit Station", style="margin-right: 5px")
+              small
+               i.glyphicon.glyphicon-edit
+            strong {{ settings.nickname || macRewrite(settings.macaddress()) }}
+            |  
+            small {{ (settings.nickname) ? macRewrite(settings.macaddress()) : "" }}
+            ul.list-inline
+              li(data-bind="foreach: {data: settings.roles, as: 'role'}")
+                span.label.label-primary {{role}}
+                |  
+          //-
+            .panel.panel-default
+              .panel-body
+                dl.dl-horizontal
+                  mixin dl-item('Mac Address', 'settings.macaddress')
+                  mixin dl-item('Roles', 'settings.roles')
+                  mixin dl-item('Nickname', 'settings.nickname')
+                  mixin dl-item('Room', 'settings.room')
         
 block scripts
-  
+  script.
+    jQuery(function($) {
+      $('.form').on('submit', '.data-async', function(event) {
+        var $form = $(this);
+ 
+        $.ajax({
+          type: $form.attr('method'),
+          url: $form.attr('action'),
+          data: $form.serialize(),
+        })
+          .done(function() {
+            $form.parents('.form').children('#add-station').collapse('hide')
+          })
+ 
+        event.preventDefault();
+      });
+    });
