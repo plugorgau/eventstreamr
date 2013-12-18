@@ -140,6 +140,13 @@ if ($response->{success} && $response->{status} == 200 ) {
 $logger->debug({filter => \&Data::Dumper::Dumper,
                 value  => $self}) if ($logger->is_debug());
 
+# Log when started
+if ($self->{config}{run}) {
+  $logger->info("Manager started, starting devices");
+} else {
+  $logger->info("Manager started, configuration set to not start devices.");
+}
+
 # Main Daemon Loop
 while ($daemons->{main}{run}) {
   # If we're restarting, we should trigger check for dvswitch
