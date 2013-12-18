@@ -21,10 +21,10 @@ var Station = function(macaddress, roles, room, nickname) {
   }
 }
 
-var storeStation = function(settings, ip, callback) {
+var storeStation = function(mac, ip, callback) {
   var document = {
     ip: ip || null,
-    settings: settings
+    settings: {"mac" : mac}
   }
   db.insert('stations', document, callback)
 }
@@ -65,7 +65,7 @@ exports.getStation = function(req, res) {
     if (error) {
       res.send(500, error)
     }
-    if (typeof docs !== 'undefined') {
+    if (doc === null) {
       res.send(204, {
         "status": 'unknown'
       })
@@ -78,7 +78,7 @@ exports.getStation = function(req, res) {
 
 exports.registerStation = function(req, res) {
   db.get('stations', { 'settings.mac': req.params.mac }, function (error, doc) {
-    if (typeof docs !== 'undefined') {
+    if (doc === null) {
       storeStation(req.params.mac, req.ip, function(error, success) {
         if (success) {
           res.send(201)
