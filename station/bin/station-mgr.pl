@@ -100,17 +100,24 @@ our $http = HTTP::Tiny->new(timeout => 15);
 # Start the API
 api();
 
-# Request config from the controller
-$logger->info("Checking for controller http://$localconfig->{controller}:5001/station/$self->{config}{macaddress}");
-my $response =  $http->get("http://$localconfig->{controller}:5001/station/$self->{config}{macaddress}");
+# Register with controller
+$logger->info("Registering with controller $localconfig->{controller}/$self->{config}{macaddress}");
+my $response =  $http->post("$localconfig->{controller}/$self->{config}{macaddress}");
 
-if ($response->{success} && $response->{status} == 200 ) {
+# Controller responds with created 201, now we can ask for a blank config
+if ($response->{status} == 201) {
+  $logger->info("Getting config $localconfig->{controller}/$self->{config}{macaddress}");
+  $response =  $http->get("$localconfig->{controller}/$self->{config}{macaddress}");
+}
+
+
+if ($response->{status} == 200 ) {
   my $content = from_json($response->{content});
   $logger->debug({filter => \&Data::Dumper::Dumper,
                   value  => $content}) if ($logger->is_debug());
 
-  if ($content->{result} == 200 && defined $content->{config}) {
-    $self->{config} = $content->{config};
+  if (defined $content) {
+    $self->{config} = $content;
     write_config();
   }
 
@@ -121,11 +128,23 @@ if ($response->{success} && $response->{status} == 200 ) {
 
   $self->{config}{manager}{pid} = $$;
   post_config();
+} elsif ($response->{status} == 204){
+  $self->{config}{manager}{pid} = $$;
+  $logger->warn("Connected but not registered");
+  $logger->info("Falling back to local config");
+  $logger->debug({filter => \&Data::Dumper::Dumper,
+                  value  => $response}) if ($logger->is_debug());
+
+  # Run all connected devices - need to get devices to return an array
+  if ($self->{config}{devices} eq 'all') {
+    $self->{config}{devices} = $self->{devices}{array};
+  }
+  post_config();
 } else {
   chomp $response->{content};
   $self->{config}{manager}{pid} = $$;
   $logger->warn("Failed to connect: $response->{content}");
-  $logger->info("Falling back to local config.");
+  $logger->info("Falling back to local config");
   $logger->debug({filter => \&Data::Dumper::Dumper,
                   value  => $response}) if ($logger->is_debug());
 
