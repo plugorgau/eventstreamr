@@ -29,21 +29,21 @@ block content
         .form
           button.btn.btn-default.btn-sm.pull-right(data-toggle="collapse", data-target="#add-station", type="button", form-toggle)
             | Add Station
-          h3 Stations
-          .collapse#add-station
-            .panel.panel-default
-              .panel-heading
-                h3.panel-title New Station
-              .panel-body
-                form.form-horizontal.data-async(role="form", method="post", action="/api/station")
-                  legend Station Details
-                  mixin form-group-standard("Mac Address", "macaddress", "text", "##:##:##:##:##:##")
-                  mixin form-group-checkbox("Roles", "roles", ["capture","mixer"])
-                  mixin form-group-standard("Nickname", "nickname", "text", "podium camera")
-                  mixin form-group-standard("Room", "room", "text", "")
-                  .form-group
-                    .col-lg-offset-2.col-lg-10.col-md-offset-3.col-md-9.col-sm-offset-4.col-sm-8
-                      button.btn.btn-default(type="submit") Submit
+        h3 Stations
+        .collapse#add-station
+          .panel.panel-default
+            .panel-heading
+              h3.panel-title New Station
+            .panel-body
+              form.form-horizontal.data-async(role="form", method="post", action="/api/station")
+                legend Station Details
+                mixin form-group-standard("Mac Address", "macaddress", "text", "##:##:##:##:##:##")
+                mixin form-group-checkbox("Roles", "roles", ["capture","mixer"])
+                mixin form-group-standard("Nickname", "nickname", "text", "podium camera")
+                mixin form-group-standard("Room", "room", "text", "")
+                .form-group
+                  .col-lg-offset-2.col-lg-10.col-md-offset-3.col-md-9.col-sm-offset-4.col-sm-8
+                    button.btn.btn-default(type="submit") Submit
         ul.list-unstyled(data-bind="foreach: stations, visible: true" style="display: none;")
           li
             button.btn.btn-default.btn-xs.pull-right(data-bind="click: removeStation", title="Forget Station")
