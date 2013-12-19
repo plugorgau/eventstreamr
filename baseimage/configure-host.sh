@@ -195,6 +195,10 @@ sed -i "s/${existing}/${hostname}/g" /etc/hostname
 echo "- updating /etc/rc.local to start eventstreamr bits"
 cp $confdir/rc.local /etc/rc.local
 
+echo "- fix grub"
+/usr/sbin/grub-install /dev/sda
+/usr/sbin/update-grub
+
 
 echo "- done: REBOOTING NOW (in 10 seconds)"
 sleep 10
