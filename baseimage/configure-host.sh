@@ -198,10 +198,6 @@ echo "- updating /etc/rc.local to start eventstreamr bits"
 cp $confdir/rc.local /etc/rc.local
 
 
-echo "- (re)starting hostname service"
-service hostname start
-
-
 echo "- done: REBOOTING NOW (in 10 seconds)"
 sleep 10
 shutdown -r now
