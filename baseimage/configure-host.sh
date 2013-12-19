@@ -183,8 +183,6 @@ iface eth0 inet static
     gateway $gateway
     dns-nameservers $dns
 " > /etc/network/interfaces
-    echo "- restarting networking"
-    service networking restart
 fi
 
 
@@ -194,17 +192,16 @@ echo "- updating /etc/hostname"
 sed -i "s/${existing}/${hostname}/g" /etc/hostname
 
 
-echo "- (re)starting hostname service"
-service hostname start
-
-
-echo "- updating background image"
-$confdir/update-wallpaper.sh
-
-
 echo "- updating /etc/rc.local to start eventstreamr bits"
 cp $confdir/rc.local /etc/rc.local
 
+echo "- fix grub"
+/usr/sbin/grub-install /dev/sda
+/usr/sbin/update-grub
 
-echo "- done, should probably reboot just in case"
+
+echo "- done: REBOOTING NOW (in 10 seconds)"
+sleep 10
+shutdown -r now
+
 exit 0
