@@ -120,6 +120,7 @@ get '/log/manager' => sub {
 get '/status' => sub {
   my $result;
   if ($status->{status}) {
+    header 'Access-Controll-Allow-Origin' => '*';
     status '200';
     return $status->{status};
   } else {
