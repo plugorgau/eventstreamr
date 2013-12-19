@@ -49,31 +49,48 @@ exports.deleteStation = function(req, res) {
   })
 }
 
-exports.allStations = function(req, res) {
-  db.list('stations', {}, function (error, docs) {
-    if (error) {
-      res.send(500, err)
-    }
-    if (docs) {
-      res.send(docs)
-    }
-  });
+var tablesDocLookups = {
+  stations: 'settings.mac',
 }
 
-exports.getStation = function(req, res) {
-  db.get('stations', { 'settings.mac': req.params.mac }, function (error, doc) {
-    if (error) {
-      res.send(500, error)
-    }
-    if (doc === null) {
-      res.send(204, {
-        "status": 'unknown'
-      })
-    }
-    if (doc) {
-      res.send(200, doc)
-    }
-  });
+var tableNames = Object.keys(tablesDocLookups)
+
+exports.listDb = function(req, res) {
+  if (tableNames.indexOf(req.params.db) !== -1) {
+    db.list(req.params.db, {}, function (error, docs) {
+      if (error) {
+        res.send(500, err)
+      }
+      if (docs) {
+        res.send(docs)
+      }
+    });
+  }
+  else {
+    res.send(404)
+  }
+}
+
+exports.getDocument = function(req, res) {
+  if (tableNames.indexOf(req.params.db) !== -1) {
+    var query = {}
+    query[tablesDocLookups[req.params.db]] = req.params.id;
+    console.log(query)
+    db.get(req.params.db, query, function (error, doc) {
+      if (error) {
+        res.send(500, error)
+      }
+      if (doc === null) {
+        res.send(204)
+      }
+      if (doc) {
+        res.send(200, doc)
+      }
+    });
+  }
+  else {
+    res.send(404)
+  }
 }
 
 exports.registerStation = function(req, res) {
