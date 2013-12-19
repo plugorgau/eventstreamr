@@ -397,22 +397,6 @@ sub run_stop {
     }
   }
 
-  # Prevent the service from running if failed to many times in a short period of time
-  if ( $self->{config}{device_control}{$device->{id}}{run} && (($time - $self->{device_control}{$device->{id}}{timestamp} < 30) && $self->{device_control}{$device->{id}}{runcount} > 5 )) {
-    # Log details
-    $logger->warn("$device->{id} failed to start too many times, stopping.");
-    $logger->warn("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}");
-
-    # Stop Device
-    $self->{config}{device_control}{$device->{id}}{run} = 0;
-    
-    # Status flag
-    $self->{status}{$device->{id}}{running} = 0;
-    $self->{status}{$device->{id}}{status} = "failed_start";
-    $self->{status}{$device->{id}}{state} = "hard";
-    post_config();
-  }
-  
   # If we're supposed to be running, run.
   if (($self->{config}{run} == 1 && 
   (! defined $self->{config}{device_control}{$device->{id}}{run} || $self->{config}{device_control}{$device->{id}}{run} == 1)) ||
@@ -424,33 +408,40 @@ sub run_stop {
     my $state = $utils->get_pid_command($device->{id},$self->{device_commands}{$device->{id}}{command},$device->{type}); 
 
     unless ($state->{running}) {
-      # Run Count and timestamp to prevent failing services going undected
+
+      # notice process is down, record timestamp when it went down
       if ( ! defined $self->{device_control}{$device->{id}}{timestamp} ) {
         $self->{device_control}{$device->{id}}{timestamp} = $time;
-        $self->{device_control}{$device->{id}}{runcount} = 1;
-        $logger->debug("Timestamp and Run Count initialised for $device->{id}");
-      } else {
-        # Log
-        $logger->warn("$device->{id} failed to start, incrementing run count. Current count $self->{device_control}{$device->{id}}{runcount}");
+        $self->{device_control}{$device->{id}}{runcount} = 0;
 
-        # Increase runcount
-        $self->{device_control}{$device->{id}}{runcount}++;
-
-        # Status flag
         $self->{status}{$device->{id}}{running} = 0;
         $self->{status}{$device->{id}}{status} = "failed_start";
         $self->{status}{$device->{id}}{state} = "soft";
-        post_config();
+        $self->{status}{$device->{id}}{type} = $device->{type};
+        $self->{status}{$device->{id}}{timestamp} = $self->{device_control}{$device->{id}}{timestamp};
+
+        $logger->debug("Timestamp and Run Count initialised for $device->{id}");
       }
+
+      # if above restart threshold then slow down restarts to every 10 seconds
+      if ( $self->{device_control}{$device->{id}}{runcount} > 5 && ($time % 10) != 0 ) {
+        return;
+      }
+
+      # Increase runcount
+      $self->{device_control}{$device->{id}}{runcount}++;
+      my $age = $time - $self->{device_control}{$device->{id}}{timestamp};
+      $logger->warn("$device->{id} failed to start (count=$self->{device_control}{$device->{id}}{runcount}, died=$age secs ago)");
+      post_config();
       
-      # log dvswitch start or  device connecting 
+      # log dvswitch start or device connecting 
       unless ($device->{type} eq "mixer") {
         $logger->info("Connect $device->{id} to DVswitch");
       } else {
         $logger->info("Starting DVswitch");
       }
       
-      # Spawn the Ingest Command
+      # build daemon option
       my %proc_opts;
       unless ($logger->is_debug()) {
         %proc_opts = (
@@ -463,6 +454,7 @@ sub run_stop {
            exec_command => $self->{device_commands}{$device->{id}}{command},
         );
       }       
+      # run process
       my $proc = $daemon->Init( \%proc_opts );
 
       # give the process some time to settle
@@ -488,6 +480,7 @@ sub run_stop {
         $self->{status}{$device->{id}}{running} = 1;
         $self->{status}{$device->{id}}{status} = "started";
         $self->{status}{$device->{id}}{state} = "hard";
+        $self->{device_control}{$device->{id}}{timestamp} = undef;
       } else {
         $self->{status}{$device->{id}}{running} = 0;
         $self->{status}{$device->{id}}{status} = "stopped";
