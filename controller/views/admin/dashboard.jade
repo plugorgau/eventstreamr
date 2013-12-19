@@ -71,7 +71,7 @@ block content
 block scripts
   script.
     jQuery(function($) {
-      $('.form').on('submit', '.data-async', function(event) {
+      $('form.data-async').on('submit', function(event) {
         var $form = $(this);
  
         $.ajax({
@@ -80,7 +80,7 @@ block scripts
           data: $form.serialize(),
         })
           .done(function() {
-            $form.parents('.form').children('#add-station').collapse('hide')
+            $form.parents('#add-station').collapse('hide')
           })
  
         event.preventDefault();
