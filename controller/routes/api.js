@@ -24,7 +24,9 @@ var Station = function(macaddress, roles, room, nickname) {
 var storeStation = function(mac, ip, callback) {
   var document = {
     ip: ip || null,
-    settings: {"mac" : mac}
+    settings: {
+      "mac" : mac
+    }
   }
   db.insert('stations', document, callback)
 }
