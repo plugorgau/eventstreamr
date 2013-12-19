@@ -115,6 +115,25 @@ get '/log/manager' => sub {
   return $result;
 };
 
+# Status Information
+get '/status' => sub {
+  my $result;
+  if ($self->{status}) {
+    status '200';
+    return $self->{status};
+  } else {
+    status '204';
+    return;
+  }
+};
+
+post '/status/:mac' => sub {
+  my $mac = params->{mac};
+  my $data = from_json(request->body);
+  $self->{status}{$mac} = $data;
+  return;
+};
+
 # Internal Communication with Manager
 post '/internal/settings' => sub {
   my $data = from_json(request->body);

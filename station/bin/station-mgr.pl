@@ -113,6 +113,7 @@ if ($response->{status} == 201) {
 
 if ($response->{status} == 200 ) {
   my $content = from_json($response->{content});
+  $self->{controller}{running} = 1;
   $logger->debug({filter => \&Data::Dumper::Dumper,
                   value  => $content}) if ($logger->is_debug());
 
@@ -129,6 +130,7 @@ if ($response->{status} == 200 ) {
   $self->{config}{manager}{pid} = $$;
   post_config();
 } elsif ($response->{status} == 204){
+  $self->{controller}{running} = 1;
   $self->{config}{manager}{pid} = $$;
   $logger->warn("Connected but not registered");
   $logger->info("Falling back to local config");
@@ -142,6 +144,7 @@ if ($response->{status} == 200 ) {
   post_config();
 } else {
   chomp $response->{content};
+  $self->{controller}{running} = 0;
   $self->{config}{manager}{pid} = $$;
   $logger->warn("Failed to connect: $response->{content}");
   $logger->info("Falling back to local config");
@@ -236,6 +239,8 @@ Options:
 # Config triggers
 sub post_config {
   my $json = to_json($self);
+
+  # Post to manager api
   my %post_data = ( 
         content => $json, 
         'content-type' => 'application/json', 
@@ -246,6 +251,35 @@ sub post_config {
   $logger->info("Config Posted to API");
   $logger->debug({filter => \&Data::Dumper::Dumper,
                 value  => $post}) if ($logger->is_debug());
+
+  # Status information
+  my $status;
+  $status->{status} = $self->{status};
+  $status->{macaddress} = $self->{config}{macaddress};
+  $status->{nickname} = $self->{config}{nickname};
+
+  # Status Post Data
+  $json = to_json($status);
+  my %post_data = ( 
+        content => $json, 
+        'content-type' => 'application/json', 
+        'content-length' => length($json),
+  );
+
+  # Post Status to Mixer
+  $post = $http->post("http://$self->{config}{mixer}{host}:3000/status/$self->{config}{macaddress}", \%post_data);
+  $logger->info("Status Posted to Mixer API -> http://$self->{config}{mixer}{host}:3000/status/$self->{config}{macaddress}");
+  $logger->debug({filter => \&Data::Dumper::Dumper,
+                value  => $post}) if ($logger->is_debug());
+
+  # Post Status to Controller
+  if ($self->{controller}{running}) {
+    $post = $http->post("$localconfig->{controller}/$self->{config}{macaddress}/status", \%post_data);
+    $logger->info("Status Posted to Controller API");
+    $logger->debug({filter => \&Data::Dumper::Dumper,
+                  value  => $post}) if ($logger->is_debug());
+  }
+  
   return;
 }
 
@@ -333,6 +367,14 @@ sub run_stop {
   my ($device) = @_;
   my $time = time;
 
+  # Set initial status if not defined
+  if (! defined $self->{status}{$device->{id}}) {
+    $logger->debug("Setting initial status information for $device->{id}") if ($logger->is_debug());
+    $self->{status}{$device->{id}}{running} = undef;
+    $self->{status}{$device->{id}}{status} = undef;
+    $self->{status}{$device->{id}}{state} = undef;
+  }
+
   # Build command for execution and save it for future use
   unless ($self->{device_commands}{$device->{id}}{command}) {
     given ($device->{role}) {
@@ -357,10 +399,17 @@ sub run_stop {
 
   # Prevent the service from running if failed to many times in a short period of time
   if ( $self->{config}{device_control}{$device->{id}}{run} && (($time - $self->{device_control}{$device->{id}}{timestamp} < 30) && $self->{device_control}{$device->{id}}{runcount} > 5 )) {
+    # Log details
     $logger->warn("$device->{id} failed to start too many times, stopping.");
-    $self->{config}{device_control}{$device->{id}}{run} = 0;
     $logger->warn("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}");
-    # status flag
+
+    # Stop Device
+    $self->{config}{device_control}{$device->{id}}{run} = 0;
+    
+    # Status flag
+    $self->{status}{$device->{id}}{running} = 0;
+    $self->{status}{$device->{id}}{status} = "failed_start";
+    $self->{status}{$device->{id}}{state} = "hard";
     post_config();
   }
   
@@ -381,8 +430,17 @@ sub run_stop {
         $self->{device_control}{$device->{id}}{runcount} = 1;
         $logger->debug("Timestamp and Run Count initialised for $device->{id}");
       } else {
+        # Log
         $logger->warn("$device->{id} failed to start, incrementing run count. Current count $self->{device_control}{$device->{id}}{runcount}");
+
+        # Increase runcount
         $self->{device_control}{$device->{id}}{runcount}++;
+
+        # Status flag
+        $self->{status}{$device->{id}}{running} = 0;
+        $self->{status}{$device->{id}}{status} = "failed_start";
+        $self->{status}{$device->{id}}{state} = "soft";
+        post_config();
       }
       
       # log dvswitch start or  device connecting 
@@ -418,17 +476,40 @@ sub run_stop {
     # If state has changed set it and post the config
     if (! defined $self->{device_control}{$device->{id}}{running} || 
       ($self->{device_control}{$device->{id}}{running} != $state->{running})) {
+      # Log
+      $logger->debug("$device->{id} has changed state");
+
+      # Set state
       $self->{device_control}{$device->{id}}{pid} = $state->{pid};
       $self->{device_control}{$device->{id}}{running} = $state->{running};
+
+      # Status flag
+      if ($state->{running}) {
+        $self->{status}{$device->{id}}{running} = 1;
+        $self->{status}{$device->{id}}{status} = "started";
+        $self->{status}{$device->{id}}{state} = "hard";
+      } else {
+        $self->{status}{$device->{id}}{running} = 0;
+        $self->{status}{$device->{id}}{status} = "stopped";
+        $self->{status}{$device->{id}}{state} = "hard";
+      }
       post_config();
     }
 
   } elsif (defined $self->{device_control}{$device->{id}}{pid}) {
     # Kill The Child
     if ($daemon->Kill_Daemon($self->{device_control}{$device->{id}}{pid})) { 
+      # Log
       $logger->info("Stop $device->{id}");
+      
+      # Set device state
       $self->{device_control}{$device->{id}}{running} = 0;
       $self->{device_control}{$device->{id}}{pid} = undef; 
+      
+      # Set device status
+      $self->{status}{$device->{id}}{running} = 0;
+      $self->{status}{$device->{id}}{status} = "stopped";
+      $self->{status}{$device->{id}}{state} = "hard";
       post_config();
     }
 
@@ -440,8 +521,15 @@ sub run_stop {
 
   # Set device back to running if a restart was triggered
   if ($self->{config}{device_control}{$device->{id}}{run} == 2) {
+    # Log
     $logger->info("Restarting $device->{id}");
+    
+    # Set run back to running
     $self->{config}{device_control}{$device->{id}}{run} = 1;
+    
+    # Set device status
+    $self->{status}{$device->{id}}{status} = "restarting";
+    $self->{status}{$device->{id}}{state} = "hard";
     write_config();
     post_config();
   }
