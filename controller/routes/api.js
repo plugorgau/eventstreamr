@@ -8,31 +8,29 @@ var updateIp = function(mac, ip) {
   db.updateRaw('stations', { "setings.mac": mac }, { $set: { ip: ip } }, {}, function () {});
 }
 
-var Station = function(macaddress, roles, room, nickname) {
-  macaddress = (macaddress) ? macaddress.replace(/:\s*/g, "-") : null;
-  if (roles && typeof roles == 'string') {
-    roles = [roles]
+var Station = function(request) {
+  var macaddress = (request.macaddress) ? request.macaddress.replace(/:\s*/g, "-") : null;
+  if (request.roles && typeof request.roles == 'string') {
+    roles = [request.roles]
   }
   return {
     macaddress: macaddress,
-    roles: roles || [],
-    room: room || null,
-    nickname: nickname || null
+    roles: request.roles || [],
+    room: request.room,
+    nickname: request.nickname
   }
 }
 
-var storeStation = function(mac, ip, callback) {
+var storeStation = function(settings, ip, callback) {
   var document = {
     ip: ip || null,
-    settings: {
-      "mac" : mac
-    }
+    settings: settings
   }
   db.insert('stations', document, callback)
 }
 
 exports.createStation = function(req, res) {
-  var station = new Station(req.body.macaddress, req.body.roles, req.body.room, req.body.nickname)
+  var station = new Station(req.body)
   storeStation(station, null, function(error, success) {
     if (error) {
       res.send(500, error)
@@ -81,7 +79,8 @@ exports.getStation = function(req, res) {
 exports.registerStation = function(req, res) {
   db.get('stations', { 'settings.mac': req.params.mac }, function (error, doc) {
     if (doc === null) {
-      storeStation(req.params.mac, req.ip, function(error, success) {
+      var station = new Station({macaddress: req.params.macaddress})
+      storeStation(station, req.ip, function(error, success) {
         if (success) {
           res.send(201)
         }
