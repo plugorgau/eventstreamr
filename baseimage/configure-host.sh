@@ -183,8 +183,6 @@ iface eth0 inet static
     gateway $gateway
     dns-nameservers $dns
 " > /etc/network/interfaces
-    echo "- restarting networking"
-    service networking restart
 fi
 
 
