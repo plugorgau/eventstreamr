@@ -23,6 +23,7 @@ our $devices = EventStreamr::Devices->new();
 
 # API Data
 our $self;
+our $status;
 
 # routes
 get '/settings/:mac' => sub {
@@ -118,9 +119,9 @@ get '/log/manager' => sub {
 # Status Information
 get '/status' => sub {
   my $result;
-  if ($self->{status}) {
+  if ($status->{status}) {
     status '200';
-    return $self->{status};
+    return $status->{status};
   } else {
     status '204';
     return;
@@ -130,7 +131,7 @@ get '/status' => sub {
 post '/status/:mac' => sub {
   my $mac = params->{mac};
   my $data = from_json(request->body);
-  $self->{status}{$mac} = $data;
+  $status->{status}{$mac} = $data;
   return;
 };
 
