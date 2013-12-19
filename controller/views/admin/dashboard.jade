@@ -2,7 +2,7 @@ mixin form-group-standard(label, name, type, placeholder)
   .form-group
     label.col-lg-2.col-md-3.col-sm-4.control-label= label
     .col-lg-10.col-md-9.col-sm-8
-      input.form-control(type=type, name=name, placeholder=placeholder)
+      input.form-control(type=type, name=name, placeholder=placeholder, data-bind="value: $data.#{name}")
 
 mixin form-group-checkbox(label, name, options)
   .form-group
@@ -10,7 +10,7 @@ mixin form-group-checkbox(label, name, options)
     .col-lg-10.col-md-9.col-sm-8
       each option in options
         label
-          input(type="checkbox", name=name, value=option)
+          input(type="checkbox", name=name, value=option, data-bind="checkedValue: '#{option}', checked: $data['#{name}']")
           |  #{option}
 
 mixin dl-item(label, databind)
@@ -29,21 +29,21 @@ block content
         .form
           button.btn.btn-default.btn-sm.pull-right(data-toggle="collapse", data-target="#add-station", type="button", form-toggle)
             | Add Station
-        h3 Stations
-        .collapse#add-station
-          .panel.panel-default
-            .panel-heading
-              h3.panel-title New Station
-            .panel-body
-              form.form-horizontal.data-async(role="form", method="post", action="/api/station")
-                legend Station Details
-                mixin form-group-standard("Mac Address", "macaddress", "text", "##:##:##:##:##:##")
-                mixin form-group-checkbox("Roles", "roles", ["capture","mixer"])
-                mixin form-group-standard("Nickname", "nickname", "text", "podium camera")
-                mixin form-group-standard("Room", "room", "text", "")
-                .form-group
-                  .col-lg-offset-2.col-lg-10.col-md-offset-3.col-md-9.col-sm-offset-4.col-sm-8
-                    button.btn.btn-default(type="submit") Submit
+          h3 Stations
+          .collapse#add-station
+            .panel.panel-default
+              .panel-heading
+                h3.panel-title New Station
+              .panel-body
+                form.form-horizontal.data-async(role="form", method="post", action="/api/station", data-bind="with: {roles: []}")
+                  legend.test-data Station Details
+                  mixin form-group-standard("Mac Address", "macaddress", "text", "##:##:##:##:##:##")
+                  mixin form-group-checkbox("Roles", "roles", ["capture","mixer"])
+                  mixin form-group-standard("Nickname", "nickname", "text", "podium camera")
+                  mixin form-group-standard("Room", "room", "text", "")
+                  .form-group
+                    .col-lg-offset-2.col-lg-10.col-md-offset-3.col-md-9.col-sm-offset-4.col-sm-8
+                      button.btn.btn-default(type="submit", data-bind="click: submitStation") Submit
         ul.list-unstyled(data-bind="foreach: stations, visible: true" style="display: none;")
           li
             button.btn.btn-default.btn-xs.pull-right(data-bind="click: removeStation", title="Forget Station")
@@ -67,22 +67,3 @@ block content
                   mixin dl-item('Roles', 'settings.roles')
                   mixin dl-item('Nickname', 'settings.nickname')
                   mixin dl-item('Room', 'settings.room')
-        
-block scripts
-  script.
-    jQuery(function($) {
-      $('form.data-async').on('submit', function(event) {
-        var $form = $(this);
- 
-        $.ajax({
-          type: $form.attr('method'),
-          url: $form.attr('action'),
-          data: $form.serialize(),
-        })
-          .done(function() {
-            $form.parents('#add-station').collapse('hide')
-          })
- 
-        event.preventDefault();
-      });
-    });
