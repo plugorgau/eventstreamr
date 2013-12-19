@@ -11,7 +11,7 @@ var updateIp = function(mac, ip) {
 var Station = function(request) {
   var macaddress = (request.macaddress) ? request.macaddress.replace(/:\s*/g, "-") : null;
   if (request.roles && typeof request.roles == 'string') {
-    roles = [request.roles]
+    request.roles = [request.roles]
   }
   return {
     macaddress: macaddress,
