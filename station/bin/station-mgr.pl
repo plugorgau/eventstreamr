@@ -436,7 +436,17 @@ sub run_stop {
     $self->{config}{device_control}{$device->{id}}{run} = 1;
 
     # Get the running state + pid if it exists
-    my $state = $utils->get_pid_command($device->{id},$self->{device_commands}{$device->{id}}{command},$device->{type}); 
+    my $state;
+    if ($self->{device_control}{$device->{id}}{pid}) {
+      my $pid = $daemon->Status($self->{device_control}{$device->{id}}{pid});
+      if ($pid) {
+        $state->{running} = 1;
+      } else {
+        $state->{running} = 0;
+      }
+    } else {
+      $state = $utils->get_pid_command($device->{id},$self->{device_commands}{$device->{id}}{command},$device->{type}); 
+    }
 
     unless ($state->{running}) {
 
