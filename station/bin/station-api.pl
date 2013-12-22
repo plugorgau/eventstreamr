@@ -98,7 +98,7 @@ get '/log/manager' => sub {
   my @log;
   my $count = 0;
   my $result;
-  my $bw = File::ReadBackwards->new( $self->{settings}{'logpath'} );
+  my $bw = File::ReadBackwards->new("$Bin/../logs/station-mgr.log" );
 
   while( defined( my $log_line = $bw->readline ) && $count < 101) {
     $count++;
@@ -120,7 +120,7 @@ get '/log/manager' => sub {
 get '/status' => sub {
   my $result;
   if ($status->{status}) {
-    header 'Access-Controll-Allow-Origin' => '*';
+    header 'Access-Control-Allow-Origin' => '*';
     status '200';
     return $status->{status};
   } else {
