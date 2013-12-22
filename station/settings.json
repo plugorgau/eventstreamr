@@ -1,6 +1,0 @@
-# config-file-type: JSON 1
-
-{
-   "controller" : "10.4.1.196",
-   "logpath" : "/tmp/station-mgr.log",
-}
