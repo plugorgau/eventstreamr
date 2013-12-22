@@ -46,12 +46,27 @@ our $devices = EventStreamr::Devices->new();
 use EventStreamr::Utils;
 our $utils = EventStreamr::Utils->new();
 
-# Load Local Config
-my $localconfig = Config::JSON->new("$Bin/../settings.json");
-$localconfig = $localconfig->{config};
+# Load/Build Local Config
+my $localconfig;
+if (-e "$Bin/../settings.json") {
+  $localconfig = Config::JSON->new("$Bin/../settings.json");
+  $localconfig = $localconfig->{config};
+} else {
+  $localconfig = Config::JSON->create("$Bin/../settings.json");
+  $localconfig->{config} = blank_settings();
+  $localconfig->write;
+  $localconfig = $localconfig->{config};
+}
 
 # Station Config
-our $stationconfig = Config::JSON->new("$Bin/../station.json");
+our $stationconfig;
+if (-e "$Bin/../station.json") {
+  $stationconfig = Config::JSON->new("$Bin/../station.json");
+} else {
+  $stationconfig = Config::JSON->create("$Bin/../station.json");
+  $stationconfig->{config} = blank_station();
+  $stationconfig->write;
+} 
 
 # Commands
 my $commands = Config::JSON->new("$Bin/../commands.json");
@@ -74,6 +89,10 @@ unless ( $DEBUG ) {
   $self->{loglevel} = 'DEBUG, LOG1, SCREEN' ;
 }
 
+unless (-d "$Bin/../logs/") {
+ make_path("$Bin/../logs/"); 
+}
+
 my $log_conf = qq(
   log4perl.rootLogger              = $self->{loglevel}
   log4perl.appender.SCREEN         = Log::Log4perl::Appender::Screen
@@ -82,7 +101,7 @@ my $log_conf = qq(
   log4perl.appender.SCREEN.layout.ConversionPattern = %m %n
   log4perl.appender.LOG1           = Log::Log4perl::Appender::File
   log4perl.appender.LOG1.utf8      = 1
-  log4perl.appender.LOG1.filename  = $localconfig->{'logpath'} 
+  log4perl.appender.LOG1.filename  = $Bin/../logs/station-mgr.log
   log4perl.appender.LOG1.mode      = append
   log4perl.appender.LOG1.layout    = Log::Log4perl::Layout::PatternLayout
   log4perl.appender.LOG1.layout.ConversionPattern = %d %p %m %n
@@ -606,6 +625,51 @@ sub getmac {
   chomp $macaddress;
   return $macaddress;
 }
+
+sub blank_station {
+  my $json = <<CONFIG;
+{
+  "roles" :
+    [
+    ],
+  "nickname" : "",
+  "room" : "",
+  "record_path" : "",
+  "mixer" :
+    {
+      "port":"1234",
+      "host":"localhost"
+    },
+  "devices" : "all",
+  "device_control" :
+    {
+    },
+  "run" : "0",
+  "stream" :
+    {
+      "host" : "",
+      "port" : "",
+      "password" : "",
+      "stream" : ""
+    }
+}
+CONFIG
+
+  my $config = from_json($json);
+  return $config;
+}
+
+sub blank_settings {
+  my $json = <<CONFIG;
+{
+     "controller" : "http://localhost:5001/api/station"
+}
+CONFIG
+
+  my $config = from_json($json);
+  return $config;
+}
+
 
 __END__
 
