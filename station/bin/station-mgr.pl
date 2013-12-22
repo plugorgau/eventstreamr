@@ -198,6 +198,7 @@ while ($daemons->{main}{run}) {
 
   # Process the internal commands
   api();
+  dvmon();
 
   # Process the roles
   foreach my $role (@{$self->{config}->{roles}}) {
@@ -332,6 +333,17 @@ sub api {
   }
   $device->{role} = "api";
   $device->{id} = "api";
+  $device->{type} = "internal";
+  run_stop($device);
+  return;
+}
+
+## dvmon 
+sub dvmon {
+  my $device;
+  $self->{device_commands}{dvmon}{command} = "$Bin/station-dvmon.pl";
+  $device->{role} = "dvmon";
+  $device->{id} = "dvmon";
   $device->{type} = "internal";
   run_stop($device);
   return;
