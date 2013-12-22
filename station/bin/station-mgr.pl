@@ -6,8 +6,8 @@ use lib "$Bin/../lib";
 use Proc::Daemon; # libproc-daemon-perl
 use JSON; # libjson-perl
 use Config::JSON; # libconfig-json-perl
-use HTTP::Tiny;
-use Log::Log4perl;
+use HTTP::Tiny; # libhttp-tiny-perl
+use Log::Log4perl; # liblog-log4perl-perl
 use File::Path qw(make_path);
 use feature qw(switch);
 use Getopt::Long;
