@@ -26,5 +26,5 @@ Directories
 Station Script Requirements
 ===========================
 Apt Packages:
-libdancer-perl libproc-daemon-perl libjson-perl libconfig-json-perl libproc-processtable-perl libfile-slurp-perl libmoo-perl libhash-merge-simple-perl liblog-log4perl-perl libfile-readbackwards-perl libhttp-tiny-perl libfile-rsync-perl moreutils
+libdancer-perl libproc-daemon-perl libjson-perl libconfig-json-perl libproc-processtable-perl libfile-slurp-perl libmoo-perl libhash-merge-simple-perl liblog-log4perl-perl libfile-readbackwards-perl libhttp-tiny-perl libfile-rsync-perl libanyevent-perl liblinux-inotify2-perl moreutils
 
