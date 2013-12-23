@@ -470,10 +470,12 @@ sub run_stop {
       }
       
       # log dvswitch start or device connecting 
-      unless ($device->{type} eq "mixer") {
-        $logger->info("Connect $device->{id} to DVswitch");
-      } else {
+      if ($device->{type} eq "mixer") {
         $logger->info("Starting DVswitch");
+      } elsif ($device->{type} eq "internal") {
+        $logger->info("Starting $device->{id}");
+      } else {
+        $logger->info("Connect $device->{id} to DVswitch");
       }
       
       # build daemon option
