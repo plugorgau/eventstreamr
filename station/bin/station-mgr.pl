@@ -225,6 +225,12 @@ while ($daemons->{main}{run}) {
     }
   }
 
+  # Post a hearbeat to the controller/mixer
+  if ((time % 10) == 0) {
+    $logger->debug("Heartbeat!") if ($logger->is_debug());
+    $self->{heartbeat} = time;
+    post_config();
+  }
   sleep 1;
 }
 
@@ -277,6 +283,7 @@ sub post_config {
   $status->{status} = $self->{status};
   $status->{macaddress} = $self->{config}{macaddress};
   $status->{nickname} = $self->{config}{nickname};
+  $status->{heartbeat} = $self->{heartbeat};
 
   # Status Post Data
   $json = to_json($status);
