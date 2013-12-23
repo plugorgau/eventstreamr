@@ -554,7 +554,7 @@ sub run_stop {
   }
 
   # Set device back to running if a restart was triggered
-  if ($self->{config}{device_control}{$device->{id}}{run} == 2) {
+  if ($self->{config}{device_control}{$device->{id}}{run} == 2 && ! $self->{device_control}{$device->{id}}{running}) {
     # Log
     $logger->info("Restarting $device->{id}");
     
