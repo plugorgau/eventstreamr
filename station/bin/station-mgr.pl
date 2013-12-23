@@ -398,14 +398,6 @@ sub run_stop {
   my ($device) = @_;
   my $time = time;
 
-  # Set initial status if not defined
-  if (! defined $self->{status}{$device->{id}}) {
-    $logger->debug("Setting initial status information for $device->{id}") if ($logger->is_debug());
-    $self->{status}{$device->{id}}{running} = undef;
-    $self->{status}{$device->{id}}{status} = undef;
-    $self->{status}{$device->{id}}{state} = undef;
-  }
-
   # Build command for execution and save it for future use
   unless ($self->{device_commands}{$device->{id}}{command}) {
     given ($device->{role}) {
@@ -456,7 +448,7 @@ sub run_stop {
         $self->{device_control}{$device->{id}}{runcount} = 0;
 
         $self->{status}{$device->{id}}{running} = 0;
-        $self->{status}{$device->{id}}{status} = "failed_start";
+        $self->{status}{$device->{id}}{status} = "starting";
         $self->{status}{$device->{id}}{state} = "soft";
         $self->{status}{$device->{id}}{type} = $device->{type};
         $self->{status}{$device->{id}}{timestamp} = $self->{device_control}{$device->{id}}{timestamp};
@@ -472,8 +464,10 @@ sub run_stop {
       # Increase runcount
       $self->{device_control}{$device->{id}}{runcount}++;
       my $age = $time - $self->{device_control}{$device->{id}}{timestamp};
-      $logger->warn("$device->{id} failed to start (count=$self->{device_control}{$device->{id}}{runcount}, died=$age secs ago)");
-      post_config();
+      if ($age > 1) {
+        $logger->warn("$device->{id} failed to start (count=$self->{device_control}{$device->{id}}{runcount}, died=$age secs ago)");
+        post_config();
+      }
       
       # log dvswitch start or device connecting 
       unless ($device->{type} eq "mixer") {
