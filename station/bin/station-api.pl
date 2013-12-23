@@ -28,29 +28,31 @@ our $status;
 # routes
 get '/settings/:mac' => sub {
   my $data->{mac} = params->{mac};
-  # status 200 config exists
-  # status 204 config not exists
-  $data->{config} = $self->{config};
-  $data->{result} = '200';
+  if ($data->{mac} == $self->{config}{macaddress}) {
+    $data->{config} = $self->{config};
+  } else {
+    status '400';
+    return qq({"status":"invalid_mac"});
+  }
+  header 'Access-Control-Allow-Origin' => '*';
   return $data;
 };
 
 get '/settings' => sub {
   my $data->{config} = $self->{config};
-  $data->{result} = '200';
+  header 'Access-Control-Allow-Origin' => '*';
   return $data;
 };
 
 get '/dump' => sub {
-  my $data->{dump} = $self;
-  $data->{result} = '200';
+  my $data = $self;
   return $data;
 };
 
 get '/devices' => sub {
   my $result;
   $result->{devices} = $devices->all();
-  $result->{result} = 200;
+  header 'Access-Control-Allow-Origin' => '*';
   return $result;
 };
 
@@ -60,9 +62,10 @@ post '/settings/:mac' => sub {
   if ($data->{mac} == $self->{config}{macaddress}) {
     debug($data);
     kill '10', $self->{config}{manager}{pid}; 
-    return qq({"result":"200"});
+    return;
   } else {
-    return qq({"result":"400"});
+    status '400';
+    return qq({"status":"invalid_mac"});
   }
 };
 
@@ -73,11 +76,12 @@ get '/command/:command' => sub {
     when ("stop")     { $self->{config}{run} = 0; }
     when ("start")    { $self->{config}{run} = 1; }
     when ("restart")  { $self->{config}{run} = 2; }
-    default { return qq({"result":"400", "status":"unkown command"}); }
+    default { status '400'; return qq("status":"unkown command"}); }
   }
 
   kill '10', $self->{config}{manager}{pid}; 
-  return qq({"result":"200"});
+  header 'Access-Control-Allow-Origin' => '*';
+  return;
 };
 
 post '/command/:command' => sub {
@@ -88,10 +92,10 @@ post '/command/:command' => sub {
     when ("stop")     { $self->{config}{device_control}{$data->{id}}{run} = 0; }
     when ("start")    { $self->{config}{device_control}{$data->{id}}{run} = 1; }
     when ("restart")  { $self->{config}{device_control}{$data->{id}}{run} = 2; }
-    default { return qq({"result":"400", "status":"unkown command"}); }
+    default { status '400'; return qq("status":"unkown command"}); }
   }
   kill '10', $self->{config}{manager}{pid}; 
-  return qq({"result":"200"});
+  return;
 };
 
 get '/log/manager' => sub {
@@ -107,10 +111,11 @@ get '/log/manager' => sub {
   }
 
   if ($log[0]) {
-    $result->{result} = 200;
     @{$result->{log}} = @log;
+    header 'Access-Control-Allow-Origin' => '*';
   } else {
-    $result->{result} = 400
+    status '400';
+    return;
   }
 
   return $result;
@@ -143,7 +148,7 @@ post '/internal/settings' => sub {
   $self = $data;
   info("Config data posted");
   debug($self);
-  return qq({"result":"200"});
+  return;
 };
 
 get '/internal/settings' => sub {
