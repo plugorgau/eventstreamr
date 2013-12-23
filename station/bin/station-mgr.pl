@@ -8,6 +8,7 @@ use JSON; # libjson-perl
 use Config::JSON; # libconfig-json-perl
 use HTTP::Tiny; # libhttp-tiny-perl
 use Log::Log4perl; # liblog-log4perl-perl
+use POSIX qw(strftime);
 use File::Path qw(make_path);
 use feature qw(switch);
 use Getopt::Long;
@@ -80,6 +81,7 @@ $self->{commands} = $commands->{config};
 $self->{dvswitch}{check} = 1; # check until dvswitch is found
 $self->{dvswitch}{running} = 0;
 $self->{settings} = $localconfig;
+$self->{date} = strftime "%Y%m%d", localtime;
 if ($self->{config}{run} == 2) {$self->{config}{run} = 1;}
 
 # Logging
@@ -232,6 +234,11 @@ while ($daemons->{main}{run}) {
   #  $self->{heartbeat} = time;
   #  post_config();
   #}
+  
+  # Update date if it's changed - I wonder if there is a better way to trigger this? Cron (requires more OS config)?
+  unless ( $self->{date} == strftime "%Y%m%d", localtime) {
+    $self->{date} = strftime "%Y%m%d", localtime;
+  }
   sleep 1;
 }
 
@@ -284,7 +291,8 @@ sub post_config {
   $status->{status} = $self->{status};
   $status->{macaddress} = $self->{config}{macaddress};
   $status->{nickname} = $self->{config}{nickname};
-  $status->{heartbeat} = $self->{heartbeat};
+  # Uncomment for heartbeat
+  #$status->{heartbeat} = $self->{heartbeat};
 
   # Status Post Data
   $json = to_json($status);
@@ -418,12 +426,21 @@ sub stream {
 ## Record
 sub record {
   my $device;
-  unless(-d "$self->{config}{record_path}") {
-    make_path("$self->{config}{record_path}");
-  }
   $device->{role} = "record";
   $device->{id} = "record";
   $device->{type} = "record";
+
+  # Get path (date + room)
+  unless ($self->{config}{device_control}{$device->{id}}{recordpath}) {
+    $self->{config}{device_control}{$device->{id}}{recordpath} = set_path($self->{config}{record_path});
+    $logger->info("Path for $device->{id}: $self->{config}{device_control}{$device->{id}}{recordpath}");
+  }
+
+  # Create the path if it doesn't exist
+  unless(-d "$self->{config}{device_control}{$device->{id}}{recordpath}") {
+    make_path("$self->{config}{device_control}{$device->{id}}{recordpath}") or $logger->warn("Could not create path $!");
+    $logger->info("Path for $device->{id}: $self->{config}{device_control}{$device->{id}}{recordpath}");
+  }
   run_stop($device);
   return;
 }
@@ -664,7 +681,7 @@ sub record_command {
                     host      => $self->{config}{mixer}{host},
                     port      => $self->{config}{mixer}{port},
                     room      => $self->{config}{room},
-                    path      => $self->{config}{record_path},
+                    path      => $self->{config}{device_control}{$id}{recordpath},
                   );
 
   $command =~ s/\$(\w+)/$cmd_vars{$1}/g;
@@ -690,6 +707,18 @@ sub stream_command {
   return $command;
 } 
 
+sub set_path {
+  my ($path) = @_;
+  my %path_vars =  ( 
+                    room    => $self->{config}{room},
+                    date    => $self->{date},
+                  );
+
+  $path =~ s/\$(\w+)/$path_vars{$1}/g;
+
+  return $path;
+} 
+
 # Get Mac Address
 sub getmac {
   # This is better, but can break if no eth0. We are only using it as a UID - think of something better.
@@ -706,7 +735,7 @@ sub blank_station {
     ],
   "nickname" : "",
   "room" : "",
-  "record_path" : "",
+  "record_path" : "/tmp/\$room/\$date",
   "mixer" :
     {
       "port":"1234",
