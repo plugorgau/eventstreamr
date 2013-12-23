@@ -449,7 +449,7 @@ sub run_stop {
       }
       when ("record")   { 
         $self->{device_commands}{$device->{id}}{command} = record_command($device->{id},$device->{type}); 
-        $logger->inf("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}");
+        $logger->info("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}");
       }
     }
   }
