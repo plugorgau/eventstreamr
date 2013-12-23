@@ -133,6 +133,7 @@ post '/status/:mac' => sub {
   my $mac = params->{mac};
   my $data = from_json(request->body);
   $status->{status}{$mac} = $data;
+  ($status->{status}{$mac}{address},$status->{status}{$mac}{port}) = split(':', request->host);
   return;
 };
 
