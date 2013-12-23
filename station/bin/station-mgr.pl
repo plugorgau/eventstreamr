@@ -234,9 +234,9 @@ while ($daemons->{main}{run}) {
 
 sub sig_exit {
       $logger->info("manager exiting...");
-      $self->{config}{run} = 0;
       $daemons->{main}{run} = 0;
       $daemon->Kill_Daemon($self->{device_control}{api}{pid}); 
+      $daemon->Kill_Daemon($self->{device_control}{dvmon}{pid}); 
 }
 
 sub sig_pipe {
@@ -430,19 +430,19 @@ sub run_stop {
     given ($device->{role}) {
       when ("ingest")   { 
         $self->{device_commands}{$device->{id}}{command} = ingest_commands($device->{id},$device->{type});
-        $logger->debug("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}") if ($logger->is_debug());
+        $logger->info("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}");
       }
       when ("mixer")    { 
         $self->{device_commands}{$device->{id}}{command} = mixer_command(); 
-        $logger->debug("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}") if ($logger->is_debug());
+        $logger->info("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}");
       }
       when ("stream")   { 
         $self->{device_commands}{$device->{id}}{command} = stream_command($device->{id},$device->{type}); 
-        $logger->debug("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}") if ($logger->is_debug());
+        $logger->info("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}");
       }
       when ("record")   { 
         $self->{device_commands}{$device->{id}}{command} = record_command($device->{id},$device->{type}); 
-        $logger->debug("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}") if ($logger->is_debug());
+        $logger->inf("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}");
       }
     }
   }
