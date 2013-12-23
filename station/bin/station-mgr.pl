@@ -225,12 +225,13 @@ while ($daemons->{main}{run}) {
     }
   }
 
-  # Post a hearbeat to the controller/mixer
-  if ((time % 10) == 0) {
-    $logger->debug("Heartbeat!") if ($logger->is_debug());
-    $self->{heartbeat} = time;
-    post_config();
-  }
+  # Uncomment to enable heartbeat
+  ## Post a hearbeat to the controller/mixer
+  #if ((time % 10) == 0) {
+  #  $logger->debug("Heartbeat!") if ($logger->is_debug());
+  #  $self->{heartbeat} = time;
+  #  post_config();
+  #}
   sleep 1;
 }
 
