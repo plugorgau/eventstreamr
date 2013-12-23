@@ -353,8 +353,35 @@ sub dvmon {
 sub ingest {
   if ($self->{dvswitch}{running} == 1) {
     foreach my $device (@{$self->{config}{devices}}) {
+      # Set Role
       $device->{role} = "ingest";
-      run_stop($device);
+
+      if ($device->{type} eq "dv") {
+        # Check dv exists
+        if (-e $self->{devices}{dv}{$device->{id}}{path}) {
+          run_stop($device);
+        # If we're restarting we should refresh the devices and try again
+        } elsif ($self->{config}{device_control}{$device->{id}}{run} == 1) {
+          $logger->warn("$device->{id} has been disconnected");
+          # It's not ideal, but dvgrab hangs if no camera exist. dvmon will restart it when it's plugged in again.
+          $self->{config}{device_control}{$device->{id}}{run} = 0;
+          run_stop($device);
+
+          # Set status
+          $self->{device_control}{$device->{id}}{timestamp} = time;
+          $self->{status}{$device->{id}}{running} = 0;
+          $self->{status}{$device->{id}}{status} = "disconnected";
+          $self->{status}{$device->{id}}{state} = "hard";
+          post_config();
+        } elsif ($self->{config}{device_control}{$device->{id}}{run} == 2) {
+          $logger->warn("$device->{id} has been restarted, refreshing devices");
+          $self->{devices} = $devices->all();
+          post_config();
+          run_stop($device);
+        } 
+      } else {
+        run_stop($device);
+      }
     }
   }
   return;
@@ -461,14 +488,6 @@ sub run_stop {
         return;
       }
 
-      # Increase runcount
-      $self->{device_control}{$device->{id}}{runcount}++;
-      my $age = $time - $self->{device_control}{$device->{id}}{timestamp};
-      if ($age > 1) {
-        $logger->warn("$device->{id} failed to start (count=$self->{device_control}{$device->{id}}{runcount}, died=$age secs ago)");
-        post_config();
-      }
-      
       # log dvswitch start or device connecting 
       if ($device->{type} eq "mixer") {
         $logger->info("Starting DVswitch");
@@ -500,6 +519,23 @@ sub run_stop {
       $state = $utils->get_pid_command($device->{id},$self->{device_commands}{$device->{id}}{command},$device->{type}); 
       $logger->debug({filter => \&Data::Dumper::Dumper,
                       value  => $state}) if ($logger->is_debug());
+      
+      # Increase runcount
+      $self->{device_control}{$device->{id}}{runcount}++;
+      my $age = $time - $self->{device_control}{$device->{id}}{timestamp};
+      if ($age > 1 && ! $state->{running}) {
+        # Log!
+        $logger->warn("$device->{id} failed to start (count=$self->{device_control}{$device->{id}}{runcount}, died=$age secs ago)");
+
+        # Refresh devices
+        $self->{devices} = $devices->all();
+        
+        # Force command rebuild
+        $self->{device_commands}{$device->{id}}{command} = undef;
+
+        # post to the api/controller
+        post_config();
+      }
     }
     
     # If state has changed set it and post the config
@@ -517,7 +553,7 @@ sub run_stop {
         $self->{status}{$device->{id}}{running} = 1;
         $self->{status}{$device->{id}}{status} = "started";
         $self->{status}{$device->{id}}{state} = "hard";
-        $self->{device_control}{$device->{id}}{timestamp} = undef;
+        $self->{device_control}{$device->{id}}{timestamp} = $time;
       } else {
         $self->{status}{$device->{id}}{running} = 0;
         $self->{status}{$device->{id}}{status} = "stopped";
@@ -556,7 +592,17 @@ sub run_stop {
     
     # Set run back to running
     $self->{config}{device_control}{$device->{id}}{run} = 1;
+
+    # Reset Run Count and timestamp
+    $self->{device_control}{$device->{id}}{timestamp} = $time;
+    $self->{device_control}{$device->{id}}{runcount} = 0;
     
+    # Force command rebuild
+    $self->{device_commands}{$device->{id}}{command} = undef;
+        
+    # Refresh devices
+    $self->{devices} = $devices->all();
+        
     # Set device status
     $self->{status}{$device->{id}}{status} = "restarting";
     $self->{status}{$device->{id}}{state} = "hard";
