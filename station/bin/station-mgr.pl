@@ -8,8 +8,9 @@ use JSON; # libjson-perl
 use Config::JSON; # libconfig-json-perl
 use HTTP::Tiny; # libhttp-tiny-perl
 use Log::Log4perl; # liblog-log4perl-perl
-use POSIX qw(strftime);
+use POSIX;
 use File::Path qw(make_path);
+use File::Basename;
 use feature qw(switch);
 use Getopt::Long;
 use Data::Dumper;
@@ -31,6 +32,15 @@ $SIG{PIPE} = \&sig_pipe;
 $SIG{CHLD} = 'IGNORE';
 $SIG{USR1} = \&get_config;
 $SIG{USR2} = \&post_config;
+
+# POSIX unmasks the sigprocmask properly
+my $sigset = POSIX::SigSet->new();
+my $action = POSIX::SigAction->new( 'self_update',
+                                    $sigset,
+                                    &POSIX::SA_NODEFER);
+POSIX::sigaction(&POSIX::SIGHUP, $action);
+
+#$SIG{HUP} = \&self_update;
 
 our $daemon = Proc::Daemon->new(
   work_dir => "$Bin/../",
@@ -255,6 +265,19 @@ sub sig_exit {
 
 sub sig_pipe {
     $logger->debug( "caught SIGPIPE" ) if ( $logger->is_debug() );
+}
+
+sub self_update {
+  $logger->info("Performing self update");
+  $logger->debug("Update host: $Bin/../../baseimage/update-host.sh") if ($logger->is_debug());
+  system("$Bin/../../baseimage/update-host.sh");
+  sig_exit();
+  my $options;
+  $options = "--debug" if $DEBUG;
+  $options = "$options --no-daemon" unless $DAEMON;
+  my $script = File::Basename::basename($0);
+  $logger->debug("Restart Manger: $Bin/$script $options") if ($logger->is_debug());
+  exec("$Bin/$script $options") or $logger->logdie("Couldn't restart: $!");
 }
 
 sub print_usage {

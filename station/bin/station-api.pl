@@ -98,7 +98,14 @@ post '/command/:command' => sub {
   return;
 };
 
-get '/log/manager' => sub {
+# Trigger Station Manager to update itself
+get '/manager/update' => sub {
+  info("triggering update");
+  kill 'HUP', $self->{config}{manager}{pid};
+  return;
+};
+
+get '/manager/logs' => sub {
   my @log;
   my $count = 0;
   my $result;
