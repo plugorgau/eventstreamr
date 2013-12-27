@@ -135,10 +135,25 @@ api();
 $logger->info("Registering with controller $localconfig->{controller}/$self->{config}{macaddress}");
 my $response =  $http->post("$localconfig->{controller}/$self->{config}{macaddress}");
 
-# Controller responds with created 201, now we can ask for a blank config
+# Controller responds with created 201, post our config 
 if ($response->{status} == 201) {
-  $logger->info("Getting config $localconfig->{controller}/$self->{config}{macaddress}");
-  $response =  $http->get("$localconfig->{controller}/$self->{config}{macaddress}");
+  $logger->info("Posting config $localconfig->{controller}");
+  
+  # Status Post Data
+  my $json = to_json($self->{config});
+  my %post_data = ( 
+        content => $json, 
+        'content-type' => 'application/json', 
+        'content-length' => length($json),
+  );
+
+  $response =  $http->post("$localconfig->{controller}", \%post_data);
+  
+  $logger->debug({filter => \&Data::Dumper::Dumper,
+                  value  => $response}) if ($logger->is_debug());
+
+  # Controller logic currently not setup for this. Will make more sane after more work there. 
+  $response->{content} = $json if ($response->{status} == 200);
 }
 
 
