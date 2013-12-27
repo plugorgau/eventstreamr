@@ -26,6 +26,13 @@ our $self;
 our $status;
 
 # routes
+get '/dump' => sub {
+  my $data = $self;
+  return $data;
+};
+
+# ----- Settings/Details -------------------------------------------------------
+# MAC confirm, returns settings if correct
 get '/settings/:mac' => sub {
   my $data->{mac} = params->{mac};
   if ($data->{mac} == $self->{config}{macaddress}) {
@@ -38,24 +45,14 @@ get '/settings/:mac' => sub {
   return $data;
 };
 
+# Returns settings
 get '/settings' => sub {
   my $data->{config} = $self->{config};
   header 'Access-Control-Allow-Origin' => '*';
   return $data;
 };
 
-get '/dump' => sub {
-  my $data = $self;
-  return $data;
-};
-
-get '/devices' => sub {
-  my $result;
-  $result->{devices} = $devices->all();
-  header 'Access-Control-Allow-Origin' => '*';
-  return $result;
-};
-
+# Updates config if mac matches
 post '/settings/:mac' => sub {
   my $data->{mac} = params->{mac};
   $data->{body} = request->body;
@@ -69,6 +66,16 @@ post '/settings/:mac' => sub {
   }
 };
 
+# Returns attached devices
+get '/devices' => sub {
+  my $result;
+  $result->{devices} = $devices->all();
+  header 'Access-Control-Allow-Origin' => '*';
+  return $result;
+};
+
+# ----- Station Control Commands -----------------------------------------------
+# Stop/Start/Restart All
 get '/command/:command' => sub {
   my $command = params->{command};
 
@@ -84,6 +91,7 @@ get '/command/:command' => sub {
   return;
 };
 
+# Post JSON content to restart an individual device eg: {"id":"dvswitch"}
 post '/command/:command' => sub {
   my $command = params->{command};
   my $data = from_json(request->body);
@@ -98,6 +106,7 @@ post '/command/:command' => sub {
   return;
 };
 
+# ----- Station System Commands + Info -----------------------------------------
 # Trigger Station Manager to update itself
 get '/manager/update' => sub {
   info("triggering update");
@@ -128,6 +137,7 @@ get '/manager/logs' => sub {
   return $result;
 };
 
+# ----- Station Information ----------------------------------------------------
 # Status Information
 get '/status' => sub {
   my $result;
@@ -149,6 +159,7 @@ post '/status/:mac' => sub {
   return;
 };
 
+# ----- Manager/Api Internal Comms ---------------------------------------------
 # Internal Communication with Manager
 post '/internal/settings' => sub {
   my $data = from_json(request->body);
