@@ -11,6 +11,7 @@
 #
 # By default this script does nothing.
 
+sleep 5
 export EVENTSTREAMR="/home/av/eventstreamr"
 export DISPLAY=":0"
 su - av -c "cd $EVENTSTREAMR/baseimage; ./update-wallpaper.sh"
