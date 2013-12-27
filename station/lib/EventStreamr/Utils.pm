@@ -29,6 +29,17 @@ sub port {
   return $state;
 }
 
+sub get_pid_state {
+  my $self = shift;
+  my ($pid) = @_;
+  my $return;
+  
+  $return->{pid} = $pid; 
+  $return->{running} = kill 0, $pid;
+
+  return $return;
+}
+
 sub get_pid_command {
   my $self = shift;
   my ($id,$command,$type) = @_;
