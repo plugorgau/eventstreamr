@@ -1,11 +1,15 @@
 #!/bin/bash
 
 homedir="/home/av"
-confdir="$homedir/eventstreamr/baseimage"
-ctrl_settings="$homedir/eventstreamr/station/settings.json"
+esdir="$homedir/eventstreamr"
+confdir="$esdir/baseimage"
+ctrl_settings="$esdir/station/settings.json"
 
 # update git repo
 cd $confdir; 
 git pull
+
+# make sure we have all our dependencies
+sudo apt-get install -y `cat $esdir/package.deps`
 
 exit 0

@@ -161,9 +161,9 @@ rm -f $homedir/Desktop/*
 
 echo "- writing controller config"
 echo "{
-   \"controller\" : \"$controller\",
-   \"logpath\" : \"/tmp/station-mgr.log\",
+   \"controller\" : \"http://$controller:5001/api/station\"
 }" > $ctrl_settings
+chown av.av $ctrl_settings
 
 echo "- configuring networking"
 if [ "$ipaddress" = "<dhcp>" ]; then
