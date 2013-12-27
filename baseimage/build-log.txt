@@ -1,6 +1,7 @@
 2013-12-27:
     - packages: update
-    - packages: new: wmctrl, npm, nodejs-legacy
+    - packages: new: wmctrl, npm, nodejs-legacy, libfile-rsync-perl
+      libanyevent-perl, liblinux-inotify2-perl
     - installed bower: sudo npm install -g bower
     - allow passwordless reboot: /etc/sudoers.d/av-reboot:
       av ALL=(ALL) NOPASSWD: /sbin/shutdown

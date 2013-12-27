@@ -89,6 +89,9 @@
     - npm
     - wmctrl
     - nodejs-legacy
+    - libfile-rsync-perl 
+    - libanyevent-perl 
+    - liblinux-inotify2-perl
 
 
 - remove packages:
