@@ -114,6 +114,13 @@ get '/manager/update' => sub {
   return;
 };
 
+get '/manager/reboot' => sub {
+  info("triggering reboot");
+  system("sudo /sbin/shutdown -r -t 5 now &");
+  kill 'TERM', $self->{config}{manager}{pid};
+  return;
+};
+
 get '/manager/logs' => sub {
   my @log;
   my $count = 0;
