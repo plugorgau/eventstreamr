@@ -520,12 +520,7 @@ sub run_stop {
     # Get the running state + pid if it exists
     my $state;
     if ($self->{device_control}{$device->{id}}{pid}) {
-      my $pid = $daemon->Status($self->{device_control}{$device->{id}}{pid});
-      if ($pid) {
-        $state->{running} = 1;
-      } else {
-        $state->{running} = 0;
-      }
+      $state = $utils->get_pid_state($self->{device_control}{$device->{id}}{pid}); 
     } else {
       $state = $utils->get_pid_command($device->{id},$self->{device_commands}{$device->{id}}{command},$device->{type}); 
     }
@@ -603,7 +598,8 @@ sub run_stop {
     
     # If state has changed set it and post the config
     if (! defined $self->{device_control}{$device->{id}}{running} || 
-      ($self->{device_control}{$device->{id}}{running} != $state->{running})) {
+      ($self->{device_control}{$device->{id}}{running} != $state->{running} ||
+      $self->{device_control}{$device->{id}}{pid} != $state->{pid})) {
       # Log
       $logger->debug("$device->{id} has changed state");
 
