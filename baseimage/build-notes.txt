@@ -86,6 +86,9 @@
     - libfile-readbackwards-perl
     - libhttp-tiny-perl
 	- moreutils
+    - npm
+    - wmctrl
+    - nodejs-legacy
 
 
 - remove packages:

@@ -1,3 +1,11 @@
+2013-12-27:
+    - packages: update
+    - packages: new: wmctrl, npm, nodejs-legacy
+    - installed bower: sudo npm install -g bower
+    - allow passwordless reboot: /etc/sudoers.d/av-reboot:
+      av ALL=(ALL) NOPASSWD: /sbin/shutdown
+    - firefox: about:config dom.allow_scripts_close_windows: true
+
 2013-12-14:
     - packages: update
     - packages: add new eventstreamr reqs
