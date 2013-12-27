@@ -4,10 +4,14 @@ homedir="/home/av"
 esdir="$homedir/eventstreamr"
 confdir="$esdir/baseimage"
 ctrl_settings="$esdir/station/settings.json"
+gitdone=$1
 
-# update git repo
-cd $confdir; 
-git pull
+# update git on first pass and re-exec in case this script has changed!
+if [ -z "$gitdone" ]; then
+    cd $confdir; 
+    git pull
+    exect $0 gitdone
+fi
 
 # make sure we have all our dependencies
 sudo apt-get install -y `cat $esdir/package.deps`
