@@ -10,7 +10,7 @@ gitdone=$1
 if [ -z "$gitdone" ]; then
     cd $confdir; 
     git pull
-    exect $0 gitdone
+    exec $0 gitdone
 fi
 
 # make sure we have all our dependencies
