@@ -96,7 +96,7 @@ exports.getDocument = function(req, res) {
 exports.registerStation = function(req, res) {
   db.get('stations', { 'settings.mac': req.params.mac }, function (error, doc) {
     if (doc === null) {
-      var station = new Station({macaddress: req.params.macaddress})
+      var station = new Station({macaddress: req.params.mac})
       storeStation(station, req.ip, function(error, success) {
         if (success) {
           res.send(201)
