@@ -473,12 +473,33 @@ sub record {
     $self->{config}{device_control}{$device->{id}}{recordpath} = set_path($self->{config}{record_path});
     $logger->info("Path for $device->{id}: $self->{config}{device_control}{$device->{id}}{recordpath}");
   }
-
+  
   # Create the path if it doesn't exist
   unless(-d "$self->{config}{device_control}{$device->{id}}{recordpath}") {
-    make_path("$self->{config}{device_control}{$device->{id}}{recordpath}") or $logger->warn("Could not create path $!");
-    $logger->info("Path for $device->{id}: $self->{config}{device_control}{$device->{id}}{recordpath}");
+    my $result = eval { make_path("$self->{config}{device_control}{$device->{id}}{recordpath}") };
+    
+    if ($result) {
+      $logger->info("Path created for $device->{id}: $self->{config}{device_control}{$device->{id}}{recordpath}");
+    } else {
+
+      # if above threshold then slow down attempts to every 10 seconds
+      if ( $self->{device_control}{$device->{id}}{runcount} > 5 && (time % 10) != 0 ) {
+        return;
+      }
+
+      $logger->error("Path creation failed for $device->{id}: $self->{config}{device_control}{$device->{id}}{recordpath}");
+      
+      $self->{device_control}{$device->{id}}{runcount}++;
+      # Set device status
+      $self->{status}{$device->{id}}{running} = 0;
+      $self->{status}{$device->{id}}{status} = "not_writeable";
+      $self->{status}{$device->{id}}{state} = "hard";
+      post_config();
+      
+      return;
+    }
   }
+
   run_stop($device);
   return;
 }
