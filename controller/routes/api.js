@@ -4,24 +4,29 @@ var removeIp = function(ip) {
   db.updateRaw('stations', { ip: ip }, { $unset: { ip: true } }, {}, function () {});
 }
 
-var updateIp = function(mac, ip) {
-  db.updateRaw('stations', { "setings.mac": mac }, { $set: { ip: ip } }, {}, function () {});
+var updateIp = function(macaddress, ip) {
+  db.updateRaw('stations', { "settings.macaddress": macaddress }, { $set: { ip: ip } }, function () {});
 }
 
 var Station = function(request) {
-  var macaddress = (request.macaddress) ? request.macaddress.replace(/:\s*/g, "-") : null;
   if (request.roles && typeof request.roles == 'string') {
     request.roles = [request.roles]
   }
+  if (request.devices && typeof request.devices == 'string') {
+    request.devices = [request.devices]
+  }
   return {
-    macaddress: macaddress,
+    macaddress: request.macaddress,
     roles: request.roles || [],
     room: request.room,
-    nickname: request.nickname
+    devices: request.devices || [],
+    nickname: request.nickname,
+    record_path: request.record_path,
+    mixer: request.mixer
   }
 }
 
-var storeStation = function(settings, ip, callback) {
+var insertStation = function(settings, ip, callback) {
   var document = {
     ip: ip || null,
     settings: settings
@@ -29,20 +34,44 @@ var storeStation = function(settings, ip, callback) {
   db.insert('stations', document, callback)
 }
 
-exports.createStation = function(req, res) {
-  var station = new Station(req.body)
-  storeStation(station, null, function(error, success) {
-    if (error) {
-      res.send(500, error)
+var updateStation = function(settings, ip, callback) {
+  db.updateRaw('stations', { "settings.macaddress": settings.macaddress }, { $set: { "settings": settings } }, callback);
+}
+
+exports.storeStation = function(req, res) {
+  db.get('stations', { 'settings.macaddress': req.body.macaddress }, function (error, doc) {
+    if (req.headers['station-mgr']) {
+      ip = req.ip
+    } else {
+      ip = null
     }
-    if (success) {
-      res.send(true)
+
+    var station = new Station(req.body)
+    if (doc === null) {
+      insertStation(station, ip, function(error, success) {
+        if (error) {
+          res.send(500, error)
+        }
+        if (success) {
+          res.send(200, true)
+        }
+      })
+    }
+    if (doc) {
+      updateStation(station, ip, function(error, success) {
+        if (error) {
+          res.send(500, error)
+        }
+        if (success) {
+          res.send(200, true)
+        }
+      })
     }
   })
 }
 
 exports.deleteStation = function(req, res) {
-  db.remove('stations', {'_id': req.params.mac}, function(error, removed) {
+  db.remove('stations', {'_id': req.params.macaddress}, function(error, removed) {
     if (removed) {
       res.send(204, true)
     }
@@ -50,7 +79,7 @@ exports.deleteStation = function(req, res) {
 }
 
 var tablesDocLookups = {
-  stations: 'settings.mac',
+  stations: 'settings.macaddress',
 }
 
 var tableNames = Object.keys(tablesDocLookups)
@@ -94,10 +123,10 @@ exports.getDocument = function(req, res) {
 }
 
 exports.registerStation = function(req, res) {
-  db.get('stations', { 'settings.mac': req.params.mac }, function (error, doc) {
+  db.get('stations', { 'settings.macaddress': req.params.macaddress }, function (error, doc) {
     if (doc === null) {
-      var station = new Station({macaddress: req.params.mac})
-      storeStation(station, req.ip, function(error, success) {
+      var station = new Station({macaddress: req.params.macaddress})
+      insertStation(station, req.ip, function(error, success) {
         if (success) {
           res.send(201)
         }
@@ -106,7 +135,7 @@ exports.registerStation = function(req, res) {
     if (doc) {
       if (doc.ip !== req.ip) {
         removeIp(req.ip)
-        updateIp(req.params.mac, req.ip)
+        updateIp(req.params.macaddress, req.ip)
       }
       res.send(200, doc)
     }

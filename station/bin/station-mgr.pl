@@ -141,10 +141,13 @@ if ($response->{status} == 201) {
   
   # Status Post Data
   my $json = to_json($self->{config});
+  my %headers = (
+        'station-mgr' => 1,
+        'Content-Type' => 'application/json', 
+  );
   my %post_data = ( 
         content => $json, 
-        'content-type' => 'application/json', 
-        'content-length' => length($json),
+        headers => \%headers,
   );
 
   $response =  $http->post("$localconfig->{controller}", \%post_data);

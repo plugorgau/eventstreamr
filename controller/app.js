@@ -41,9 +41,9 @@ app.get('/admin', adminroutes.dashboard)
 app.get('/api/:db', api.listDb)
 app.get('/api/:db/:id', api.getDocument)
 
-app.post('/api/station', api.createStation)
-app.post('/api/station/:mac', api.registerStation)
-app.del('/api/station/:mac', api.deleteStation)
+app.post('/api/station', api.storeStation)
+app.post('/api/station/:macaddress', api.registerStation)
+app.del('/api/station/:macaddress', api.deleteStation)
 
 var server = http.createServer(app)
 var io = require('socket.io').listen(server)
