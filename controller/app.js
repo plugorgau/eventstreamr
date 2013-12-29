@@ -3,7 +3,6 @@
 /**
  * Module dependencies.
  */
-
 var express = require('express');
 var adminroutes = require('./routes/admin');
 var api = require('./routes/api');
@@ -30,8 +29,9 @@ app.use(app.router);
 app.use(express.static(path.join(__dirname, 'public')));
 
 // development only
-if ('development' == app.get('env')) {
+if ('development' == process.env.NODE_ENV) {
   app.use(express.errorHandler());
+  module.exports = app;
 }
 
 app.locals(config.event)

@@ -167,7 +167,7 @@ if ($response->{status} == 200 ) {
                   value  => $content}) if ($logger->is_debug());
 
   if (defined $content) {
-    $self->{config} = $content;
+    $self->{config} = $content->{settings};
     write_config();
   }
 

@@ -12,17 +12,17 @@ var Station = function(request) {
   if (request.roles && typeof request.roles == 'string') {
     request.roles = [request.roles]
   }
-  if (request.devices && typeof request.devices == 'string') {
-    request.devices = [request.devices]
-  }
   return {
     macaddress: request.macaddress,
     roles: request.roles || [],
     room: request.room,
     devices: request.devices || [],
     nickname: request.nickname,
-    record_path: request.record_path,
-    mixer: request.mixer
+    record_path: request.record_path || null,
+    mixer: request.mixer,
+    stream: request.stream || null,
+    run: request.run || 0,
+    device_control: request.device_control || null
   }
 }
 
@@ -40,6 +40,9 @@ var updateStation = function(settings, ip, callback) {
 
 exports.storeStation = function(req, res) {
   db.get('stations', { 'settings.macaddress': req.body.macaddress }, function (error, doc) {
+
+    // this needs fixing, if the controller sends config it blats the IP
+    // consider this temporary logic, there will be a better way.
     if (req.headers['station-mgr']) {
       ip = req.ip
     } else {
@@ -71,7 +74,7 @@ exports.storeStation = function(req, res) {
 }
 
 exports.deleteStation = function(req, res) {
-  db.remove('stations', {'_id': req.params.macaddress}, function(error, removed) {
+  db.remove('stations', {'settings.macaddress': req.params.macaddress}, function(error, removed) {
     if (removed) {
       res.send(204, true)
     }
@@ -104,7 +107,6 @@ exports.getDocument = function(req, res) {
   if (tableNames.indexOf(req.params.db) !== -1) {
     var query = {}
     query[tablesDocLookups[req.params.db]] = req.params.id;
-    console.log(query)
     db.get(req.params.db, query, function (error, doc) {
       if (error) {
         res.send(500, error)
