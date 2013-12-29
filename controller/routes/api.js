@@ -48,7 +48,7 @@ exports.storeStation = function(req, res) {
     } else {
       ip = null
     }
-
+    
     var station = new Station(req.body)
     if (doc === null) {
       insertStation(station, ip, function(error, success) {

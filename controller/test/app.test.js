@@ -41,7 +41,10 @@ describe('POST /api/station', function(){
             {
               "device_control" : {
                  "api" : {
-                    "run" : 1
+                    "run" : "1"
+                 },
+                 "dvmon" : {
+                    "run" : "1"
                  }
               },
               "devices" : "all",
@@ -52,7 +55,11 @@ describe('POST /api/station', function(){
               },
               "nickname" : "stationtest",
               "record_path" : "/tmp/$room/$date",
-              "roles" : [],
+              "roles" : [
+                { "role": "mixer" },
+                { "role": "record" },
+                { "role": "ingest" }
+              ],
               "room" : "",
               "run" : "0",
               "stream" : {
@@ -76,35 +83,36 @@ describe('GET /api/station/D0:FB:DB:D4:21:15', function(){
       .expect(200)
       .end(function(err, res) {
         console.log(res.body) // remove when all tests for current data built
+        // settings object
         res.body.should.have.property('settings').to.be.an('object')
+        // device control object
         res.body.settings.should.have.property('device_control').to.be.an('object')
         // Failing following test failing (something is wrong with the json return or parsing)
-        //res.body.settings.should.have.property('device_control').to.have.deep.property('device_control.api.run', '1');
-
-            //{
-            //  "device_control" : {
-            //     "api" : {
-            //        "run" : 1
-            //     }
-            //  },
-            //  "devices" : "all",
-            //  "macaddress" : "D0:FB:DB:D4:21:15",
-            //  "mixer" : {
-            //     "host" : "localhost",
-            //     "port" : "1234"
-            //  },
-            //  "nickname" : "stationtest",
-            //  "record_path" : "/tmp/$room/$date",
-            //  "roles" : [],
-            //  "room" : "",
-            //  "run" : "0",
-            //  "stream" : {
-            //     "host" : "1.2.3.4",
-            //     "password" : "password",
-            //     "port" : "1337",
-            //     "stream" : "test.ogg"
-            //  }
-            //}
+        //res.body.settings.should.have.property('device_control').to.have.deep.property('api.run', '1');
+        // devices
+        res.body.settings.should.have.property('devices').to.equal('all')
+        // mac address
+        res.body.settings.should.have.property('macaddress').to.equal('D0:FB:DB:D4:21:15')
+        // mixer object
+        res.body.settings.should.have.property('mixer').to.be.an('object')
+        res.body.settings.should.have.property('mixer').to.have.deep.property('host', 'localhost');
+        res.body.settings.should.have.property('mixer').to.have.deep.property('port', '1234');
+        // nickname
+        res.body.settings.should.have.property('nickname').to.equal('stationtest')
+        // record path
+        res.body.settings.should.have.property('record_path').to.equal('/tmp/$room/$date')
+        // roles array
+        res.body.settings.should.have.property('roles').to.be.an('array')
+        // room
+        res.body.settings.should.have.property('room').to.be.empty
+        // run
+        res.body.settings.should.have.property('run').to.be.equal('0')
+        // stream object
+        res.body.settings.should.have.property('stream').to.be.an('object')
+        res.body.settings.should.have.property('stream').to.have.deep.property('host', '1.2.3.4');
+        res.body.settings.should.have.property('stream').to.have.deep.property('password', 'password');
+        res.body.settings.should.have.property('stream').to.have.deep.property('port', '1337');
+        res.body.settings.should.have.property('stream').to.have.deep.property('stream', 'test.ogg');
 
         done();
       });
