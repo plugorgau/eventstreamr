@@ -1,6 +1,11 @@
+2013-12-29:
+    - packages (new): libfile-tail-perl
+    - mv sudoers file to "av"
+    - add /usr/bin/apt-get to NOPASSWD sudo cmd
+
 2013-12-27:
     - packages: update
-    - packages: new: wmctrl, npm, nodejs-legacy, libfile-rsync-perl
+    - packages (new): wmctrl, npm, nodejs-legacy, libfile-rsync-perl
       libanyevent-perl, liblinux-inotify2-perl
     - installed bower: sudo npm install -g bower
     - allow passwordless reboot: /etc/sudoers.d/av-reboot:
