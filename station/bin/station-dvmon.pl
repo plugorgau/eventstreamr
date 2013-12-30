@@ -16,9 +16,9 @@ my $log = File::Tail->new(name => "/var/log/syslog", maxinterval=>1, );
 
 while(defined(my $line=$log->read)) {
   # Perform action on device created logs
-  if ($line =~ m/firewire_core: created device/i) {
+  if ($line =~ m/firewire_core.+: created device/i) {
     # Extract the GUID
-    $line =~ /.+].firewire_core:.created.device.fw\d+:.GUID.(?<guid>.+),.*/ix;
+    $line =~ /.+].firewire_core.+:.created.device.fw\d+:.GUID.(?<guid>.+),.*/ix;
     my $guid = $+{guid};
 
     # Load DV devices
