@@ -2,27 +2,18 @@
 
 {
    "device_control" : {},
-   "devices" : [
-	{
-		"name": "standby loop",
-		"type": "file",
-		"id": "/home/av/eventstreamr/baseimage/video/standby.dv"
-	},
+   "devices" : "all",
+   "device_control" : 
     {
-        "name": "USB audio mixer input",
-        "type": "alsa",
-        "id": "1"
-    }
-   ],
+      "video0" : {"run":"0"},
+    },
    "mixer" : {
-      "host" : "localhost",
+      "host" : "CHANGEME",
       "port" : "1234"
    },
    "nickname" : "CHANGEME",
    "record_path" : "/localbackup/$room/$date",
    "roles" : [
-	{ "role": "mixer" },
-	{ "role": "record" },
 	{ "role": "ingest" }
    ],
    "room" : "CHANGEME",
