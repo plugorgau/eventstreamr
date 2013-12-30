@@ -1,4 +1,0 @@
-{"ip":"127.0.0.1","settings":{"macaddress":"00:15:58:D8:85:C7","roles":[],"room":"","devices":["all"],"nickname":"","record_path":"/tmp/$room/$date","mixer":{"host":"localhost","port":"1234"}},"_id":"zIwSqXxHg5ThWFy2"}
-{"ip":"127.0.0.1","settings":{"macaddress":"D0:FB:DB:D4:21:15","roles":[],"devices":[],"record_path":null,"stream":null,"run":0,"device_control":null},"_id":"ov0piDpu5TGIRJT0"}
-{"ip":"127.0.0.1","settings":{"macaddress":"D0:FB:DB:D4:21:15","roles":[],"room":"","devices":"all","nickname":"stationtest","record_path":"/tmp/$room/$date","mixer":{"host":"localhost","port":"1234"},"stream":{"host":"1.2.3.4","password":"password","port":"1337","stream":"test.ogg"},"run":"0","device_control":{"api":{"run":1}}},"_id":"ov0piDpu5TGIRJT0"}
-{"$$deleted":true,"_id":"ov0piDpu5TGIRJT0"}
