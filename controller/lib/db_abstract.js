@@ -27,12 +27,15 @@ exports.insert = function(table, document, callback) {
 }
 
 exports.remove = function(table, query, callback) {
-  db[table].remove(query, {}, function(error, success) {
-    if (error) callback(err)
-    if (success) {
-      feed.emit('change', {type: 'remove', content: query._id})
-      callback(null, success)
-    }
+  db[table].findOne(query, function(error, original) {
+    var id = original._id
+    db[table].remove(query, {}, function(error, success) {
+      if (error) callback(err)
+      if (success) {
+        feed.emit('change', {type: 'remove', content: id})
+        callback(null, success)
+      }
+    })
   })
 }
 
@@ -40,7 +43,9 @@ exports.update = function(table, query, partial, callback)  {
   db[table].update(query, { $set: partial }, {}, function(error, success) {
     if (error) callback(err)
     if (success) {
-      feed.emit('change', {type: 'update', content: success})
+      db[table].findOne(query, function(error, original) {
+        feed.emit('change', {type: 'update', content: original})
+      })
       callback(null, success)
     }
   })
@@ -50,7 +55,9 @@ exports.updateRaw = function(table, query, partial, callback) {
   db[table].update(query, partial, {}, function(error, success) {
     if (error) callback(err)
     if (success) {
-      feed.emit('change', {type: 'update', content: success})
+      db[table].findOne(query, function(error, original) {
+        feed.emit('change', {type: 'update', content: original})
+      })
       callback(null, success)
     }
   })
@@ -64,10 +71,10 @@ exports.list = function(table, query, callback) {
   db[table].find(query, callback)
 }
 
-feed.on('change', function(content) {
+feed.on('change', function(info) {
   request.post({
     uri: 'http://localhost:5001/feed',
-    json: content
+    json: info
   }, function(error) {
     if (error) {
       console.log(error)

@@ -99,8 +99,8 @@ exports.deleteStation = function(req, res) {
 
 var tablesDocLookups = {
   stations: {
-    requestId: 'macaddress',
-    queryId: 'settings.macaddress'
+    valueKey: 'macaddress',
+    key: 'settings.macaddress'
   }
 }
 
@@ -126,13 +126,13 @@ exports.getDocument = function(req, res) {
   if (tableNames.indexOf(req.params.db) !== -1) {
     var query = {}
     var tableInfo = tablesDocLookups[req.params.db]
-    query[tableInfo.queryId] = req.params[tableInfo.requestId];
+    query[tableInfo.key] = req.params.id;
     db.get(req.params.db, query, function (error, doc) {
       if (error) {
         res.send(500, error)
       }
       if (doc === null) {
-        res.send(204)
+        res.send(404, tableInfo)
       }
       if (doc) {
         res.send(200, doc)
@@ -148,17 +148,21 @@ exports.partial = function(req, res) {
   if (tableNames.indexOf(req.params.db) !== -1) {
     var query = {}
     var tableInfo = tablesDocLookups[req.params.db]
-    query[tableInfo[req.params.db].queryId] = req.params[tableInfo.requestId];
+    query[tableInfo.key] = req.params.id;
     
     partial = {}
-    partial[req.params.key] = req.params.id
+    partial[req.body.key] = req.body.value
     
     db.update(req.params.db, query, partial, function (error, doc) {
+      console.log(doc)
       if (error) {
         res.send(500)
       }
       if (doc) {
-        res.send(200, doc)
+        res.send(200, partial)
+      }
+      if (!error && !doc) {
+        res.send(404)
       }
     })
   }  

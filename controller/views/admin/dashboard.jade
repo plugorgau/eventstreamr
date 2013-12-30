@@ -49,12 +49,9 @@ block content
             button.btn.btn-default.btn-xs.pull-right(data-bind="click: removeStation", title="Forget Station")
               small
                i.glyphicon.glyphicon-remove
-            button.btn.btn-default.btn-xs.pull-right(data-bind="click: removeStation", title="Edit Station", style="margin-right: 5px")
-              small
-               i.glyphicon.glyphicon-edit
-            strong {{ settings.nickname || macRewrite(settings.macaddress()) }}
+            strong {{ macRewrite(settings.macaddress()) }}
             |  
-            small {{ (settings.nickname) ? macRewrite(settings.macaddress()) : "" }}
+            small(data-bind="editable: settings.nickname, editableOptions: {pk: 'unused', name: 'unused', url: '/api/stations/' + $data.settings.macaddress() + '/partial', params: {key: 'settings.nickname'}}")
             ul.list-inline
               li(data-bind="foreach: {data: settings.roles, as: 'role'}")
                 span.label.label-primary {{role}}

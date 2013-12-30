@@ -22,6 +22,9 @@ $.get( "/api/stations", function( data ) {
       if (data.type == 'insert') {
         viewModel.stations.push(ko.mapping.fromJS(data.content))
       }
+      if (data.type == 'update') {
+        console.log(data)
+      }
     });
   })
 
@@ -30,7 +33,7 @@ $.get( "/api/stations", function( data ) {
 
 var removeStation = function(data, event) {
   $.ajax({
-    url: "/api/station/"+ data._id(),
+    url: "/api/station/"+ data.settings.macaddress(),
     type: 'DELETE'
   })
     .done(function(data) {
