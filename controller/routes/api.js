@@ -34,23 +34,19 @@ var insertStation = function(settings, ip, callback) {
   db.insert('stations', document, callback)
 }
 
-var updateStation = function(settings, ip, callback) {
+var updateStation = function(settings, callback) {
   db.updateRaw('stations', { "settings.macaddress": settings.macaddress }, { $set: { "settings": settings } }, callback);
 }
 
 exports.storeStation = function(req, res) {
   db.get('stations', { 'settings.macaddress': req.body.macaddress }, function (error, doc) {
 
-    // this needs fixing, if the controller sends config it blats the IP
-    // consider this temporary logic, there will be a better way.
     if (req.headers['station-mgr']) {
-      ip = req.ip
-    } else {
-      ip = doc.ip 
+      req.body.ip = req.ip
     }
     
-    var station = new Station(req.body)
-    if (doc === null) {
+    var updatedStation = new Station(req.body)
+    if (!error && doc === null) {
       insertStation(station, ip, function(error, success) {
         if (error) {
           res.send(500, error)
@@ -61,7 +57,7 @@ exports.storeStation = function(req, res) {
       })
     }
     if (doc) {
-      updateStation(station, ip, function(error, success) {
+      updateStation(updatedStation, function(error, success) {
         if (error) {
           res.send(500, error)
         }
