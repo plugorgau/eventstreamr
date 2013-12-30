@@ -384,9 +384,9 @@ sub write_config {
 sub api {
   my $device;
   unless ($logger->is_debug()) {
-    $self->{device_commands}{api}{command} = "$Bin/station-api.pl --daemon --environment production";
+    $self->{device_commands}{api}{command} = "/usr/bin/plackup -s Twiggy -p 3000 $Bin/station-api.pl --daemon --environment production";
   } else{
-    $self->{device_commands}{api}{command} = "$Bin/station-api.pl";
+    $self->{device_commands}{api}{command} = "/usr/bin/plackup -s Twiggy -p 3000 $Bin/station-api.pl";
   }
   $device->{role} = "api";
   $device->{id} = "api";

@@ -53,6 +53,9 @@ sub get_pid_command {
     default           { $regex = $command }
   }
 
+  # this is hacky.. but it's late and I'm tired!
+  $regex = "\\/usr\\/bin\\/plackup.*" if ($id eq 'api');
+
   my $pt = Proc::ProcessTable->new;
   my @procs = grep { $_->cmndline =~ /$regex/ } @{ $pt->table };
   if (@procs) {
