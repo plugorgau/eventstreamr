@@ -8,7 +8,7 @@ var updateIp = function(macaddress, ip) {
   db.updateRaw('stations', { "settings.macaddress": macaddress }, { $set: { ip: ip } }, function () {});
 }
 
-var Station = function(request) {
+var StationSettings = function(request) {
   if (request.roles && typeof request.roles == 'string') {
     request.roles = [request.roles]
   }
@@ -37,7 +37,7 @@ var insertStation = function(settings, ip, callback) {
 exports.registerStation = function(req, res) {
   db.get('stations', { 'settings.macaddress': req.params.macaddress }, function (error, doc) {
     if (doc === null) {
-      var station = new Station({macaddress: req.params.macaddress})
+      var station = new StationSettings({macaddress: req.params.macaddress})
       insertStation(station, req.ip, function(error, success) {
         if (success) {
           res.send(201)
@@ -61,9 +61,9 @@ exports.storeStation = function(req, res) {
       req.body.ip = req.ip
     }
     
-    var updatedStation = new Station(req.body)
+    var settings = new StationSettings(req.body)
     if (!error && doc === null) {
-      insertStation(station, ip, function(error, success) {
+      insertStation(settings, req.body.ip, function(error, success) {
         if (error) {
           res.send(500, error)
         }
@@ -73,7 +73,7 @@ exports.storeStation = function(req, res) {
       })
     }
     if (doc) {
-      db.updateRaw('stations', { "settings.macaddress": settings.macaddress }, { $set: { "settings": settings } }, function(error, success) {
+      db.updateRaw('stations', { "settings.macaddress": req.body.macaddress }, { $set: { "settings": settings } }, function(error, success) {
         if (error) {
           res.send(500, error)
         }
@@ -81,6 +81,10 @@ exports.storeStation = function(req, res) {
           res.send(200, true)
         }
       })
+    }
+    if (error) {
+      console.log(error)
+      res.send(500, error)
     }
   })
 }
@@ -94,7 +98,10 @@ exports.deleteStation = function(req, res) {
 }
 
 var tablesDocLookups = {
-  stations: 'settings.macaddress',
+  stations: {
+    requestId: 'macaddress',
+    queryId: 'settings.macaddress'
+  }
 }
 
 var tableNames = Object.keys(tablesDocLookups)
@@ -118,7 +125,8 @@ exports.listDocs = function(req, res) {
 exports.getDocument = function(req, res) {
   if (tableNames.indexOf(req.params.db) !== -1) {
     var query = {}
-    query[tablesDocLookups[req.params.db]] = req.params.id;
+    var tableInfo = tablesDocLookups[req.params.db]
+    query[tableInfo.queryId] = req.params[tableInfo.requestId];
     db.get(req.params.db, query, function (error, doc) {
       if (error) {
         res.send(500, error)
@@ -131,6 +139,29 @@ exports.getDocument = function(req, res) {
       }
     });
   }
+  else {
+    res.send(404)
+  }
+}
+
+exports.partial = function(req, res) {
+  if (tableNames.indexOf(req.params.db) !== -1) {
+    var query = {}
+    var tableInfo = tablesDocLookups[req.params.db]
+    query[tableInfo[req.params.db].queryId] = req.params[tableInfo.requestId];
+    
+    partial = {}
+    partial[req.params.key] = req.params.id
+    
+    db.update(req.params.db, query, partial, function (error, doc) {
+      if (error) {
+        res.send(500)
+      }
+      if (doc) {
+        res.send(200, doc)
+      }
+    })
+  }  
   else {
     res.send(404)
   }
