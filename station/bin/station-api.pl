@@ -104,7 +104,7 @@ post '/command/:command' => sub {
     when ("stop")     { $self->{config}{device_control}{$data->{id}}{run} = 0; }
     when ("start")    { $self->{config}{device_control}{$data->{id}}{run} = 1; }
     when ("restart")  { $self->{config}{device_control}{$data->{id}}{run} = 2; }
-    default { status '400'; return qq("status":"unkown command"}); }
+    default { header 'Access-Control-Allow-Origin' => '*'; status '400'; return qq("status":"unkown command"}); }
   }
   kill '10', $self->{config}{manager}{pid}; 
   header 'Access-Control-Allow-Origin' => '*';
