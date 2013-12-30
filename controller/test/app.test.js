@@ -78,7 +78,7 @@ describe('POST /api/station', function(){
 })
 
 // Get station information
-describe('GET /api/station/D0:FB:DB:D4:21:15', function(){
+describe('GET /api/stations/D0:FB:DB:D4:21:15', function(){
   it('Get station details', function(done){
     request(app)
       .get('/api/stations/D0:FB:DB:D4:21:15')
