@@ -1,8 +1,21 @@
 ko.bindingProvider.instance = new StringInterpolatingBindingProvider();
 
-var viewModel = {
-  stations: ko.mapping.fromJS([])
+function onlyUnique(value, index, self) { 
+    return self.indexOf(value) === index;
 }
+
+var viewModel = {
+  stations: ko.mapping.fromJS([]),
+}
+viewModel.roomDuplicates = ko.computed(function() {
+  return viewModel.stations().map(function(item) {
+    return item.settings.room()
+  })
+})
+viewModel.rooms = ko.computed(function() {
+  return viewModel.roomDuplicates().filter(onlyUnique)
+})
+
 ko.applyBindings(viewModel);
 
 var socket = io.connect('//:5001')
@@ -24,6 +37,16 @@ $.get( "/api/stations", function( data ) {
       }
       if (data.type == 'update') {
         console.log(data)
+        var match = ko.utils.arrayFirst(viewModel.stations(), function(item) {
+          return data.content._id === item._id();
+        });
+        
+        match = ko.mapping.fromJS(data.content)
+
+        if (!match) {
+          viewModel.stations.push(data);
+        }
+
       }
     });
   })

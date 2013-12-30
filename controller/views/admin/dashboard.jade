@@ -25,6 +25,10 @@ block content
     hr
     .row
       .col-xs-8
+        div(data-bind="foreach: {data: viewModel.rooms, as: 'roomId'}")
+          h3(data-bind="text: roomId")
+          div(data-bind="foreach: viewModel.stations().filter(function(item) { return roomId == item.settings.room() })")
+            p(data-bind="text: ko.toJSON($data.settings)")
       .col-xs-4
         div
           button.btn.btn-default.btn-sm.pull-right(data-toggle="collapse", data-target="#add-station", type="button", form-toggle)
