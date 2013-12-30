@@ -34,10 +34,6 @@ var insertStation = function(settings, ip, callback) {
   db.insert('stations', document, callback)
 }
 
-var updateStation = function(settings, callback) {
-  db.updateRaw('stations', { "settings.macaddress": settings.macaddress }, { $set: { "settings": settings } }, callback);
-}
-
 exports.storeStation = function(req, res) {
   db.get('stations', { 'settings.macaddress': req.body.macaddress }, function (error, doc) {
 
@@ -57,7 +53,7 @@ exports.storeStation = function(req, res) {
       })
     }
     if (doc) {
-      updateStation(updatedStation, function(error, success) {
+      db.updateRaw('stations', { "settings.macaddress": settings.macaddress }, { $set: { "settings": settings } }, function(error, success) {
         if (error) {
           res.send(500, error)
         }
