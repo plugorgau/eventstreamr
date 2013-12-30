@@ -11,5 +11,13 @@
     "request": "~2.27.0",
     "nedb": "~0.8.9",
     "socket.io": "~0.9.16"
+  },
+  "devDependencies": {
+    "mocha": "*",
+    "should": "~2.1.1",
+    "supertest": "~0.8.2",
+    "chai": "~1.8.1",
+    "chai-things": "~0.2.0"
   }
 }
+

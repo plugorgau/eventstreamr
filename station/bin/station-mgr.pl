@@ -6,9 +6,11 @@ use lib "$Bin/../lib";
 use Proc::Daemon; # libproc-daemon-perl
 use JSON; # libjson-perl
 use Config::JSON; # libconfig-json-perl
-use HTTP::Tiny;
-use Log::Log4perl;
+use HTTP::Tiny; # libhttp-tiny-perl
+use Log::Log4perl; # liblog-log4perl-perl
+use POSIX;
 use File::Path qw(make_path);
+use File::Basename;
 use feature qw(switch);
 use Getopt::Long;
 use Data::Dumper;
@@ -31,6 +33,15 @@ $SIG{CHLD} = 'IGNORE';
 $SIG{USR1} = \&get_config;
 $SIG{USR2} = \&post_config;
 
+# POSIX unmasks the sigprocmask properly
+my $sigset = POSIX::SigSet->new();
+my $action = POSIX::SigAction->new( 'self_update',
+                                    $sigset,
+                                    &POSIX::SA_NODEFER);
+POSIX::sigaction(&POSIX::SIGHUP, $action);
+
+#$SIG{HUP} = \&self_update;
+
 our $daemon = Proc::Daemon->new(
   work_dir => "$Bin/../",
 );
@@ -46,12 +57,27 @@ our $devices = EventStreamr::Devices->new();
 use EventStreamr::Utils;
 our $utils = EventStreamr::Utils->new();
 
-# Load Local Config
-my $localconfig = Config::JSON->new("$Bin/../settings.json");
-$localconfig = $localconfig->{config};
+# Load/Build Local Config
+my $localconfig;
+if (-e "$Bin/../settings.json") {
+  $localconfig = Config::JSON->new("$Bin/../settings.json");
+  $localconfig = $localconfig->{config};
+} else {
+  $localconfig = Config::JSON->create("$Bin/../settings.json");
+  $localconfig->{config} = blank_settings();
+  $localconfig->write;
+  $localconfig = $localconfig->{config};
+}
 
 # Station Config
-our $stationconfig = Config::JSON->new("$Bin/../station.json");
+our $stationconfig;
+if (-e "$Bin/../station.json") {
+  $stationconfig = Config::JSON->new("$Bin/../station.json");
+} else {
+  $stationconfig = Config::JSON->create("$Bin/../station.json");
+  $stationconfig->{config} = blank_station();
+  $stationconfig->write;
+} 
 
 # Commands
 my $commands = Config::JSON->new("$Bin/../commands.json");
@@ -65,6 +91,7 @@ $self->{commands} = $commands->{config};
 $self->{dvswitch}{check} = 1; # check until dvswitch is found
 $self->{dvswitch}{running} = 0;
 $self->{settings} = $localconfig;
+$self->{date} = strftime "%Y%m%d", localtime;
 if ($self->{config}{run} == 2) {$self->{config}{run} = 1;}
 
 # Logging
@@ -72,6 +99,10 @@ unless ( $DEBUG ) {
   $self->{loglevel} = 'INFO, LOG1' ;
 } else {
   $self->{loglevel} = 'DEBUG, LOG1, SCREEN' ;
+}
+
+unless (-d "$Bin/../logs/") {
+ make_path("$Bin/../logs/"); 
 }
 
 my $log_conf = qq(
@@ -82,7 +113,7 @@ my $log_conf = qq(
   log4perl.appender.SCREEN.layout.ConversionPattern = %m %n
   log4perl.appender.LOG1           = Log::Log4perl::Appender::File
   log4perl.appender.LOG1.utf8      = 1
-  log4perl.appender.LOG1.filename  = $localconfig->{'logpath'} 
+  log4perl.appender.LOG1.filename  = $Bin/../logs/station-mgr.log
   log4perl.appender.LOG1.mode      = append
   log4perl.appender.LOG1.layout    = Log::Log4perl::Layout::PatternLayout
   log4perl.appender.LOG1.layout.ConversionPattern = %d %p %m %n
@@ -104,10 +135,28 @@ api();
 $logger->info("Registering with controller $localconfig->{controller}/$self->{config}{macaddress}");
 my $response =  $http->post("$localconfig->{controller}/$self->{config}{macaddress}");
 
-# Controller responds with created 201, now we can ask for a blank config
+# Controller responds with created 201, post our config 
 if ($response->{status} == 201) {
-  $logger->info("Getting config $localconfig->{controller}/$self->{config}{macaddress}");
-  $response =  $http->get("$localconfig->{controller}/$self->{config}{macaddress}");
+  $logger->info("Posting config $localconfig->{controller}");
+  
+  # Status Post Data
+  my $json = to_json($self->{config});
+  my %headers = (
+        'station-mgr' => 1,
+        'Content-Type' => 'application/json', 
+  );
+  my %post_data = ( 
+        content => $json, 
+        headers => \%headers,
+  );
+
+  $response =  $http->post("$localconfig->{controller}", \%post_data);
+  
+  $logger->debug({filter => \&Data::Dumper::Dumper,
+                  value  => $response}) if ($logger->is_debug());
+
+  # Controller logic currently not setup for this. Will make more sane after more work there. 
+  $response->{content} = $json if ($response->{status} == 200);
 }
 
 
@@ -118,7 +167,7 @@ if ($response->{status} == 200 ) {
                   value  => $content}) if ($logger->is_debug());
 
   if (defined $content) {
-    $self->{config} = $content;
+    $self->{config} = $content->{settings};
     write_config();
   }
 
@@ -179,6 +228,7 @@ while ($daemons->{main}{run}) {
 
   # Process the internal commands
   api();
+  dvmon();
 
   # Process the roles
   foreach my $role (@{$self->{config}->{roles}}) {
@@ -205,6 +255,18 @@ while ($daemons->{main}{run}) {
     }
   }
 
+  # Uncomment to enable heartbeat
+  ## Post a hearbeat to the controller/mixer
+  #if ((time % 10) == 0) {
+  #  $logger->debug("Heartbeat!") if ($logger->is_debug());
+  #  $self->{heartbeat} = time;
+  #  post_config();
+  #}
+  
+  # Update date if it's changed - I wonder if there is a better way to trigger this? Cron (requires more OS config)?
+  unless ( $self->{date} == strftime "%Y%m%d", localtime) {
+    $self->{date} = strftime "%Y%m%d", localtime;
+  }
   sleep 1;
 }
 
@@ -214,13 +276,26 @@ while ($daemons->{main}{run}) {
 
 sub sig_exit {
       $logger->info("manager exiting...");
-      $self->{config}{run} = 0;
       $daemons->{main}{run} = 0;
       $daemon->Kill_Daemon($self->{device_control}{api}{pid}); 
+      $daemon->Kill_Daemon($self->{device_control}{dvmon}{pid}); 
 }
 
 sub sig_pipe {
     $logger->debug( "caught SIGPIPE" ) if ( $logger->is_debug() );
+}
+
+sub self_update {
+  $logger->info("Performing self update");
+  $logger->debug("Update host: $Bin/../../baseimage/update-host.sh") if ($logger->is_debug());
+  system("$Bin/../../baseimage/update-host.sh");
+  sig_exit();
+  my $options;
+  $options = "--debug" if $DEBUG;
+  $options = "$options --no-daemon" unless $DAEMON;
+  my $script = File::Basename::basename($0);
+  $logger->debug("Restart Manger: $Bin/$script $options") if ($logger->is_debug());
+  exec("$Bin/$script $options") or $logger->logdie("Couldn't restart: $!");
 }
 
 sub print_usage {
@@ -257,6 +332,8 @@ sub post_config {
   $status->{status} = $self->{status};
   $status->{macaddress} = $self->{config}{macaddress};
   $status->{nickname} = $self->{config}{nickname};
+  # Uncomment for heartbeat
+  #$status->{heartbeat} = $self->{heartbeat};
 
   # Status Post Data
   $json = to_json($status);
@@ -318,12 +395,50 @@ sub api {
   return;
 }
 
+## dvmon 
+sub dvmon {
+  my $device;
+  $self->{device_commands}{dvmon}{command} = "$Bin/station-dvmon.pl";
+  $device->{role} = "dvmon";
+  $device->{id} = "dvmon";
+  $device->{type} = "internal";
+  run_stop($device);
+  return;
+}
+
 ## Ingest
 sub ingest {
   if ($self->{dvswitch}{running} == 1) {
     foreach my $device (@{$self->{config}{devices}}) {
+      # Set Role
       $device->{role} = "ingest";
-      run_stop($device);
+
+      if ($device->{type} eq "dv") {
+        # Check dv exists
+        if (-e $self->{devices}{dv}{$device->{id}}{path}) {
+          run_stop($device);
+        # If we're restarting we should refresh the devices and try again
+        } elsif ($self->{config}{device_control}{$device->{id}}{run} == 1) {
+          $logger->warn("$device->{id} has been disconnected");
+          # It's not ideal, but dvgrab hangs if no camera exist. dvmon will restart it when it's plugged in again.
+          $self->{config}{device_control}{$device->{id}}{run} = 0;
+          run_stop($device);
+
+          # Set status
+          $self->{device_control}{$device->{id}}{timestamp} = time;
+          $self->{status}{$device->{id}}{running} = 0;
+          $self->{status}{$device->{id}}{status} = "disconnected";
+          $self->{status}{$device->{id}}{state} = "hard";
+          post_config();
+        } elsif ($self->{config}{device_control}{$device->{id}}{run} == 2) {
+          $logger->warn("$device->{id} has been restarted, refreshing devices");
+          $self->{devices} = $devices->all();
+          post_config();
+          run_stop($device);
+        } 
+      } else {
+        run_stop($device);
+      }
     }
   }
   return;
@@ -352,12 +467,42 @@ sub stream {
 ## Record
 sub record {
   my $device;
-  unless(-d "$self->{config}{record_path}") {
-    make_path("$self->{config}{record_path}");
-  }
   $device->{role} = "record";
   $device->{id} = "record";
   $device->{type} = "record";
+
+  # Get path (date + room)
+  unless ($self->{config}{device_control}{$device->{id}}{recordpath}) {
+    $self->{config}{device_control}{$device->{id}}{recordpath} = set_path($self->{config}{record_path});
+    $logger->info("Path for $device->{id}: $self->{config}{device_control}{$device->{id}}{recordpath}");
+  }
+  
+  # Create the path if it doesn't exist
+  unless(-d "$self->{config}{device_control}{$device->{id}}{recordpath}") {
+    my $result = eval { make_path("$self->{config}{device_control}{$device->{id}}{recordpath}") };
+    
+    if ($result) {
+      $logger->info("Path created for $device->{id}: $self->{config}{device_control}{$device->{id}}{recordpath}");
+    } else {
+
+      # if above threshold then slow down attempts to every 10 seconds
+      if ( $self->{device_control}{$device->{id}}{runcount} > 5 && (time % 10) != 0 ) {
+        return;
+      }
+
+      $logger->error("Path creation failed for $device->{id}: $self->{config}{device_control}{$device->{id}}{recordpath}");
+      
+      $self->{device_control}{$device->{id}}{runcount}++;
+      # Set device status
+      $self->{status}{$device->{id}}{running} = 0;
+      $self->{status}{$device->{id}}{status} = "not_writeable";
+      $self->{status}{$device->{id}}{state} = "hard";
+      post_config();
+      
+      return;
+    }
+  }
+
   run_stop($device);
   return;
 }
@@ -367,52 +512,28 @@ sub run_stop {
   my ($device) = @_;
   my $time = time;
 
-  # Set initial status if not defined
-  if (! defined $self->{status}{$device->{id}}) {
-    $logger->debug("Setting initial status information for $device->{id}") if ($logger->is_debug());
-    $self->{status}{$device->{id}}{running} = undef;
-    $self->{status}{$device->{id}}{status} = undef;
-    $self->{status}{$device->{id}}{state} = undef;
-  }
-
   # Build command for execution and save it for future use
   unless ($self->{device_commands}{$device->{id}}{command}) {
     given ($device->{role}) {
       when ("ingest")   { 
         $self->{device_commands}{$device->{id}}{command} = ingest_commands($device->{id},$device->{type});
-        $logger->debug("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}") if ($logger->is_debug());
+        $logger->info("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}");
       }
       when ("mixer")    { 
         $self->{device_commands}{$device->{id}}{command} = mixer_command(); 
-        $logger->debug("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}") if ($logger->is_debug());
+        $logger->info("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}");
       }
       when ("stream")   { 
         $self->{device_commands}{$device->{id}}{command} = stream_command($device->{id},$device->{type}); 
-        $logger->debug("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}") if ($logger->is_debug());
+        $logger->info("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}");
       }
       when ("record")   { 
         $self->{device_commands}{$device->{id}}{command} = record_command($device->{id},$device->{type}); 
-        $logger->debug("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}") if ($logger->is_debug());
+        $logger->info("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}");
       }
     }
   }
 
-  # Prevent the service from running if failed to many times in a short period of time
-  if ( $self->{config}{device_control}{$device->{id}}{run} && (($time - $self->{device_control}{$device->{id}}{timestamp} < 30) && $self->{device_control}{$device->{id}}{runcount} > 5 )) {
-    # Log details
-    $logger->warn("$device->{id} failed to start too many times, stopping.");
-    $logger->warn("Command for $device->{id} - $device->{type}: $self->{device_commands}{$device->{id}}{command}");
-
-    # Stop Device
-    $self->{config}{device_control}{$device->{id}}{run} = 0;
-    
-    # Status flag
-    $self->{status}{$device->{id}}{running} = 0;
-    $self->{status}{$device->{id}}{status} = "failed_start";
-    $self->{status}{$device->{id}}{state} = "hard";
-    post_config();
-  }
-  
   # If we're supposed to be running, run.
   if (($self->{config}{run} == 1 && 
   (! defined $self->{config}{device_control}{$device->{id}}{run} || $self->{config}{device_control}{$device->{id}}{run} == 1)) ||
@@ -421,36 +542,44 @@ sub run_stop {
     $self->{config}{device_control}{$device->{id}}{run} = 1;
 
     # Get the running state + pid if it exists
-    my $state = $utils->get_pid_command($device->{id},$self->{device_commands}{$device->{id}}{command},$device->{type}); 
+    my $state;
+    if ($self->{device_control}{$device->{id}}{pid}) {
+      $state = $utils->get_pid_state($self->{device_control}{$device->{id}}{pid}); 
+    } else {
+      $state = $utils->get_pid_command($device->{id},$self->{device_commands}{$device->{id}}{command},$device->{type}); 
+    }
 
     unless ($state->{running}) {
-      # Run Count and timestamp to prevent failing services going undected
+
+      # notice process is down, record timestamp when it went down
       if ( ! defined $self->{device_control}{$device->{id}}{timestamp} ) {
         $self->{device_control}{$device->{id}}{timestamp} = $time;
-        $self->{device_control}{$device->{id}}{runcount} = 1;
-        $logger->debug("Timestamp and Run Count initialised for $device->{id}");
-      } else {
-        # Log
-        $logger->warn("$device->{id} failed to start, incrementing run count. Current count $self->{device_control}{$device->{id}}{runcount}");
+        $self->{device_control}{$device->{id}}{runcount} = 0;
 
-        # Increase runcount
-        $self->{device_control}{$device->{id}}{runcount}++;
-
-        # Status flag
         $self->{status}{$device->{id}}{running} = 0;
-        $self->{status}{$device->{id}}{status} = "failed_start";
+        $self->{status}{$device->{id}}{status} = "starting";
         $self->{status}{$device->{id}}{state} = "soft";
-        post_config();
+        $self->{status}{$device->{id}}{type} = $device->{type};
+        $self->{status}{$device->{id}}{timestamp} = $self->{device_control}{$device->{id}}{timestamp};
+
+        $logger->debug("Timestamp and Run Count initialised for $device->{id}");
       }
-      
-      # log dvswitch start or  device connecting 
-      unless ($device->{type} eq "mixer") {
-        $logger->info("Connect $device->{id} to DVswitch");
-      } else {
+
+      # if above restart threshold then slow down restarts to every 10 seconds
+      if ( $self->{device_control}{$device->{id}}{runcount} > 5 && ($time % 10) != 0 ) {
+        return;
+      }
+
+      # log dvswitch start or device connecting 
+      if ($device->{type} eq "mixer") {
         $logger->info("Starting DVswitch");
+      } elsif ($device->{type} eq "internal") {
+        $logger->info("Starting $device->{id}");
+      } else {
+        $logger->info("Connect $device->{id} to DVswitch");
       }
       
-      # Spawn the Ingest Command
+      # build daemon option
       my %proc_opts;
       unless ($logger->is_debug()) {
         %proc_opts = (
@@ -463,6 +592,7 @@ sub run_stop {
            exec_command => $self->{device_commands}{$device->{id}}{command},
         );
       }       
+      # run process
       my $proc = $daemon->Init( \%proc_opts );
 
       # give the process some time to settle
@@ -471,11 +601,29 @@ sub run_stop {
       $state = $utils->get_pid_command($device->{id},$self->{device_commands}{$device->{id}}{command},$device->{type}); 
       $logger->debug({filter => \&Data::Dumper::Dumper,
                       value  => $state}) if ($logger->is_debug());
+      
+      # Increase runcount
+      $self->{device_control}{$device->{id}}{runcount}++;
+      my $age = $time - $self->{device_control}{$device->{id}}{timestamp};
+      if ($age > 1 && ! $state->{running}) {
+        # Log!
+        $logger->warn("$device->{id} failed to start (count=$self->{device_control}{$device->{id}}{runcount}, died=$age secs ago)");
+
+        # Refresh devices
+        $self->{devices} = $devices->all();
+        
+        # Force command rebuild
+        $self->{device_commands}{$device->{id}}{command} = undef;
+
+        # post to the api/controller
+        post_config();
+      }
     }
     
     # If state has changed set it and post the config
     if (! defined $self->{device_control}{$device->{id}}{running} || 
-      ($self->{device_control}{$device->{id}}{running} != $state->{running})) {
+      ($self->{device_control}{$device->{id}}{running} != $state->{running} ||
+      $self->{device_control}{$device->{id}}{pid} != $state->{pid})) {
       # Log
       $logger->debug("$device->{id} has changed state");
 
@@ -488,6 +636,7 @@ sub run_stop {
         $self->{status}{$device->{id}}{running} = 1;
         $self->{status}{$device->{id}}{status} = "started";
         $self->{status}{$device->{id}}{state} = "hard";
+        $self->{device_control}{$device->{id}}{timestamp} = $time;
       } else {
         $self->{status}{$device->{id}}{running} = 0;
         $self->{status}{$device->{id}}{status} = "stopped";
@@ -520,13 +669,23 @@ sub run_stop {
   }
 
   # Set device back to running if a restart was triggered
-  if ($self->{config}{device_control}{$device->{id}}{run} == 2) {
+  if ($self->{config}{device_control}{$device->{id}}{run} == 2 && ! $self->{device_control}{$device->{id}}{running}) {
     # Log
     $logger->info("Restarting $device->{id}");
     
     # Set run back to running
     $self->{config}{device_control}{$device->{id}}{run} = 1;
+
+    # Reset Run Count and timestamp
+    $self->{device_control}{$device->{id}}{timestamp} = $time;
+    $self->{device_control}{$device->{id}}{runcount} = 0;
     
+    # Force command rebuild
+    $self->{device_commands}{$device->{id}}{command} = undef;
+        
+    # Refresh devices
+    $self->{devices} = $devices->all();
+        
     # Set device status
     $self->{status}{$device->{id}}{status} = "restarting";
     $self->{status}{$device->{id}}{state} = "hard";
@@ -580,7 +739,7 @@ sub record_command {
                     host      => $self->{config}{mixer}{host},
                     port      => $self->{config}{mixer}{port},
                     room      => $self->{config}{room},
-                    path      => $self->{config}{record_path},
+                    path      => $self->{config}{device_control}{$id}{recordpath},
                   );
 
   $command =~ s/\$(\w+)/$cmd_vars{$1}/g;
@@ -606,6 +765,18 @@ sub stream_command {
   return $command;
 } 
 
+sub set_path {
+  my ($path) = @_;
+  my %path_vars =  ( 
+                    room    => $self->{config}{room},
+                    date    => $self->{date},
+                  );
+
+  $path =~ s/\$(\w+)/$path_vars{$1}/g;
+
+  return $path;
+} 
+
 # Get Mac Address
 sub getmac {
   # This is better, but can break if no eth0. We are only using it as a UID - think of something better.
@@ -613,6 +784,51 @@ sub getmac {
   chomp $macaddress;
   return $macaddress;
 }
+
+sub blank_station {
+  my $json = <<CONFIG;
+{
+  "roles" :
+    [
+    ],
+  "nickname" : "",
+  "room" : "",
+  "record_path" : "/tmp/\$room/\$date",
+  "mixer" :
+    {
+      "port":"1234",
+      "host":"localhost"
+    },
+  "devices" : "all",
+  "device_control" :
+    {
+    },
+  "run" : "0",
+  "stream" :
+    {
+      "host" : "",
+      "port" : "",
+      "password" : "",
+      "stream" : ""
+    }
+}
+CONFIG
+
+  my $config = from_json($json);
+  return $config;
+}
+
+sub blank_settings {
+  my $json = <<CONFIG;
+{
+     "controller" : "http://localhost:5001/api/station"
+}
+CONFIG
+
+  my $config = from_json($json);
+  return $config;
+}
+
 
 __END__
 

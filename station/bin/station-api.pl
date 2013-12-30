@@ -26,46 +26,56 @@ our $self;
 our $status;
 
 # routes
+get '/dump' => sub {
+  my $data = $self;
+  return $data;
+};
+
+# ----- Settings/Details -------------------------------------------------------
+# MAC confirm, returns settings if correct
 get '/settings/:mac' => sub {
   my $data->{mac} = params->{mac};
-  # status 200 config exists
-  # status 204 config not exists
-  $data->{config} = $self->{config};
-  $data->{result} = '200';
+  if ($data->{mac} == $self->{config}{macaddress}) {
+    $data->{config} = $self->{config};
+  } else {
+    status '400';
+    return qq({"status":"invalid_mac"});
+  }
+  header 'Access-Control-Allow-Origin' => '*';
   return $data;
 };
 
+# Returns settings
 get '/settings' => sub {
   my $data->{config} = $self->{config};
-  $data->{result} = '200';
+  header 'Access-Control-Allow-Origin' => '*';
   return $data;
 };
 
-get '/dump' => sub {
-  my $data->{dump} = $self;
-  $data->{result} = '200';
-  return $data;
-};
-
-get '/devices' => sub {
-  my $result;
-  $result->{devices} = $devices->all();
-  $result->{result} = 200;
-  return $result;
-};
-
+# Updates config if mac matches
 post '/settings/:mac' => sub {
   my $data->{mac} = params->{mac};
   $data->{body} = request->body;
   if ($data->{mac} == $self->{config}{macaddress}) {
     debug($data);
     kill '10', $self->{config}{manager}{pid}; 
-    return qq({"result":"200"});
+    return;
   } else {
-    return qq({"result":"400"});
+    status '400';
+    return qq({"status":"invalid_mac"});
   }
 };
 
+# Returns attached devices
+get '/devices' => sub {
+  my $result;
+  $result->{devices} = $devices->all();
+  header 'Access-Control-Allow-Origin' => '*';
+  return $result;
+};
+
+# ----- Station Control Commands -----------------------------------------------
+# Stop/Start/Restart All
 get '/command/:command' => sub {
   my $command = params->{command};
 
@@ -73,13 +83,15 @@ get '/command/:command' => sub {
     when ("stop")     { $self->{config}{run} = 0; }
     when ("start")    { $self->{config}{run} = 1; }
     when ("restart")  { $self->{config}{run} = 2; }
-    default { return qq({"result":"400", "status":"unkown command"}); }
+    default { status '400'; return qq("status":"unkown command"}); }
   }
 
   kill '10', $self->{config}{manager}{pid}; 
-  return qq({"result":"200"});
+  header 'Access-Control-Allow-Origin' => '*';
+  return;
 };
 
+# Post JSON content to restart an individual device eg: {"id":"dvswitch"}
 post '/command/:command' => sub {
   my $command = params->{command};
   my $data = from_json(request->body);
@@ -88,17 +100,32 @@ post '/command/:command' => sub {
     when ("stop")     { $self->{config}{device_control}{$data->{id}}{run} = 0; }
     when ("start")    { $self->{config}{device_control}{$data->{id}}{run} = 1; }
     when ("restart")  { $self->{config}{device_control}{$data->{id}}{run} = 2; }
-    default { return qq({"result":"400", "status":"unkown command"}); }
+    default { status '400'; return qq("status":"unkown command"}); }
   }
   kill '10', $self->{config}{manager}{pid}; 
-  return qq({"result":"200"});
+  return;
 };
 
-get '/log/manager' => sub {
+# ----- Station System Commands + Info -----------------------------------------
+# Trigger Station Manager to update itself
+get '/manager/update' => sub {
+  info("triggering update");
+  kill 'HUP', $self->{config}{manager}{pid};
+  return;
+};
+
+get '/manager/reboot' => sub {
+  info("triggering reboot");
+  system("sudo /sbin/shutdown -r -t 5 now &");
+  kill 'TERM', $self->{config}{manager}{pid};
+  return;
+};
+
+get '/manager/logs' => sub {
   my @log;
   my $count = 0;
   my $result;
-  my $bw = File::ReadBackwards->new( $self->{settings}{'logpath'} );
+  my $bw = File::ReadBackwards->new("$Bin/../logs/station-mgr.log" );
 
   while( defined( my $log_line = $bw->readline ) && $count < 101) {
     $count++;
@@ -107,19 +134,22 @@ get '/log/manager' => sub {
   }
 
   if ($log[0]) {
-    $result->{result} = 200;
     @{$result->{log}} = @log;
+    header 'Access-Control-Allow-Origin' => '*';
   } else {
-    $result->{result} = 400
+    status '400';
+    return;
   }
 
   return $result;
 };
 
+# ----- Station Information ----------------------------------------------------
 # Status Information
 get '/status' => sub {
   my $result;
   if ($status->{status}) {
+    header 'Access-Control-Allow-Origin' => '*';
     status '200';
     return $status->{status};
   } else {
@@ -132,16 +162,18 @@ post '/status/:mac' => sub {
   my $mac = params->{mac};
   my $data = from_json(request->body);
   $status->{status}{$mac} = $data;
+  $status->{status}{$mac}{ip} = request->env->{REMOTE_ADDR};
   return;
 };
 
+# ----- Manager/Api Internal Comms ---------------------------------------------
 # Internal Communication with Manager
 post '/internal/settings' => sub {
   my $data = from_json(request->body);
   $self = $data;
   info("Config data posted");
   debug($self);
-  return qq({"result":"200"});
+  return;
 };
 
 get '/internal/settings' => sub {

@@ -1,0 +1,17 @@
+<div id='status'>
+<h3 class='text-center'>AV Status</h3>
+<accordion close-others='false'>
+  <accordion-group ng-repeat="(station_id,station_details) in status_list" is-open="true">
+    <accordion-heading>
+    <i class="icon-{{station_details.icon}} icon-{{station_details.colour}}"></i>
+    <b>{{station_details.nickname}} ({{station_details.ip}})</b>
+    </accordion-heading>
+    <ul class='unstyled'>
+      <li ng-repeat="(proc_id,proc_details) in station_details.status">
+        <i class="icon-{{proc_details.icon}} icon-{{proc_details.colour}}"></i>
+        {{proc_details.type}}: {{proc_id}} {{proc_details.status}}
+      </li>
+    </ul>
+  </accordion-group>
+</accordion>
+</div>

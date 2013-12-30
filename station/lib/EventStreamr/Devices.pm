@@ -59,6 +59,7 @@ sub dv {
         $dv_devices->{$guid}{vendor} = $vendor_name;
         $dv_devices->{$guid}{type} = "dv";
         $dv_devices->{$guid}{id} = $guid;
+        $dv_devices->{$guid}{path} = "$dv/guid";
         push (@{$dv_devices->{all}}, $dv_devices->{$guid}); ;
       }
     }
