@@ -28,6 +28,7 @@ our $status;
 # routes
 get '/dump' => sub {
   my $data = $self;
+  header 'Access-Control-Allow-Origin' => '*';
   return $data;
 };
 
@@ -39,6 +40,7 @@ get '/settings/:mac' => sub {
     $data->{config} = $self->{config};
   } else {
     status '400';
+    header 'Access-Control-Allow-Origin' => '*';
     return qq({"status":"invalid_mac"});
   }
   header 'Access-Control-Allow-Origin' => '*';
@@ -59,9 +61,11 @@ post '/settings/:mac' => sub {
   if ($data->{mac} == $self->{config}{macaddress}) {
     debug($data);
     kill '10', $self->{config}{manager}{pid}; 
+    header 'Access-Control-Allow-Origin' => '*';
     return;
   } else {
     status '400';
+    header 'Access-Control-Allow-Origin' => '*';
     return qq({"status":"invalid_mac"});
   }
 };
@@ -83,7 +87,7 @@ get '/command/:command' => sub {
     when ("stop")     { $self->{config}{run} = 0; }
     when ("start")    { $self->{config}{run} = 1; }
     when ("restart")  { $self->{config}{run} = 2; }
-    default { status '400'; return qq("status":"unkown command"}); }
+    default { header 'Access-Control-Allow-Origin' => '*'; status '400'; return qq("status":"unkown command"}); }
   }
 
   kill '10', $self->{config}{manager}{pid}; 
@@ -103,6 +107,7 @@ post '/command/:command' => sub {
     default { status '400'; return qq("status":"unkown command"}); }
   }
   kill '10', $self->{config}{manager}{pid}; 
+  header 'Access-Control-Allow-Origin' => '*';
   return;
 };
 
@@ -111,6 +116,7 @@ post '/command/:command' => sub {
 get '/manager/update' => sub {
   info("triggering update");
   kill 'HUP', $self->{config}{manager}{pid};
+  header 'Access-Control-Allow-Origin' => '*';
   return;
 };
 
@@ -118,6 +124,7 @@ get '/manager/reboot' => sub {
   info("triggering reboot");
   system("sudo /sbin/shutdown -r -t 5 now &");
   kill 'TERM', $self->{config}{manager}{pid};
+  header 'Access-Control-Allow-Origin' => '*';
   return;
 };
 
@@ -137,6 +144,7 @@ get '/manager/logs' => sub {
     @{$result->{log}} = @log;
     header 'Access-Control-Allow-Origin' => '*';
   } else {
+    header 'Access-Control-Allow-Origin' => '*';
     status '400';
     return;
   }
@@ -153,6 +161,7 @@ get '/status' => sub {
     status '200';
     return $status->{status};
   } else {
+    header 'Access-Control-Allow-Origin' => '*';
     status '204';
     return;
   }
@@ -163,6 +172,7 @@ post '/status/:mac' => sub {
   my $data = from_json(request->body);
   $status->{status}{$mac} = $data;
   $status->{status}{$mac}{ip} = request->env->{REMOTE_ADDR};
+  header 'Access-Control-Allow-Origin' => '*';
   return;
 };
 
