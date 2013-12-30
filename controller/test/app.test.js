@@ -1,7 +1,9 @@
 process.env.NODE_ENV = 'development';
 var app = require('../app');
 var request = require('supertest');
-var should = require('chai').should();
+var chai = require("chai");
+chai.should();
+chai.use(require('chai-things'));
 
 // check admin page 
 describe('GET /admin', function(){
@@ -80,41 +82,43 @@ describe('GET /api/station/D0:FB:DB:D4:21:15', function(){
   it('Get station details', function(done){
     request(app)
       .get('/api/stations/D0:FB:DB:D4:21:15')
-        .expect('Content-Type', /json/)
+      .expect('Content-Type', /json/)
       .expect(200)
       .end(function(err, res) {
         // settings object
         res.body.should.have.property('settings').to.be.an('object')
         // device control object
         res.body.settings.should.have.property('device_control').to.be.an('object')
-        // Failing following test failing (something is wrong with the json return or parsing)
         res.body.settings.should.have.property('device_control').to.have.deep.property('api.run', '1');
-        res.body.settings.should.have.property('device_control').to.have.deep.property('api.run', '0');
+        res.body.settings.should.have.property('device_control').to.have.deep.property('dvmon.run', '0');
         // devices
         res.body.settings.should.have.property('devices').to.equal('all')
         // mac address
         res.body.settings.should.have.property('macaddress').to.equal('D0:FB:DB:D4:21:15')
         // mixer object
         res.body.settings.should.have.property('mixer').to.be.an('object')
-        res.body.settings.should.have.property('mixer').to.have.deep.property('host', 'localhost');
-        res.body.settings.should.have.property('mixer').to.have.deep.property('port', '1234');
+        res.body.settings.mixer.host.should.equal('localhost');
+        res.body.settings.mixer.port.should.equal('1234');
         // nickname
         res.body.settings.should.have.property('nickname').to.equal('stationtest')
         // record path
         res.body.settings.should.have.property('record_path').to.equal('/tmp/$room/$date')
         // roles array
         res.body.settings.should.have.property('roles').to.be.an('array')
-        res.body.settings.should.have.property('roles').to.have.deep.property('[1].role', 'ingest');
+        res.body.settings.roles.should.contain.an.item.with.property('role', 'mixer');
+        res.body.settings.roles.should.contain.an.item.with.property('role', 'record');
+        res.body.settings.roles.should.contain.an.item.with.property('role', 'ingest');
+        res.body.settings.roles.should.contain.an.item.with.property('role', 'stream');
         // room
         res.body.settings.should.have.property('room').to.be.empty
         // run
         res.body.settings.should.have.property('run').to.be.equal('0')
         // stream object
         res.body.settings.should.have.property('stream').to.be.an('object')
-        res.body.settings.should.have.property('stream').to.have.deep.property('host', '1.2.3.4');
-        res.body.settings.should.have.property('stream').to.have.deep.property('password', 'password');
-        res.body.settings.should.have.property('stream').to.have.deep.property('port', '1337');
-        res.body.settings.should.have.property('stream').to.have.deep.property('stream', 'test.ogg');
+        res.body.settings.stream.host.should.equal('1.2.3.4');
+        res.body.settings.stream.password.should.equal('password');
+        res.body.settings.stream.port.should.equal('1337');
+        res.body.settings.stream.stream.should.equal('test.ogg');
 
         done();
       });
@@ -127,5 +131,4 @@ describe('DEL /api/station/D0:FB:DB:D4:21:15', function(){
     request(app)
       .del('/api/station/D0:FB:DB:D4:21:15')
       .expect(204, done);
-  })
-})
+  })})
