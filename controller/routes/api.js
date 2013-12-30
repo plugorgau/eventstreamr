@@ -34,6 +34,26 @@ var insertStation = function(settings, ip, callback) {
   db.insert('stations', document, callback)
 }
 
+exports.registerStation = function(req, res) {
+  db.get('stations', { 'settings.macaddress': req.params.macaddress }, function (error, doc) {
+    if (doc === null) {
+      var station = new Station({macaddress: req.params.macaddress})
+      insertStation(station, req.ip, function(error, success) {
+        if (success) {
+          res.send(201)
+        }
+      })
+    }
+    if (doc) {
+      if (doc.ip !== req.ip) {
+        removeIp(req.ip)
+        updateIp(req.params.macaddress, req.ip)
+      }
+      res.send(200, doc)
+    }
+  })
+}
+
 exports.storeStation = function(req, res) {
   db.get('stations', { 'settings.macaddress': req.body.macaddress }, function (error, doc) {
 
@@ -114,24 +134,4 @@ exports.getDocument = function(req, res) {
   else {
     res.send(404)
   }
-}
-
-exports.registerStation = function(req, res) {
-  db.get('stations', { 'settings.macaddress': req.params.macaddress }, function (error, doc) {
-    if (doc === null) {
-      var station = new Station({macaddress: req.params.macaddress})
-      insertStation(station, req.ip, function(error, success) {
-        if (success) {
-          res.send(201)
-        }
-      })
-    }
-    if (doc) {
-      if (doc.ip !== req.ip) {
-        removeIp(req.ip)
-        updateIp(req.params.macaddress, req.ip)
-      }
-      res.send(200, doc)
-    }
-  })
 }
