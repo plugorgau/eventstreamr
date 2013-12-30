@@ -79,7 +79,7 @@ var tablesDocLookups = {
 
 var tableNames = Object.keys(tablesDocLookups)
 
-exports.listDb = function(req, res) {
+exports.listDocs = function(req, res) {
   if (tableNames.indexOf(req.params.db) !== -1) {
     db.list(req.params.db, {}, function (error, docs) {
       if (error) {

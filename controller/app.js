@@ -38,7 +38,7 @@ app.locals(config.event)
 
 app.get('/admin', adminroutes.dashboard)
 
-app.get('/api/:db', api.listDb)
+app.get('/api/:db', api.listDocs)
 app.get('/api/:db/:id', api.getDocument)
 
 app.post('/api/station', api.storeStation)
