@@ -44,7 +44,7 @@ describe('POST /api/station', function(){
                     "run" : "1"
                  },
                  "dvmon" : {
-                    "run" : "1"
+                    "run" : "0"
                  }
               },
               "devices" : "all",
@@ -58,7 +58,8 @@ describe('POST /api/station', function(){
               "roles" : [
                 { "role": "mixer" },
                 { "role": "record" },
-                { "role": "ingest" }
+                { "role": "ingest" },
+                { "role": "stream" }
               ],
               "room" : "",
               "run" : "0",
@@ -82,13 +83,13 @@ describe('GET /api/station/D0:FB:DB:D4:21:15', function(){
         .expect('Content-Type', /json/)
       .expect(200)
       .end(function(err, res) {
-        console.log(res.body) // remove when all tests for current data built
         // settings object
         res.body.should.have.property('settings').to.be.an('object')
         // device control object
         res.body.settings.should.have.property('device_control').to.be.an('object')
         // Failing following test failing (something is wrong with the json return or parsing)
-        //res.body.settings.should.have.property('device_control').to.have.deep.property('api.run', '1');
+        res.body.settings.should.have.property('device_control').to.have.deep.property('api.run', '1');
+        res.body.settings.should.have.property('device_control').to.have.deep.property('api.run', '0');
         // devices
         res.body.settings.should.have.property('devices').to.equal('all')
         // mac address
@@ -103,6 +104,7 @@ describe('GET /api/station/D0:FB:DB:D4:21:15', function(){
         res.body.settings.should.have.property('record_path').to.equal('/tmp/$room/$date')
         // roles array
         res.body.settings.should.have.property('roles').to.be.an('array')
+        res.body.settings.should.have.property('roles').to.have.deep.property('[1].role', 'ingest');
         // room
         res.body.settings.should.have.property('room').to.be.empty
         // run
