@@ -24,9 +24,9 @@ block content
     p Welcome to #{title}
     hr
     .row
-      .col-sm-8
-      .col-sm-4
-        .form
+      .col-xs-8
+      .col-xs-4
+        div
           button.btn.btn-default.btn-sm.pull-right(data-toggle="collapse", data-target="#add-station", type="button", form-toggle)
             | Add Station
           h3 Stations
@@ -35,7 +35,7 @@ block content
               .panel-heading
                 h3.panel-title New Station
               .panel-body
-                form.form-horizontal.data-async(role="form", method="post", action="/api/station", data-bind="with: {roles: []}")
+                form.form-horizontal.data-async(role="form", data-bind="with: {roles: []}")
                   legend.test-data Station Details
                   mixin form-group-standard("Mac Address", "macaddress", "text", "##:##:##:##:##:##")
                   mixin form-group-checkbox("Roles", "roles", ["capture","mixer"])
@@ -59,11 +59,3 @@ block content
               li(data-bind="foreach: {data: settings.roles, as: 'role'}")
                 span.label.label-primary {{role}}
                 |  
-          //-
-            .panel.panel-default
-              .panel-body
-                dl.dl-horizontal
-                  mixin dl-item('Mac Address', 'settings.macaddress')
-                  mixin dl-item('Roles', 'settings.roles')
-                  mixin dl-item('Nickname', 'settings.nickname')
-                  mixin dl-item('Room', 'settings.room')
