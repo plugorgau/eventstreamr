@@ -7,7 +7,7 @@ var myCtrls = angular.module('myApp.controllers', []);
 myCtrls.controller('status-list', ['$scope', '$http', '$timeout',
     function($scope, $http, $timeout) {
         $scope.getData = function() {
-        $http.get('http://10.2.0.206:3000/status').success(function(data) {
+        $http.get('http://localhost:3000/status').success(function(data) {
             for ( var station in data ) {
                 var station_details = data[station];
                 station_details.icon = 'ok';
@@ -29,6 +29,15 @@ myCtrls.controller('status-list', ['$scope', '$http', '$timeout',
                         var new_id = proc.substring(proc.lastIndexOf("/")+1, proc.length);
                         station_details.status[new_id] = proc_details;
                         delete station_details.status[proc];
+                        proc = new_id;
+                    }
+                    if ( proc_details.type == 'internal' ) {
+                        proc_details.label = proc;
+                        proc_details.tooltip = "<em>internal process</em><br/>state: " + proc_details.status;
+                    }
+                    else {
+                        proc_details.label = proc_details.type;
+                        proc_details.tooltip = "state: " + proc_details.status + "<br/>id: " + proc;
                     }
                 }
                 if ( not_ok > 0 ) {
@@ -43,7 +52,7 @@ myCtrls.controller('status-list', ['$scope', '$http', '$timeout',
         $scope.refreshData = function() {
             console.log( "refreshing data" );
             $scope.getData();
-            $timeout( $scope.refreshData, 5000 );
+            $timeout( $scope.refreshData, 1000 );
         }
 
         $scope.refreshData();

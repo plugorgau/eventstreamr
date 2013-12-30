@@ -1,4 +1,5 @@
 #!/bin/bash
 
-#google-chrome -incognito http://localhost:8000/
-chromium-browser -incognito http://localhost:8000/app/index.html
+chromium-browser -incognito http://localhost:8000/app/launch.html &
+sleep 3
+wmctrl -r "AV Status" -b add,above
