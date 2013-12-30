@@ -46,7 +46,7 @@ exports.storeStation = function(req, res) {
     if (req.headers['station-mgr']) {
       ip = req.ip
     } else {
-      ip = null
+      ip = doc.ip 
     }
     
     var station = new Station(req.body)
