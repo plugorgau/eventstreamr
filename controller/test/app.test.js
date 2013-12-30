@@ -85,10 +85,12 @@ describe('GET /api/station/D0:FB:DB:D4:21:15', function(){
       .expect('Content-Type', /json/)
       .expect(200)
       .end(function(err, res) {
+        // ip
+        res.body.ip.should.equal('127.0.0.1');
         // settings object
-        res.body.should.have.property('settings').to.be.an('object')
+        res.body.should.have.property('settings').to.be.an('object');
         // device control object
-        res.body.settings.should.have.property('device_control').to.be.an('object')
+        res.body.settings.should.have.property('device_control').to.be.an('object');
         res.body.settings.should.have.property('device_control').to.have.deep.property('api.run', '1');
         res.body.settings.should.have.property('device_control').to.have.deep.property('dvmon.run', '0');
         // devices
