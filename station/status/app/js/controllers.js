@@ -6,8 +6,9 @@ var myCtrls = angular.module('myApp.controllers', []);
 
 myCtrls.controller('status-list', ['$scope', '$http', '$timeout',
     function($scope, $http, $timeout) {
+        var api_url = 'http://localhost:3000';
         $scope.getData = function() {
-        $http.get('http://localhost:3000/status').success(function(data) {
+        $http.get( api_url + '/status' ).success(function(data) {
             for ( var station in data ) {
                 var station_details = data[station];
                 station_details.icon = 'ok';
@@ -25,11 +26,9 @@ myCtrls.controller('status-list', ['$scope', '$http', '$timeout',
                         proc_details.icon = 'remove';
                         proc_details.colour = 'red';
                     }
+                    proc_details.short_id = proc;
                     if ( proc_details.type == 'file' ) {
-                        var new_id = proc.substring(proc.lastIndexOf("/")+1, proc.length);
-                        station_details.status[new_id] = proc_details;
-                        delete station_details.status[proc];
-                        proc = new_id;
+                        proc_details.short_id = proc.substring(proc.lastIndexOf("/")+1, proc.length);
                     }
                     if ( proc_details.type == 'internal' ) {
                         proc_details.label = proc;
@@ -37,7 +36,7 @@ myCtrls.controller('status-list', ['$scope', '$http', '$timeout',
                     }
                     else {
                         proc_details.label = proc_details.type;
-                        proc_details.tooltip = "state: " + proc_details.status + "<br/>id: " + proc;
+                        proc_details.tooltip = "state: " + proc_details.status + "<br/>id: " + proc_details.short_id;
                     }
                 }
                 if ( not_ok > 0 ) {
@@ -53,6 +52,11 @@ myCtrls.controller('status-list', ['$scope', '$http', '$timeout',
             console.log( "refreshing data" );
             $scope.getData();
             $timeout( $scope.refreshData, 1000 );
+        }
+
+        $scope.resetProc = function( proc_id ) {
+            var data = '{ "id": "' + proc_id + '" }';
+            $http.post( api_url + '/command/restart', data );
         }
 
         $scope.refreshData();
