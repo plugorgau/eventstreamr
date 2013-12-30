@@ -16,7 +16,8 @@
     "mocha": "*",
     "should": "~2.1.1",
     "supertest": "~0.8.2",
-    "chai": "~1.8.1"
+    "chai": "~1.8.1",
+    "chai-things": "~0.2.0"
   }
 }
 
