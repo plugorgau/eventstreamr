@@ -23,6 +23,9 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 
+echo "- killing manager (in case it's running)"
+killall -TERM perl
+
 
 echo "- restoring default desktop"
 rm -f $HOMEDIR/Desktop/*
