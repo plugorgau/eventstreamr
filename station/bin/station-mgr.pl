@@ -154,9 +154,6 @@ if ($response->{status} == 201) {
   
   $logger->debug({filter => \&Data::Dumper::Dumper,
                   value  => $response}) if ($logger->is_debug());
-
-  # Controller logic currently not setup for this. Will make more sane after more work there. 
-  $response->{content} = $json if ($response->{status} == 200);
 }
 
 
