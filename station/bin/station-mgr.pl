@@ -154,9 +154,6 @@ if ($response->{status} == 201) {
   
   $logger->debug({filter => \&Data::Dumper::Dumper,
                   value  => $response}) if ($logger->is_debug());
-
-  # Controller logic currently not setup for this. Will make more sane after more work there. 
-  $response->{content} = $json if ($response->{status} == 200);
 }
 
 
@@ -384,9 +381,9 @@ sub write_config {
 sub api {
   my $device;
   unless ($logger->is_debug()) {
-    $self->{device_commands}{api}{command} = "$Bin/station-api.pl --daemon --environment production";
+    $self->{device_commands}{api}{command} = "/usr/bin/plackup -s Twiggy -p 3000 $Bin/station-api.pl --daemon --environment production";
   } else{
-    $self->{device_commands}{api}{command} = "$Bin/station-api.pl";
+    $self->{device_commands}{api}{command} = "/usr/bin/plackup -s Twiggy -p 3000 $Bin/station-api.pl";
   }
   $device->{role} = "api";
   $device->{id} = "api";

@@ -32,6 +32,11 @@ get '/dump' => sub {
   return $data;
 };
 
+options qr{.*} => sub {
+  header 'Access-Control-Allow-Origin' => '*';
+  return;
+};
+
 # ----- Settings/Details -------------------------------------------------------
 # MAC confirm, returns settings if correct
 get '/settings/:mac' => sub {

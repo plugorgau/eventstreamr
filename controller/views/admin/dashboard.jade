@@ -25,6 +25,11 @@ block content
     hr
     .row
       .col-xs-8
+        div(data-bind="foreach: {data: viewModel.rooms, as: 'roomId'}")
+          h3(data-bind="text: roomId")
+          div(data-bind="foreach: viewModel.stations().filter(function(item) { return roomId == item.settings.room() })")
+            p(data-bind="text: ko.toJSON($data.ip)")
+            p(data-bind="text: ko.toJSON($data.settings)")
       .col-xs-4
         div
           button.btn.btn-default.btn-sm.pull-right(data-toggle="collapse", data-target="#add-station", type="button", form-toggle)
@@ -38,9 +43,10 @@ block content
                 form.form-horizontal.data-async(role="form", data-bind="with: {roles: []}")
                   legend.test-data Station Details
                   mixin form-group-standard("Mac Address", "macaddress", "text", "##:##:##:##:##:##")
-                  mixin form-group-checkbox("Roles", "roles", ["capture","mixer"])
+                  mixin form-group-checkbox("Roles", "roles", ["mixer","ingest","record","stream"])
                   mixin form-group-standard("Nickname", "nickname", "text", "podium camera")
                   mixin form-group-standard("Room", "room", "text", "")
+                  mixin form-group-standard("Record Path", "record_path", "text", "")
                   .form-group
                     .col-lg-offset-2.col-lg-10.col-md-offset-3.col-md-9.col-sm-offset-4.col-sm-8
                       button.btn.btn-default(type="submit", data-bind="click: submitStation") Submit
@@ -49,9 +55,12 @@ block content
             button.btn.btn-default.btn-xs.pull-right(data-bind="click: removeStation", title="Forget Station")
               small
                i.glyphicon.glyphicon-remove
-            strong {{ macRewrite(settings.macaddress()) }}
+            strong(data-bind="editable: settings.nickname, editableOptions: {pk: 'unused', name: 'unused', url: '/api/stations/' + $data.settings.macaddress() + '/partial', params: {key: 'settings.nickname'}}")
             |  
-            small(data-bind="editable: settings.nickname, editableOptions: {pk: 'unused', name: 'unused', url: '/api/stations/' + $data.settings.macaddress() + '/partial', params: {key: 'settings.nickname'}}")
+            small {{ macRewrite(settings.macaddress()) }}
+            dl
+              dt Room
+              dd(data-bind="editable: settings.room, editableOptions: {pk: 'unused', name: 'unused', url: '/api/stations/' + $data.settings.macaddress() + '/partial', params: {key: 'settings.room'}}")
             ul.list-inline
               li(data-bind="foreach: {data: settings.roles, as: 'role'}")
                 span.label.label-primary {{role}}

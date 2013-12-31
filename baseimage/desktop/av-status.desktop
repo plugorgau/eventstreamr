@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Name=AV Status
+Comment=AV Status monitoring app
+Exec=/home/av/eventstreamr/station/status/launch.sh
+Icon=/home/av/eventstreamr/baseimage/pictures/av-status.png
+Terminal=false
+Type=Application
+Categories=Utility;Application;

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Name=Monitor AV
+Comment=Monitor AV output from dvswitch
+Exec=/home/av/eventstreamr/station/status/monitor.sh
+Icon=/home/av/eventstreamr/baseimage/pictures/av-monitor.png
+Terminal=false
+Type=Application
+Categories=Utility;Application;

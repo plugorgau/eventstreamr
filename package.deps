@@ -14,3 +14,5 @@ libanyevent-perl
 liblinux-inotify2-perl
 moreutils
 libfile-tail-perl
+libplack-perl
+twiggy

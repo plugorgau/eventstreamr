@@ -1,15 +1,13 @@
 #!/bin/bash
 
-newname=`hostname`
-ipaddr=`ifdata -pa eth0`
-homedir="/home/av"
-confdir="$homedir/eventstreamr/baseimage"
+# load common configuration
+. ~/eventstreamr/baseimage/common-config.sh
 
 echo "- updating background image"
-convert $confdir/pictures/av-background-orig.png \
+convert $IMAGE/pictures/av-background-orig.png \
 	-fill "#333333" -font Ubuntu-Mono-Bold -pointsize 24 \
-	-draw "text 1600,820 'hostname: ${newname}" \
-	-draw "text 1600,845 ' IP addr: ${ipaddr}" \
-	$homedir/Pictures/av-background.png
+	-draw "text 1600,820 'hostname: ${HOSTNAME}" \
+	-draw "text 1600,845 ' IP addr: ${IPADDR}" \
+	~/Pictures/av-background.png
 
 exit 0

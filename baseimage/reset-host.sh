@@ -1,14 +1,10 @@
 #!/bin/bash
 
+# load common configuration
+. ~/eventstreamr/baseimage/common-config.sh
+
 hostname=avclone
-existing=`hostname`
-
-ipaddr=`ifdata -pa eth0`
-homedir="/home/av"
-confdir="$homedir/eventstreamr/baseimage"
-ctrl_settings="$homedir/eventstreamr/station/settings.json"
-log="/tmp/station-mgr.log"
-
+existing=$HOSTNAME
 
 
 # initial banner (shown all the time)
@@ -27,14 +23,21 @@ if [ "$EUID" -ne 0 ]; then
 fi
 
 
+echo "- killing manager (in case it's running)"
+killall -TERM perl
+
 
 echo "- restoring default desktop"
-rm -f $homedir/Desktop/*
-ln -s $confdir/desktop/README-NEW-IMAGE.txt $homedir/Desktop/
+rm -f $HOMEDIR/Desktop/*
+ln -s $IMAGE/desktop/README-NEW-IMAGE.txt $HOMEDIR/Desktop/
 
 
 echo "- remove station config"
-rm -f $ctrl_settings
+rm -f "$STATION/settings.json"
+rm -f "$STATION/station.json"
+
+echo "- remove station logs"
+rm -rf "$STATION/logs"
 
 echo "- restoring default DHCP networking"
 
@@ -56,10 +59,10 @@ echo "- (re)starting hostname service"
 service hostname start
 
 echo "- restoring default background image"
-cp $confdir/pictures/av-background-default.png $homedir/Pictures/av-background.png
+cp $IMAGE/pictures/av-background-default.png $HOMEDIR/Pictures/av-background.png
 
 echo "- restoring rc.local"
-cp $confdir/rc.local.orig /etc/rc.local
+cp $IMAGE/rc.local.orig /etc/rc.local
 
 
 echo "- done, should probably reboot just in case"
