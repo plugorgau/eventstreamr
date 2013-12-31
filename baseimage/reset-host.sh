@@ -5,9 +5,11 @@ existing=`hostname`
 
 ipaddr=`ifdata -pa eth0`
 homedir="/home/av"
-confdir="$homedir/eventstreamr/baseimage"
-ctrl_settings="$homedir/eventstreamr/station/settings.json"
-log="/tmp/station-mgr.log"
+gitdir="$homedir/eventstreamr"
+stationdir="$gitdir/station"
+confdir="$gitdir/baseimage"
+ctrl_settings="$stationdir/settings.json"
+station_settings="$stationdir/station.json"
 
 
 
@@ -35,6 +37,10 @@ ln -s $confdir/desktop/README-NEW-IMAGE.txt $homedir/Desktop/
 
 echo "- remove station config"
 rm -f $ctrl_settings
+rm -f $station_settings
+
+echo "- remove station logs"
+rm -rf "$stationdir/logs"
 
 echo "- restoring default DHCP networking"
 
