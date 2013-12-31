@@ -1,7 +1,7 @@
 var db = require('../lib/db_abstract')
 
 var removeIp = function(ip) {
-  db.updateRaw('stations', { ip: ip }, { $unset: { ip: true } }, {}, function () {});
+  db.updateRaw('stations', { ip: ip }, { $unset: { ip: true } }, function () {});
 }
 
 var updateIp = function(macaddress, ip) {
