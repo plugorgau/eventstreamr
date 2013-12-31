@@ -127,6 +127,36 @@ describe('GET /api/stations/D0:FB:DB:D4:21:15', function(){
   })
 })
 
+// update station nickname
+describe('POST /api/stations/D0:FB:DB:D4:21:15/partial', function(){
+  it('Update Station Nickname', function(done){
+    request(app)
+      .post('/api/stations/D0:FB:DB:D4:21:15/partial')
+      .send({ name: 'unused',
+              value: 'teststation',
+              pk: 'unused',
+              key: 'settings.nickname' })
+      .expect(200, done)
+  })
+})
+
+// test nickname change 
+describe('GET /api/stations/D0:FB:DB:D4:21:15', function(){
+  it('Check updated nickname', function(done){
+    request(app)
+      .get('/api/stations/D0:FB:DB:D4:21:15')
+      .expect('Content-Type', /json/)
+      .expect(200)
+      .end(function(err, res) {
+        // settings object
+        res.body.should.have.property('settings').to.be.an('object');
+        // nickname
+        res.body.settings.should.have.property('nickname').to.equal('teststation')
+        done();
+      });
+  })
+})
+
 // delete a station
 describe('DEL /api/station/D0:FB:DB:D4:21:15', function(){
   it('Station should be deleted', function(done){
@@ -134,3 +164,12 @@ describe('DEL /api/station/D0:FB:DB:D4:21:15', function(){
       .del('/api/station/D0:FB:DB:D4:21:15')
       .expect(204, done);
   })})
+
+// ensure station got removed
+describe('GET /api/stations/D0:FB:DB:D4:21:15', function(){
+  it('Check successful removal', function(done){
+    request(app)
+      .get('/api/stations/D0:FB:DB:D4:21:15')
+      .expect(404, done)
+  })
+})
