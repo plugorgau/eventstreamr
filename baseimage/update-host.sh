@@ -8,7 +8,7 @@ gitdone=$1
 if [ -z "$gitdone" ]; then
     cd $BASE; 
     git pull
-    exec $0 gitdone
+    exec $IMAGE/update-host.sh gitdone
 fi
 
 # make sure we have all our dependencies
