@@ -36,17 +36,14 @@ $.get( "/api/stations", function( data ) {
         viewModel.stations.push(ko.mapping.fromJS(data.content))
       }
       if (data.type == 'update') {
-        console.log(data)
         var match = ko.utils.arrayFirst(viewModel.stations(), function(item) {
           return data.content._id === item._id();
         });
-        
-        match = ko.mapping.fromJS(data.content)
-
-        if (!match) {
-          viewModel.stations.push(data);
+       
+        if (match) {
+          viewModel.stations.remove(match) 
+          viewModel.stations.push(ko.mapping.fromJS(data.content))
         }
-
       }
     });
   })
