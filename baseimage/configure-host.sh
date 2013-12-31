@@ -1,19 +1,17 @@
 #!/bin/bash
 
+# load common configuration
+. ~/eventstreamr/baseimage/common-config.sh
+
 hostname=
 controller=
 ipaddress=
 netmask=
 gateway=
 dns=
-existing=`hostname`
+existing=$HOSTNAME
 
 gitdone=$1
-ipaddr=`ifdata -pa eth0`
-homedir="/home/av"
-confdir="$homedir/eventstreamr/baseimage"
-ctrl_settings="$homedir/eventstreamr/station/settings.json"
-log="/tmp/station-mgr.log"
 
 
 function valid_ip() {
@@ -50,7 +48,7 @@ if [ -z "$gitdone" ]; then
     echo -n "update eventstreamr from git (y/n) [n]? "
     read REPLY
     if [ "$REPLY" == "y" ]; then
-        su - av -c "cd $confdir; git pull"
+        su - av -c "cd $BASE; git pull"
         echo "restarting script in 3 seconds ..."
         sleep 3
         reset
@@ -157,13 +155,13 @@ echo "
 "
 
 echo "- clearing desktop icons"
-rm -f $homedir/Desktop/*
+rm -f $HOMEDIR/Desktop/*
 
 echo "- writing controller config"
 echo "{
    \"controller\" : \"http://$controller:5001/api/station\"
-}" > $ctrl_settings
-chown av.av $ctrl_settings
+}" > "$CONTROLLER/settings.json"
+chown av.av "$CONTROLLER/settings.json"
 
 echo "- configuring networking"
 if [ "$ipaddress" = "<dhcp>" ]; then
@@ -193,7 +191,7 @@ sed -i "s/${existing}/${hostname}/g" /etc/hostname
 
 
 echo "- updating /etc/rc.local to start eventstreamr bits"
-cp $confdir/rc.local /etc/rc.local
+cp $IMAGE/rc.local /etc/rc.local
 
 echo "- fix grub"
 /usr/sbin/grub-install /dev/sda

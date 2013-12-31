@@ -1,3 +1,8 @@
+2013-12-31:
+    - packages: re-ran update-host, got from deps file
+    - chromium-browser: allow popups from all sites
+    - added launcher icons for AV Status, Monitoring, and Xchat
+
 2013-12-29:
     - packages (new): libfile-tail-perl
     - mv sudoers file to "av"
