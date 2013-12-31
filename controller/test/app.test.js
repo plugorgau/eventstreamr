@@ -5,6 +5,41 @@ var chai = require("chai");
 chai.should();
 chai.use(require('chai-things'));
 
+// -------------- Example Data
+var station = '{ \
+              "device_control" : { \
+                 "api" : { \
+                    "run" : "1" \
+                 }, \
+                 "dvmon" : { \
+                    "run" : "0" \
+                 } \
+              }, \
+              "devices" : "all", \
+              "macaddress" : "D0:FB:DB:D4:21:15", \
+              "mixer" : { \
+                 "host" : "localhost", \
+                 "port" : "1234" \
+              }, \
+              "nickname" : "stationtest", \
+              "record_path" : "/tmp/$room/$date", \
+              "roles" : [ \
+                { "role": "mixer" }, \
+                { "role": "record" }, \
+                { "role": "ingest" }, \
+                { "role": "stream" } \
+              ], \
+              "room" : "", \
+              "run" : "0", \
+              "stream" : { \
+                 "host" : "1.2.3.4", \
+                 "password" : "password", \
+                 "port" : "1337", \
+                 "stream" : "test.ogg" \
+              } \
+            }'
+
+// -------------- Controller Test
 // check admin page 
 describe('GET /admin', function(){
   it('admin page should load', function(done){
@@ -14,12 +49,26 @@ describe('GET /admin', function(){
   })
 })
 
+// -------------- Station Tests
 // register a station
 describe('POST /api/station/D0:FB:DB:D4:21:15', function(){
   it('Station should register', function(done){
     request(app)
       .post('/api/station/D0:FB:DB:D4:21:15')
       .expect(201, done);
+  })
+})
+
+// remove station ip 
+describe('POST /api/stations/D0:FB:DB:D4:21:15/partial', function(){
+  it('remove station ip', function(done){
+    request(app)
+      .post('/api/stations/D0:FB:DB:D4:21:15/partial')
+      .send({ name: 'unused',
+              value: null,
+              pk: 'unused',
+              key: 'ip' })
+      .expect(200, done)
   })
 })
 
@@ -39,40 +88,7 @@ describe('POST /api/station', function(){
       .post('/api/station')
       .set('station-mgr','1') 
       .set('Content-Type', 'application/json')
-      .send(
-            {
-              "device_control" : {
-                 "api" : {
-                    "run" : "1"
-                 },
-                 "dvmon" : {
-                    "run" : "0"
-                 }
-              },
-              "devices" : "all",
-              "macaddress" : "D0:FB:DB:D4:21:15",
-              "mixer" : {
-                 "host" : "localhost",
-                 "port" : "1234"
-              },
-              "nickname" : "stationtest",
-              "record_path" : "/tmp/$room/$date",
-              "roles" : [
-                { "role": "mixer" },
-                { "role": "record" },
-                { "role": "ingest" },
-                { "role": "stream" }
-              ],
-              "room" : "",
-              "run" : "0",
-              "stream" : {
-                 "host" : "1.2.3.4",
-                 "password" : "password",
-                 "port" : "1337",
-                 "stream" : "test.ogg"
-              }
-            }
-      )
+      .send(station)
       .expect(200, done);
   })
 })
