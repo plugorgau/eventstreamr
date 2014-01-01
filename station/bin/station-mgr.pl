@@ -163,8 +163,10 @@ if ($response->{status} == 200 ) {
   $logger->debug({filter => \&Data::Dumper::Dumper,
                   value  => $content}) if ($logger->is_debug());
 
-  if (defined $content) {
+  if (defined $content && $content ne 'true') {
     $self->{config} = $content->{settings};
+    write_config();
+  } else {
     write_config();
   }
 
