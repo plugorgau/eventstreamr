@@ -9,7 +9,7 @@ var viewModel = {
 }
 viewModel.roomDuplicates = ko.computed(function() {
   return viewModel.stations().map(function(item) {
-    return item.settings.room()
+    return (item.settings.room ? item.settings.room() : '')
   })
 })
 viewModel.rooms = ko.computed(function() {

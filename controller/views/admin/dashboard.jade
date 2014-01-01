@@ -40,7 +40,7 @@ block content
               .panel-heading
                 h3.panel-title New Station
               .panel-body
-                form.form-horizontal.data-async(role="form", data-bind="with: {roles: []}")
+                form.form-horizontal.data-async(role="form", data-bind="with: {roles: [], room: null, nickname: null, record_path: null}")
                   legend.test-data Station Details
                   mixin form-group-standard("Mac Address", "macaddress", "text", "##:##:##:##:##:##")
                   mixin form-group-checkbox("Roles", "roles", ["mixer","ingest","record","stream"])
