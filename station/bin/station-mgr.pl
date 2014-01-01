@@ -493,6 +493,8 @@ sub record {
       
       $self->{device_control}{$device->{id}}{runcount}++;
       # Set device status
+      $self->{status}{$device->{id}}{type} = $device->{type};
+      $self->{status}{$device->{id}}{timestamp} = time;
       $self->{status}{$device->{id}}{running} = 0;
       $self->{status}{$device->{id}}{status} = "not_writeable";
       $self->{status}{$device->{id}}{state} = "hard";
