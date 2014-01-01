@@ -1,5 +1,26 @@
 ko.bindingProvider.instance = new StringInterpolatingBindingProvider();
 
+var availableRoles = [
+  {value: 'ingest', text: 'ingest'},
+  {value: 'mixer', text: 'mixer'},
+  {value: 'record', text: 'record'},
+  {value: 'stream', text: 'stream'}
+]
+
+var roleDisplay = function(value, sourceData) {
+   var selectedRoles = "",
+       checked = $.fn.editableutils.itemsByValue(value, sourceData);
+       
+   if(checked.length) {
+     $.each(checked, function(i, v) { 
+       selectedRoles += "<li><span class='label label-info'>" + $.fn.editableutils.escape(v.text) + "</span></li>";
+     });
+     $(this).html('<ul class="list-inline">' + selectedRoles + '</ul>');
+   } else {
+     $(this).empty(); 
+   }
+}
+
 function onlyUnique(value, index, self) { 
     return self.indexOf(value) === index;
 }
@@ -41,8 +62,7 @@ $.get( "/api/stations", function( data ) {
         });
        
         if (match) {
-          viewModel.stations.remove(match) 
-          viewModel.stations.push(ko.mapping.fromJS(data.content))
+          // need to actually do somethings..
         }
       }
     });

@@ -15,7 +15,7 @@ var StationSettings = function(request) {
   return {
     macaddress: request.macaddress,
     roles: request.roles || [],
-    room: request.room,
+    room: request.room || '',
     devices: request.devices || [],
     nickname: request.nickname,
     record_path: request.record_path || null,

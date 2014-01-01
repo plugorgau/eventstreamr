@@ -4,3 +4,25 @@
   border-bottom-right-radius: 0;
   border-top-left-radius: 0;
 }
+
+.control-actions {
+  margin-right: -1px;
+  margin-top: -1px;
+  margin-bottom: -10px;
+}
+
+.rooms .panel-heading {
+  position: relative;
+}
+.rooms .panel-title {
+  margin-top: 15px;
+  margin-bottom: -8px;
+}
+
+.rooms .btn-group {
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+

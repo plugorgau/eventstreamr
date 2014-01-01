@@ -25,11 +25,29 @@ block content
     hr
     .row
       .col-xs-8
-        div(data-bind="foreach: {data: viewModel.rooms, as: 'roomId'}")
-          h3(data-bind="text: roomId")
-          div(data-bind="foreach: viewModel.stations().filter(function(item) { return roomId == item.settings.room() })")
-            p(data-bind="text: ko.toJSON($data.ip)")
-            p(data-bind="text: ko.toJSON($data.settings)")
+        .row.rooms(data-bind="foreach: {data: viewModel.rooms, as: 'roomId'}")
+          div(data-bind="if: roomId")
+            .panel.panel-default
+              .panel-heading
+                .btn-group.control-actions
+                    a.btn.btn-success.btn-xs Start 
+                    a.btn.btn-warning.btn-xs Restart
+                    a.btn.btn-primary.btn-xs Update
+                    a.btn.btn-danger.btn-xs Stop
+                h3.panel-title(data-bind="text: roomId")
+              .panel-body
+                .row(data-bind="foreach: viewModel.stations().filter(function(item) { return roomId == item.settings.room() })")
+                  .col-md-4
+                    .panel.panel-primary
+                      .panel-heading
+                        .btn-group.control-actions
+                            a.btn.btn-success.btn-xs Start 
+                            a.btn.btn-warning.btn-xs Restart
+                            a.btn.btn-primary.btn-xs Update
+                            a.btn.btn-danger.btn-xs Stop
+                        h2.panel-title(data-bind="text: $data.settings.nickname")
+                      .panel-body
+                        div(data-bind="editable: settings.roles, editableOptions: {display: roleDisplay, type: 'checklist', source: availableRoles, pk: 'unused', name: 'unused', url: '/api/stations/' + $data.settings.macaddress() + '/partial', params: {key: 'settings.roles'}}")
       .col-xs-4
         div
           button.btn.btn-default.btn-sm.pull-right(data-toggle="collapse", data-target="#add-station", type="button", form-toggle)
@@ -50,18 +68,19 @@ block content
                   .form-group
                     .col-lg-offset-2.col-lg-10.col-md-offset-3.col-md-9.col-sm-offset-4.col-sm-8
                       button.btn.btn-default(type="submit", data-bind="click: submitStation") Submit
-        ul.list-unstyled(data-bind="foreach: stations, visible: true" style="display: none;")
-          li
-            button.btn.btn-default.btn-xs.pull-right(data-bind="click: removeStation", title="Forget Station")
-              small
-               i.glyphicon.glyphicon-remove
-            strong(data-bind="editable: settings.nickname, editableOptions: {pk: 'unused', name: 'unused', url: '/api/stations/' + $data.settings.macaddress() + '/partial', params: {key: 'settings.nickname'}}")
-            |  
-            small {{ macRewrite(settings.macaddress()) }}
-            dl
-              dt Room
-              dd(data-bind="editable: settings.room, editableOptions: {pk: 'unused', name: 'unused', url: '/api/stations/' + $data.settings.macaddress() + '/partial', params: {key: 'settings.room'}}")
-            ul.list-inline
-              li(data-bind="foreach: {data: settings.roles, as: 'role'}")
-                span.label.label-primary {{role}}
-                |  
+        ul.list-unstyled(data-bind="foreach: {data: stations, as: 'station'}, visible: true" style="display: none;")
+          div(data-bind="ifnot: station.settings.room()")
+            li
+              button.btn.btn-default.btn-xs.pull-right(data-bind="click: removeStation", title="Forget Station")
+                small
+                 i.glyphicon.glyphicon-remove
+              strong(data-bind="editable: settings.nickname, editableOptions: {pk: 'unused', name: 'unused', url: '/api/stations/' + $data.settings.macaddress() + '/partial', params: {key: 'settings.nickname'}}")
+              |  
+              small {{ macRewrite(settings.macaddress()) }}
+              dl
+                dt Room
+                dd(data-bind="editable: settings.room, editableOptions: {pk: 'unused', name: 'unused', url: '/api/stations/' + $data.settings.macaddress() + '/partial', params: {key: 'settings.room'}}")
+              ul.list-inline
+                li(data-bind="foreach: {data: settings.roles, as: 'role'}, ")
+                  span.label.label-info {{role}}
+                  |  
