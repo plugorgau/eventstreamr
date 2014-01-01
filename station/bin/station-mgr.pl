@@ -627,6 +627,10 @@ sub run_stop {
       # Set state
       $self->{device_control}{$device->{id}}{pid} = $state->{pid};
       $self->{device_control}{$device->{id}}{running} = $state->{running};
+      
+      # Status Defaults
+      $self->{status}{$device->{id}}{type} = $device->{type};
+      $self->{status}{$device->{id}}{timestamp} = $time;
 
       # Status flag
       if ($state->{running}) {
