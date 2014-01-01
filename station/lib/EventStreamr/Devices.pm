@@ -80,12 +80,12 @@ sub alsa { # Only Does USB devices currently
     my $name = name_lsusb($usbid);
     chomp $usbid;
 
-    $alsa_devices->{$card}{usbid} = $usbid;
-    $alsa_devices->{$card}{name} = $name;
-    $alsa_devices->{$card}{device} = $card;
-    $alsa_devices->{$card}{type} = "alsa";
-    $alsa_devices->{$card}{id} = $card;
-    push (@{$alsa_devices->{all}}, $alsa_devices->{$card});
+    $alsa_devices->{$usbid}{id} = $usbid;
+    $alsa_devices->{$usbid}{name} = $name;
+    $alsa_devices->{$usbid}{device} = $card;
+    $alsa_devices->{$usbid}{type} = "alsa";
+    $alsa_devices->{$usbid}{alsa} = $card;
+    push (@{$alsa_devices->{all}}, $alsa_devices->{$usbid});
   }
   return $alsa_devices;
 }

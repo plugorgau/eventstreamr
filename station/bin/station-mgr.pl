@@ -705,9 +705,12 @@ sub ingest_commands {
   my $command = $self->{commands}{$type};
   my $did;
 
-  # Files aren't part of the device list returned by Devices.pm
-  unless ($type eq "file") {
+  # Some device types require different details
+  if ($type eq "file") {
     $did = $self->{devices}{$type}{$id}{device};
+  } elsif ($type eq "alsa") {
+    $self->{devices} = $devices->all();
+    $did = $self->{devices}{$type}{$id}{alsa};
   } else {
     $did = $id;
   }
