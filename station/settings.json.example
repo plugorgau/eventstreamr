@@ -1,5 +1,5 @@
 # config-file-type: JSON 1
 
 {
-   "controller" : "http://localhost:5001/api/station",
+   "controller" : "http://localhost:5001",
 }

@@ -160,8 +160,8 @@ rm -f $HOMEDIR/Desktop/*
 echo "- writing controller config"
 echo "{
    \"controller\" : \"http://$controller:5001\"
-}" > "$CONTROLLER/settings.json"
-chown av.av "$CONTROLLER/settings.json"
+}" > "$STATION/settings.json"
+chown av.av "$STATION/settings.json"
 
 echo "- configuring networking"
 if [ "$ipaddress" = "<dhcp>" ]; then
