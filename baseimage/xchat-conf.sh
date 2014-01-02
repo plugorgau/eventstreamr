@@ -4,7 +4,7 @@
 . ~/eventstreamr/baseimage/common-config.sh
 
 if [ -z "${ROOM}" ]; then
-	ROOM="no-room-defined"
+	ROOM=$HOSTNAME
 fi 
 
 killall xchat
