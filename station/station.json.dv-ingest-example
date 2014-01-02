@@ -13,7 +13,7 @@
     "nickname" : "CHANGEME",
     "record_path" : "/localbackup/$room/$date",
     "roles" : [
-        { "role": "ingest" }
+        "ingest"
     ],
     "room" : "CHANGEME",
     "run" : "1",

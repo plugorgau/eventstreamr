@@ -23,9 +23,9 @@
     "nickname" : "CHANGEME",
     "record_path" : "/localbackup/$room/$date",
     "roles" : [
-        { "role": "mixer" },
-        { "role": "record" },
-        { "role": "ingest" }
+        "mixer",
+        "record",
+        "ingest"
     ],
     "room" : "CHANGEME",
     "run" : "1",

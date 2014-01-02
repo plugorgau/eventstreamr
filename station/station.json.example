@@ -3,10 +3,10 @@
 { 
   "roles" : 
     [
-      {"role":"ingest"},
-      {"role":"mixer"},
-      {"role":"record"},
-      {"role":"stream"}
+      "ingest",
+      "mixer",
+      "record",
+      "stream"
     ],
   "nickname" : "test",
   "room" : "room1",
