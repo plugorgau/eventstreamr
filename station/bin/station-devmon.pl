@@ -38,6 +38,9 @@ while(defined(my $line=$log->read)) {
       my $http = HTTP::Tiny->new(timeout => 15);
       my $post = $http->post("http://localhost:3000/command/restart", \%post_data);
     }
+  } elsif ($line =~ m/new full-speed USB device/i) {
+    my $http = HTTP::Tiny->new(timeout => 15);
+    my $post = $http->get("http://localhost:3000/manager/refresh");
   }
 }
 
