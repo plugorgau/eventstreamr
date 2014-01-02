@@ -3,9 +3,13 @@
 # load common configuration
 . ~/eventstreamr/baseimage/common-config.sh
 
+extra_join=""
 if [ -z "${ROOM}" ]; then
 	ROOM=$HOSTNAME
+else
+    extra_join=",AV_${ROOM}"
 fi 
+
 
 killall xchat
 rm -rf ~/.xchat2
@@ -25,7 +29,7 @@ cat > ~/.xchat2/servlist_.conf << EOF
 v=2.8.8
 
 N=LCA
-J=#AV
+J=#AV_global${extra_join}
 E=IRC (Latin/Unicode Hybrid)
 F=27
 D=2
