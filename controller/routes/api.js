@@ -19,7 +19,7 @@ var StationSettings = function(request) {
     devices: request.devices || [],
     nickname: request.nickname,
     record_path: request.record_path || null,
-    mixer: request.mixer,
+    mixer: request.mixer || null,
     stream: request.stream || null,
     run: request.run || 0,
     device_control: request.device_control || null
@@ -161,7 +161,6 @@ exports.partial = function(req, res) {
     }
 
     db.update(req.params.db, query, partial, function (error, doc) {
-      console.log(doc)
       if (error) {
         res.send(500)
       }
