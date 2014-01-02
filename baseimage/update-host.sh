@@ -14,6 +14,7 @@ fi
 # make sure we have all our dependencies
 sudo apt-get install -y `cat $BASE/package.deps`
 
-# reconfigure xchat TODO
+# reconfigure xchat
+$IMAGE/xchat-conf.sh
 
 exit 0
