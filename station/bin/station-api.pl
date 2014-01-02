@@ -88,7 +88,7 @@ get '/devices' => sub {
 
 # ----- Station Control Commands -----------------------------------------------
 # Stop/Start/Restart All
-get '/command/:command' => sub {
+post '/command/:command/all' => sub {
   my $command = params->{command};
 
   given ($command) {
