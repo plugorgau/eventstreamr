@@ -729,12 +729,12 @@ sub ingest_commands {
 
   # Some device types require different details
   if ($type eq "file") {
-    $did = $self->{devices}{$type}{$id}{device};
+    $did = $id;
   } elsif ($type eq "alsa") {
     $self->{devices} = $devices->all();
     $did = $self->{devices}{$type}{$id}{alsa};
   } else {
-    $did = $id;
+    $did = $self->{devices}{$type}{$id}{device};
   }
 
   my %cmd_vars =  ( 
