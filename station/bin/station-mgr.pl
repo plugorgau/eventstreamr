@@ -227,7 +227,7 @@ while ($daemons->{main}{run}) {
 
   # Process the internal commands
   api();
-  dvmon();
+  devmon();
 
   # Process the roles
   foreach my $role (@{$self->{config}->{roles}}) {
@@ -277,7 +277,7 @@ sub sig_exit {
       $logger->info("manager exiting...");
       $daemons->{main}{run} = 0;
       $daemon->Kill_Daemon($self->{device_control}{api}{pid}); 
-      $daemon->Kill_Daemon($self->{device_control}{dvmon}{pid}); 
+      $daemon->Kill_Daemon($self->{device_control}{devmon}{pid}); 
 }
 
 sub sig_pipe {
@@ -312,9 +312,11 @@ Options:
 
 # Config triggers
 sub post_config {
-  my $json = to_json($self);
+  # Refresh devices 
+  $self->{devices} = $devices->all();
 
   # Post to manager api
+  my $json = to_json($self);
   my %post_data = ( 
         content => $json, 
         'content-type' => 'application/json', 
@@ -348,10 +350,22 @@ sub post_config {
   $logger->debug({filter => \&Data::Dumper::Dumper,
                 value  => $post}) if ($logger->is_debug());
 
-  # Post Status to Controller
+  # Post Status + devices to Controller
   if ($self->{controller}{running}) {
+    # Post status
     $post = $http->post("$localconfig->{controller}/$self->{config}{macaddress}/status", \%post_data);
     $logger->info("Status Posted to Controller API");
+    $logger->debug({filter => \&Data::Dumper::Dumper,
+                  value  => $post}) if ($logger->is_debug());
+    # Post devices
+    $json = to_json($self);
+    my %post_data = ( 
+          content => $json, 
+          'content-type' => 'application/json', 
+          'content-length' => length($json),
+    );
+    $post = $http->post("$localconfig->{controller}/$self->{config}{macaddress}/devices", \%post_data);
+    $logger->info("Devices Posted to Controller API");
     $logger->debug({filter => \&Data::Dumper::Dumper,
                   value  => $post}) if ($logger->is_debug());
   }
@@ -394,12 +408,12 @@ sub api {
   return;
 }
 
-## dvmon 
-sub dvmon {
+## devmon 
+sub devmon {
   my $device;
-  $self->{device_commands}{dvmon}{command} = "$Bin/station-dvmon.pl";
-  $device->{role} = "dvmon";
-  $device->{id} = "dvmon";
+  $self->{device_commands}{devmon}{command} = "$Bin/station-devmon.pl";
+  $device->{role} = "devmon";
+  $device->{id} = "devmon";
   $device->{type} = "internal";
   run_stop($device);
   return;
@@ -419,7 +433,7 @@ sub ingest {
         # If we're restarting we should refresh the devices and try again
         } elsif ($self->{config}{device_control}{$device->{id}}{run} == 1) {
           $logger->warn("$device->{id} has been disconnected");
-          # It's not ideal, but dvgrab hangs if no camera exist. dvmon will restart it when it's plugged in again.
+          # It's not ideal, but dvgrab hangs if no camera exist. devmon will restart it when it's plugged in again.
           $self->{config}{device_control}{$device->{id}}{run} = 0;
           run_stop($device);
 
