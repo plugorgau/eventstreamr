@@ -47,6 +47,7 @@ block content
                             a.btn.btn-danger.btn-xs Stop
                         h2.panel-title(data-bind="text: $data.settings.nickname")
                       .panel-body
+                        div(data-bind="editable: devices, editableOptions: {display: deviceDisplay, type: 'checklist', source: availableDevices, pk: 'unused', name: 'unused', url: '/api/stations/' + $data.settings.macaddress() + '/partial', params: {key: 'settings.roles'}}")
                         div(data-bind="editable: settings.roles, editableOptions: {display: roleDisplay, type: 'checklist', source: availableRoles, pk: 'unused', name: 'unused', url: '/api/stations/' + $data.settings.macaddress() + '/partial', params: {key: 'settings.roles'}}")
       .col-xs-4
         div
