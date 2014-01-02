@@ -231,7 +231,7 @@ while ($daemons->{main}{run}) {
 
   # Process the roles
   foreach my $role (@{$self->{config}->{roles}}) {
-    given ( $role->{role} ) {
+    given ( $role ) {
       when ("mixer")    { mixer();  }
       when ("ingest")   { ingest(); }
       when ("stream")   { stream(); }
