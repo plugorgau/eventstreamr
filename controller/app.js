@@ -40,7 +40,7 @@ app.get('/admin', adminroutes.dashboard)
 
 app.get('/api/:db', api.listDocs)
 app.get('/api/:db/:id', api.getDocument)
-app.post('/api/:db/:id/:partial', api.partial)
+app.post('/api/:db/:id/partial', api.partial)
 
 app.post('/api/station', api.storeStation)
 app.post('/api/station/:macaddress', api.registerStation)

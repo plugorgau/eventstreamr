@@ -151,13 +151,15 @@ exports.partial = function(req, res) {
     query[tableInfo.key] = req.params.id;
     
     partial = {}
-    if (req.params.partial == 'partial') {
-      partial[req.body.key] = req.body.value
-    } else {
-      console.log(req.body)
-      partial[req.params.partial] = req.body
+    if (req.body instanceof Array) { 
+      for (var i in req.body) {
+        partial[req.body[i].key] = req.body[i].value
+      }
     }
-    
+    else {
+      partial[req.body.key] = req.body.value
+    }
+
     db.update(req.params.db, query, partial, function (error, doc) {
       console.log(doc)
       if (error) {

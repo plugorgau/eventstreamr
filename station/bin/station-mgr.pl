@@ -357,10 +357,12 @@ sub post_config {
   # Post Status + devices to Controller
   if ($self->{controller}{running}) {
     # Build post object
-    my $data[0]->{key} = "status";
-    $data[0]->{value} = $status->{status};
-    $data[1]->{key} = "devices";
-    $data[1]->{value} = $self->{devices};
+    my $data;
+    $data->[0]{key} = "status";
+    $data->[0]{value} = $status->{status};
+    $data->[1]{key} = "devices";
+    $data->[1]{value} = $self->{devices}{all};
+    delete $data->[1]{value}{all};
 
     # Post data
     $json = to_json($data);
