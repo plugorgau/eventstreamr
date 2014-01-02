@@ -45,13 +45,17 @@ sub dv {
   my $dv_devices;
 
   foreach my $dv (@dvs) { # suffers from Big0 notation, but should only be a limited number of devices
-    if (-e "$dv/vendor_name") {
-      my $vendor_name = read_file("$dv/vendor_name");
+    if (-e "$dv/vendor") {
+      my $vendor_name = read_file("$dv/vendor");
+      $vendor_name = read_file("$dv/vendor_name") if ( -e "$dv/vendor_name" );
       chomp $vendor_name;
+      $vendor_name = "Canopus" if ( $vendor_name eq "0x002011" );
       
       unless ($vendor_name eq "Linux Firewire") {
         my $guid = read_file("$dv/guid");
-        my $model = read_file("$dv/model_name");
+        my $model = "unknown";
+        $model = "twinpact100" if ( $vendor_name eq "Canopus" );
+        $model = read_file("$dv/model_name") if ( -e "$dv/model_name" );
         chomp $guid;
         chomp $model;
         $dv_devices->{$guid}{device} = $guid;
