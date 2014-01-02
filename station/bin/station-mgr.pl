@@ -132,8 +132,8 @@ our $http = HTTP::Tiny->new(timeout => 15);
 api();
 
 # Register with controller
-$logger->info("Registering with controller $localconfig->{controller}/$self->{config}{macaddress}");
-my $response =  $http->post("$localconfig->{controller}/$self->{config}{macaddress}");
+$logger->info("Registering with controller $localconfig->{controller}/api/station/$self->{config}{macaddress}");
+my $response =  $http->post("$localconfig->{controller}/api/station/$self->{config}{macaddress}");
 
 # Controller responds with created 201, post our config 
 if ($response->{status} == 201) {
@@ -336,12 +336,16 @@ sub post_config {
   # Uncomment for heartbeat
   #$status->{heartbeat} = $self->{heartbeat};
 
+  # Post Headers
+  my %headers = (
+        'Content-Type' => 'application/json',
+  );
+
   # Status Post Data
   $json = to_json($status);
   my %post_data = ( 
         content => $json, 
-        'content-type' => 'application/json', 
-        'content-length' => length($json),
+        headers => \%headers, 
   );
 
   # Post Status to Mixer
@@ -353,19 +357,23 @@ sub post_config {
   # Post Status + devices to Controller
   if ($self->{controller}{running}) {
     # Post status
-    $post = $http->post("$localconfig->{controller}/$self->{config}{macaddress}/status", \%post_data);
-    $logger->info("Status Posted to Controller API");
+    $json = to_json($status->{status});
+    %post_data = ( 
+          content => $json, 
+          headers => \%headers, 
+    );
+    $post = $http->post("$localconfig->{controller}/api/stations/$self->{config}{macaddress}/status", \%post_data);
+    $logger->info("Status Posted to Controller API - $localconfig->{controller}/api/stations/$self->{config}{macaddress}/status");
     $logger->debug({filter => \&Data::Dumper::Dumper,
                   value  => $post}) if ($logger->is_debug());
     # Post devices
-    $json = to_json($self);
-    my %post_data = ( 
+    $json = to_json($self->{devices});
+    %post_data = ( 
           content => $json, 
-          'content-type' => 'application/json', 
-          'content-length' => length($json),
+          headers => \%headers, 
     );
-    $post = $http->post("$localconfig->{controller}/$self->{config}{macaddress}/devices", \%post_data);
-    $logger->info("Devices Posted to Controller API");
+    $post = $http->post("$localconfig->{controller}/api/stations/$self->{config}{macaddress}/devices", \%post_data);
+    $logger->info("Devices Posted to Controller API - $localconfig->{controller}/api/stations/$self->{config}{macaddress}/devices");
     $logger->debug({filter => \&Data::Dumper::Dumper,
                   value  => $post}) if ($logger->is_debug());
   }
@@ -843,7 +851,7 @@ CONFIG
 sub blank_settings {
   my $json = <<CONFIG;
 {
-     "controller" : "http://localhost:5001/api/station"
+     "controller" : "http://localhost:5001"
 }
 CONFIG
 

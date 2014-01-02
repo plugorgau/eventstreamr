@@ -159,7 +159,7 @@ rm -f $HOMEDIR/Desktop/*
 
 echo "- writing controller config"
 echo "{
-   \"controller\" : \"http://$controller:5001/api/station\"
+   \"controller\" : \"http://$controller:5001\"
 }" > "$CONTROLLER/settings.json"
 chown av.av "$CONTROLLER/settings.json"
 
