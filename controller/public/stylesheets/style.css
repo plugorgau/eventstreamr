@@ -11,6 +11,11 @@
   margin-bottom: -10px;
 }
 
+.room-remove {
+  margin-left: -1px;
+  margin-top: -1px;
+  margin-bottom: -10px;
+}
 .rooms .panel-heading {
   position: relative;
 }
@@ -19,10 +24,15 @@
   margin-bottom: -8px;
 }
 
-.rooms .btn-group {
+.rooms .control-actions.btn-group {
   position: absolute;
   top: 0;
   right: 0;
 }
 
+.rooms .room-remove.btn-xs {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
 
