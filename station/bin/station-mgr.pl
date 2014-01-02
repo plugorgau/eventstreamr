@@ -356,24 +356,20 @@ sub post_config {
 
   # Post Status + devices to Controller
   if ($self->{controller}{running}) {
-    # Post status
-    $json = to_json($status->{status});
+    # Build post object
+    my $data[0]->{key} = "status";
+    $data[0]->{value} = $status->{status};
+    $data[1]->{key} = "devices";
+    $data[1]->{value} = $self->{devices};
+
+    # Post data
+    $json = to_json($data);
     %post_data = ( 
           content => $json, 
           headers => \%headers, 
     );
-    $post = $http->post("$localconfig->{controller}/api/stations/$self->{config}{macaddress}/status", \%post_data);
-    $logger->info("Status Posted to Controller API - $localconfig->{controller}/api/stations/$self->{config}{macaddress}/status");
-    $logger->debug({filter => \&Data::Dumper::Dumper,
-                  value  => $post}) if ($logger->is_debug());
-    # Post devices
-    $json = to_json($self->{devices});
-    %post_data = ( 
-          content => $json, 
-          headers => \%headers, 
-    );
-    $post = $http->post("$localconfig->{controller}/api/stations/$self->{config}{macaddress}/devices", \%post_data);
-    $logger->info("Devices Posted to Controller API - $localconfig->{controller}/api/stations/$self->{config}{macaddress}/devices");
+    $post = $http->post("$localconfig->{controller}/api/stations/$self->{config}{macaddress}/partial", \%post_data);
+    $logger->info("Status Posted to Controller API - $localconfig->{controller}/api/stations/$self->{config}{macaddress}/partial");
     $logger->debug({filter => \&Data::Dumper::Dumper,
                   value  => $post}) if ($logger->is_debug());
   }
