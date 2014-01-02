@@ -26,7 +26,7 @@ our $self;
 our $status;
 
 # routes
-set public( "$Bin/../status" );
+set public => "$Bin/../status";
 get '/dump' => sub {
   my $data = $self;
   header 'Access-Control-Allow-Origin' => '*';
