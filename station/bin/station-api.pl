@@ -127,6 +127,7 @@ get '/manager/update' => sub {
   return;
 };
 
+# Trigger reboot
 get '/manager/reboot' => sub {
   info("triggering reboot");
   system("sudo /sbin/shutdown -r -t 5 now &");
@@ -135,6 +136,15 @@ get '/manager/reboot' => sub {
   return;
 };
 
+# trigger refresh
+get '/manager/refresh' => sub {
+  info("triggering update");
+  kill '12', $self->{config}{manager}{pid};
+  header 'Access-Control-Allow-Origin' => '*';
+  return;
+};
+
+# get recent log entries
 get '/manager/logs' => sub {
   my @log;
   my $count = 0;
