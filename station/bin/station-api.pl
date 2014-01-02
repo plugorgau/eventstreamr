@@ -64,7 +64,9 @@ post '/settings/:mac' => sub {
   my $data->{mac} = params->{mac};
   $data->{body} = request->body;
   if ($data->{mac} == $self->{config}{macaddress}) {
-    debug($data);
+    my $manager = $self->{config}{manager}{pid};
+    $self->{config} = $data->{body}{settings};
+    $self->{config}{manager}{pid} = $manager;
     kill '10', $self->{config}{manager}{pid}; 
     header 'Access-Control-Allow-Origin' => '*';
     return;
