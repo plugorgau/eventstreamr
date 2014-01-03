@@ -101,12 +101,22 @@ $.get( "/api/stations", function( data ) {
     });
   })
 
-var actionDevicePost = function(data) {
+var actionStation = function(ip, action) {
+  var post = new Object();
+  post.station_ip = ip;
+  post.id = "Station";
+  post.action = action + "/all";
+  actionDevicePost(post);
+
+}
+
+var actionDevicePost = function(post) {
+  console.log(post)
   $.ajax({
-    url: data.station_ip + '/command/' + data.action,
+    url: 'http://' + post.station_ip + ':3000/command/' + post.action,
     type: 'POST',
     data: {
-      id: data.device_id,
+      id: post.device_id,
     }
   })
 }

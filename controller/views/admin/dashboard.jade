@@ -84,10 +84,11 @@ block content
                       small
                        i.glyphicon.glyphicon-remove
                     .btn-group.control-actions
-                        a.btn.btn-success.btn-xs Start 
-                        a.btn.btn-warning.btn-xs Restart
+                        a.btn.btn-success.btn-xs(data-bind="click: actionStation.bind($data, $data.ip(), 'start')") Start 
+                        a.btn.btn-warning.btn-xs(data-bind="click: actionStation.bind($data, $data.ip(), 'restart')") Restart
                         a.btn.btn-primary.btn-xs Update
-                        a.btn.btn-danger.btn-xs Stop
+                        a.btn.btn-danger.btn-xs(data-bind="click: actionStation.bind($data, $data.ip(), 'stop')") Stop
+                        a.btn.btn-default.btn-xs Reboot
                     h2.panel-title
                       div(data-bind="with: {nickname: $data.settings.nickname || '', macaddress: $data.settings.macaddress() } ")
                         .fa.fa-desktop
@@ -126,6 +127,12 @@ block content
                           dt Port
                           dd(data-bind="with: {port: $parent.settings.mixer.port || '', macaddress: $parent.settings.macaddress() } ")
                             div(data-bind="editable: port, editableOptions: {pk: 'unused', name: 'unused', url: '/api/stations/' + macaddress + '/partial', params: {key: 'settings.mixer.port'}}")
+                      dt Record 
+                      dd
+                        dl(style="margin-left: 10px;margin-top: 0px;" )
+                          dt Path 
+                          dd(data-bind="with: {record_path: $parent.settings.record_path || '', macaddress: $parent.settings.macaddress() } ")
+                            div(data-bind="editable: record_path, editableOptions: {pk: 'unused', name: 'unused', url: '/api/stations/' + macaddress + '/partial', params: {key: 'settings.record_path'}}")
                       dd
                       // /ko
                       // ko if: $parent.devices
