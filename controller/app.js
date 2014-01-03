@@ -44,6 +44,7 @@ app.post('/api/:db/:id/partial', api.partial)
 
 app.post('/api/station', api.storeStation)
 app.post('/api/station/:macaddress', api.registerStation)
+app.post('/api/station/:macaddress/action', api.actionStation)
 app.del('/api/station/:macaddress', api.deleteStation)
 
 var server = http.createServer(app)

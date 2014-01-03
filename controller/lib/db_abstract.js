@@ -45,8 +45,8 @@ exports.update = function(table, query, partial, callback)  {
     if (success) {
       db[table].findOne(query, function(error, original) {
         feed.emit('change', {type: 'update', content: original})
+        callback(null, original)
       })
-      callback(null, success)
     }
   })
 }
