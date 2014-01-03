@@ -67,10 +67,11 @@ block content
         .panel.panel-default
           .panel-heading
             .btn-group.control-actions
-                a.btn.btn-success.btn-xs Start 
-                a.btn.btn-warning.btn-xs Restart
-                a.btn.btn-primary.btn-xs Update
-                a.btn.btn-danger.btn-xs Stop
+              a.btn.btn-success.btn-xs(data-bind="click: actionStations.bind($data, roomId, 'start')") Start 
+              a.btn.btn-warning.btn-xs(data-bind="click: actionStations.bind($data, roomId,'restart')") Restart
+              a.btn.btn-primary.btn-xs(data-bind="click: actionStationManagers.bind($data, roomId, 'update')") Update
+              a.btn.btn-danger.btn-xs(data-bind="click: actionStations.bind($data, roomId, 'stop')") Stop
+              a.btn.btn-default.btn-xs(data-bind="click: actionStationManagers.bind($data, roomId, 'reboot')") Reboot
             h3.panel-title
               .fa.fa-home
               |  
@@ -84,11 +85,11 @@ block content
                       small
                        i.glyphicon.glyphicon-remove
                     .btn-group.control-actions
-                        a.btn.btn-success.btn-xs(data-bind="click: actionStation.bind($data, $data.ip(), 'start')") Start 
-                        a.btn.btn-warning.btn-xs(data-bind="click: actionStation.bind($data, $data.ip(), 'restart')") Restart
-                        a.btn.btn-primary.btn-xs Update
-                        a.btn.btn-danger.btn-xs(data-bind="click: actionStation.bind($data, $data.ip(), 'stop')") Stop
-                        a.btn.btn-default.btn-xs Reboot
+                        a.btn.btn-success.btn-xs(data-bind="click: actionDevice.bind($data, $data.settings.macaddress(), 'all', 'start')") Start 
+                        a.btn.btn-warning.btn-xs(data-bind="click: actionDevice.bind($data, $data.settings.macaddress(), 'all', 'restart')") Restart
+                        a.btn.btn-primary.btn-xs(data-bind="click: actionStationManager.bind($data, $data.settings.macaddress(), 'update')") Update
+                        a.btn.btn-danger.btn-xs(data-bind="click: actionDevice.bind($data, $data.settings.macaddress(), 'all', 'stop')") Stop
+                        a.btn.btn-default.btn-xs(data-bind="click: actionStationManager.bind($data, $data.settings.macaddress(), 'reboot')") Reboot
                     h2.panel-title
                       div(data-bind="with: {nickname: $data.settings.nickname || '', macaddress: $data.settings.macaddress() } ")
                         .fa.fa-desktop
@@ -135,11 +136,33 @@ block content
                             div(data-bind="editable: record_path, editableOptions: {pk: 'unused', name: 'unused', url: '/api/stations/' + macaddress + '/partial', params: {key: 'settings.record_path'}}")
                       dd
                       // /ko
-                      // ko if: $parent.devices
-                      dt Devices 
+                    dl(data-bind="with: {available: ko.observable(false)}")
+                      dt
+                        button.btn.btn-xs.btn-default.pull-right(data-bind="click: function(data) {data.available(!data.available());}") 
+                          span(data-bind="text: (available() ? 'Close' : 'Available')")
+                        | Devices
                       dd
-                        div(data-bind="editable: $parent.settings.devices, editableOptions: {display: deviceDisplay, type: 'checklist', source: availableDevices(ko.toJS($parent.devices)), pk: 'unused', name: 'unused', url: '/api/stations/' + $parent.settings.macaddress() + '/partial', params: {key: 'settings.devices'}}")
+                        div(data-bind="foreach: {data: $parent.settings.devices, as: 'device'}")
+                          div.col-sm-6
+                            div.panel.panel-default
+                              div.panel-heading
+                                div.control-actions.btn-group
+                                  a.btn.btn-success.btn-xs Start
+                                  a.btn.btn-warning.btn-xs Restart
+                                  a.btn.btn-danger.btn-xs Stop
+                              div.panel-body {{device.name}}
+
+                      // ko if: available
+                      dt Available Devices
+                      dd
+                        ul.list-unstyled
+                          div(data-bind="foreach: {data: availableDevices($parent.devices || [], $parent.settings.devices || []), as: 'availableDevice'}")
+                            li
+                              small(data-bind="click: availableDeviceClick.bind($data, availableDevice, $parents[1].settings.devices || [], $parents[1].settings.macaddress)") {{availableDevice.name}}
+                      // /ko
+                      // ko if: $parent.devices
                       // /ko
                       dt Roles
                       dd
                         div(data-bind="editable: $parent.settings.roles, editableOptions: {display: roleDisplay, type: 'checklist', source: availableRoles, pk: 'unused', name: 'unused', url: '/api/stations/' + $parent.settings.macaddress() + '/partial', params: {key: 'settings.roles'}}")
+                      // p(data-bind="text: ko.toJSON($parents[1])")
