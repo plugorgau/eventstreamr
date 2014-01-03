@@ -1,4 +1,5 @@
 var db = require('../lib/db_abstract')
+var station = require('../lib/station_abstract')
 
 var removeIp = function(ip) {
   db.updateRaw('stations', { ip: ip }, { $unset: { ip: true } }, function () {});
@@ -49,6 +50,18 @@ exports.registerStation = function(req, res) {
         removeIp(req.ip)
         updateIp(req.params.macaddress, req.ip)
       }
+      res.send(200, doc)
+    }
+  })
+}
+
+exports.actionStation = function(req, res) {
+  db.get('stations', { 'settings.macaddress': req.params.macaddress }, function (error, doc) {
+    if (doc === null) {
+      res.send(204)
+    }
+    if (doc) {
+      station.action(req.body, doc)
       res.send(200, doc)
     }
   })
@@ -165,6 +178,9 @@ exports.partial = function(req, res) {
         res.send(500)
       }
       if (doc) {
+        if (!req.headers['station-mgr']){
+          station.update(doc)
+        }
         res.send(200, partial)
       }
       if (!error && !doc) {
