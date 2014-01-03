@@ -338,6 +338,7 @@ sub post_config {
 
   # Post Headers
   my %headers = (
+        'station-mgr' => 1,
         'Content-Type' => 'application/json',
   );
 

@@ -63,11 +63,12 @@ get '/settings' => sub {
 # Updates config if mac matches
 post '/settings/:mac' => sub {
   my $data->{mac} = params->{mac};
-  $data->{body} = request->body;
-  if ($data->{mac} == $self->{config}{macaddress}) {
+  $data->{body} = from_json(request->body);
+  if ($data->{mac} eq "$self->{config}{macaddress}") {
     my $manager = $self->{config}{manager}{pid};
     $self->{config} = $data->{body}{settings};
     $self->{config}{manager}{pid} = $manager;
+    info("Config recieved restarting Manager at: $manager");
     kill '10', $self->{config}{manager}{pid}; 
     header 'Access-Control-Allow-Origin' => '*';
     return;
@@ -87,33 +88,32 @@ get '/devices' => sub {
 };
 
 # ----- Station Control Commands -----------------------------------------------
-# Stop/Start/Restart All
-post '/command/:command/all' => sub {
-  my $command = params->{command};
-
-  given ($command) {
-    when ("stop")     { $self->{config}{run} = 0; }
-    when ("start")    { $self->{config}{run} = 1; }
-    when ("restart")  { $self->{config}{run} = 2; }
-    default { header 'Access-Control-Allow-Origin' => '*'; status '400'; return qq("status":"unkown command"}); }
-  }
-
-  kill '10', $self->{config}{manager}{pid}; 
-  header 'Access-Control-Allow-Origin' => '*';
-  return;
-};
-
 # Post JSON content to restart an individual device eg: {"id":"dvswitch"}
 post '/command/:command' => sub {
   my $command = params->{command};
   my $data = from_json(request->body);
+  info("Received Command: $command for $data->{id}");
   
-  given ($command) {
-    when ("stop")     { $self->{config}{device_control}{$data->{id}}{run} = 0; }
-    when ("start")    { $self->{config}{device_control}{$data->{id}}{run} = 1; }
-    when ("restart")  { $self->{config}{device_control}{$data->{id}}{run} = 2; }
-    default { header 'Access-Control-Allow-Origin' => '*'; status '400'; return qq("status":"unkown command"}); }
+  if ($data->{id} eq 'all') {
+    info("Setting $command for all");
+    # All devices
+    given ($command) {
+      when ("stop")     { $self->{config}{run} = 0; }
+      when ("start")    { $self->{config}{run} = 1; }
+      when ("restart")  { $self->{config}{run} = 2; }
+      default { header 'Access-Control-Allow-Origin' => '*'; status '400'; return qq("status":"unkown command"}); }
+    }
+  } else {  
+    # Individual Devices
+    info("Setting $command for $data->{id}");
+    given ($command) {
+      when ("stop")     { $self->{config}{device_control}{$data->{id}}{run} = 0; }
+      when ("start")    { $self->{config}{device_control}{$data->{id}}{run} = 1; }
+      when ("restart")  { $self->{config}{device_control}{$data->{id}}{run} = 2; }
+      default { header 'Access-Control-Allow-Origin' => '*'; status '400'; return qq("status":"unkown command"}); }
+    }
   }
+
   kill '10', $self->{config}{manager}{pid}; 
   header 'Access-Control-Allow-Origin' => '*';
   return;
@@ -121,7 +121,7 @@ post '/command/:command' => sub {
 
 # ----- Station System Commands + Info -----------------------------------------
 # Trigger Station Manager to update itself
-get '/manager/update' => sub {
+post '/manager/update' => sub {
   info("triggering update");
   kill 'HUP', $self->{config}{manager}{pid};
   header 'Access-Control-Allow-Origin' => '*';
@@ -129,16 +129,15 @@ get '/manager/update' => sub {
 };
 
 # Trigger reboot
-get '/manager/reboot' => sub {
+post '/manager/reboot' => sub {
   info("triggering reboot");
   system("sudo /sbin/shutdown -r -t 5 now &");
-  kill 'TERM', $self->{config}{manager}{pid};
   header 'Access-Control-Allow-Origin' => '*';
   return;
 };
 
 # trigger refresh
-get '/manager/refresh' => sub {
+post '/manager/refresh' => sub {
   info("triggering update");
   kill '12', $self->{config}{manager}{pid};
   header 'Access-Control-Allow-Origin' => '*';
