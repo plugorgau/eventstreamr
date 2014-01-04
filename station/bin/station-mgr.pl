@@ -862,7 +862,7 @@ sub blank_station {
   "mixer" :
     {
       "port":"1234",
-      "host":"localhost"
+      "host":"0.0.0.0"
     },
   "devices" : "all",
   "device_control" :

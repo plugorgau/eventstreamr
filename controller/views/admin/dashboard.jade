@@ -148,7 +148,8 @@ block content
                           span(data-bind="text: (available() ? 'Close' : 'Available')")
                         | Devices
                       dd
-                        div(data-bind="foreach: {data: $parent.settings.devices, as: 'device'}")
+                        // ko if: $parent.settings.devices() !== 'all'
+                        div.row(data-bind="foreach: {data: $parent.settings.devices, as: 'device'}")
                           div.col-sm-6
                             div.panel.panel-default
                               div.panel-heading
@@ -157,7 +158,7 @@ block content
                                   a.btn.btn-warning.btn-xs Restart
                                   a.btn.btn-danger.btn-xs Stop
                               div.panel-body {{device.name}}
-
+                        // /ko
                       // ko if: available
                       dt Available Devices
                       dd
@@ -167,6 +168,6 @@ block content
                               small(data-bind="click: availableDeviceClick.bind($data, availableDevice, $parents[1].settings.devices || [], $parents[1].settings.macaddress)") {{availableDevice.name}}
                       // /ko
                       dt Roles
-                      dd
-                        div(data-bind="editable: $parent.settings.roles, editableOptions: {display: roleDisplay, type: 'checklist', source: availableRoles, pk: 'unused', name: 'unused', url: '/api/stations/' + $parent.settings.macaddress() + '/partial', params: {key: 'settings.roles'}}")
+                      dd(data-bind="with: {roles: $parent.settings.roles || [], macaddress: $parent.settings.macaddress()}")
+                        div(data-bind="editable: roles, editableOptions: {display: roleDisplay, type: 'checklist', source: availableRoles, pk: 'unused', name: 'unused', url: '/api/stations/' + macaddress + '/partial', params: {key: 'settings.roles'}}")
                       // p(data-bind="text: ko.toJSON($parents[1])")
