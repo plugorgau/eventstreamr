@@ -73,6 +73,9 @@ var mapping = {
         console.log(err)
         console.log("station devices broken, update the station!")
       }
+      finally {
+        return innerModel;
+      }
     }
     return innerModel;
   }
