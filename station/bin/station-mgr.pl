@@ -776,6 +776,7 @@ sub ingest_commands {
 
   my %cmd_vars =  ( 
                     device  => $did,
+                    bin     => $Bin,
                     host    => $self->{config}{mixer}{host},
                     port    => $self->{config}{mixer}{port},
                   );
