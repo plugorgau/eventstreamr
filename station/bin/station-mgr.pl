@@ -357,7 +357,7 @@ sub post_config {
 
   # Status Post Data
   $json = to_json($status);
-  my %post_data = ( 
+  %post_data = ( 
         content => $json, 
         headers => \%headers, 
   );
@@ -416,6 +416,8 @@ sub write_config {
   $stationconfig->{config} = $self->{config};
   $stationconfig->write;
   $logger->info("Config written to disk");
+  # should probably improve this logic, but it's late..
+  post_config();
   return;
 }
 
@@ -876,18 +878,23 @@ sub getmac {
 }
 
 sub blank_station {
+  my $mixer_ipaddr = `ifdata -pa eth0`;
+  $mixer_ipaddr =~ s/.$/1/;
+  my $hostname = `hostname`;
+  my $room = $hostname;
+  $room =~ s/-\d+$//;
   my $json = <<CONFIG;
 {
   "roles" :
     [
     ],
-  "nickname" : "change",
-  "room" : "",
+  "nickname" : "$hostname",
+  "room" : "$room",
   "record_path" : "/localbackup/\$room/\$date",
   "mixer" :
     {
       "port":"1234",
-      "host":"10.4.4.254",
+      "host":"$mixer_ipaddr",
       "loop":"/home/av/eventstreamr/baseimage/video/standby.dv"
     },
   "sync" :
