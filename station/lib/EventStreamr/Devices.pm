@@ -60,7 +60,7 @@ sub dv {
         chomp $model;
         $dv_devices->{$guid}{device} = $guid;
         $dv_devices->{$guid}{model} = $model;
-        $dv_devices->{$guid}{vendor} = $vendor_name;
+        $dv_devices->{$guid}{name} = "$vendor_name $model";
         $dv_devices->{$guid}{type} = "dv";
         $dv_devices->{$guid}{id} = $guid;
         $dv_devices->{$guid}{path} = "$dv/guid";
