@@ -30,38 +30,42 @@ var viewModel = {
 }
 
 var availableDevices = function(options) {
-  var innerModel = ko.mapping.fromJS(options.data)
-    , availableDevices = []
-    , connected = ko.toJS(options.data.devices)
-    , configured = ko.toJS(options.data.settings.devices) || [];
-
-  console.log(options.data.devices,options.data.settings.devices);
+  // return array based on options.data.devices with options.data.settings.devices removed
   
-  if (typeof configured !== 'array') {
-    configured = [];
-  }
-
-  console.log(connected,configured);
-
-  $.map(connected,function(availableDevice){
-    availableDevice.name = availableDevice.name || 'unknown';
-
-    for(var i in configured) {
-      var id = configured[i].id;
-      var test = availableDevice.id;
-      var match = false;
-
-      if (id == test) {
-        match = true;
-        break;
-      }
-      if (!match) {
-        console.log(availableDevice,match);
-        availableDevices.push(availableDevice);
-      }
+  // create array based on options.data.devices
+  var devicesArray = []
+  for( var i in options.data.devices ) {
+    if (options.data.devices.hasOwnProperty(i)){
+      devicesArray.push(options.data.devices[i]);
     }
-  });
-  return availableDevices;
+  }
+  
+  
+  if (options.data.settings.devices == "all") {
+    return devicesArray
+  }
+  else {
+    // filter devicesArray to remove matchs from options.data.settings.devices
+    var configured;
+    if (options.data.settings.devices) {
+      configured = options.data.settings.devices
+    }
+    else {
+      configured = []
+    }
+    var unselectedDevices = devicesArray.filter(function(element) {
+      // loop through configured and look for matching id
+      var match = true;
+      for (var i in configured) {
+        if (configured[i].id == element.id) {
+          match = false
+        }
+      }
+      return match
+    })
+    
+    return unselectedDevices
+  }
 }
 
 var mapping = {
