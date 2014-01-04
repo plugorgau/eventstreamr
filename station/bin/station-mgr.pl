@@ -271,6 +271,8 @@ while ($daemons->{main}{run}) {
   # Update date if it's changed - I wonder if there is a better way to trigger this? Cron (requires more OS config)?
   unless ( $self->{date} == strftime "%Y%m%d", localtime) {
     $self->{date} = strftime "%Y%m%d", localtime;
+    $self->{device_control}{record}{recordpath} = 0;
+    $self->{config}{device_control}{record}{run} = 2;
   }
   sleep 1;
 }
@@ -500,17 +502,18 @@ sub record {
   $device->{type} = "record";
 
   # Get path (date + room)
-  unless ($self->{config}{device_control}{$device->{id}}{recordpath}) {
-    $self->{config}{device_control}{$device->{id}}{recordpath} = set_path($self->{config}{record_path});
-    $logger->info("Path for $device->{id}: $self->{config}{device_control}{$device->{id}}{recordpath}");
+  unless ($self->{device_control}{$device->{id}}{recordpath}) {
+    $self->{device_control}{$device->{id}}{recordpath} = set_path($self->{config}{record_path});
+    $logger->info("Path for $device->{id}: $self->{device_control}{$device->{id}}{recordpath}");
   }
   
   # Create the path if it doesn't exist
-  unless(-d "$self->{config}{device_control}{$device->{id}}{recordpath}") {
-    my $result = eval { make_path("$self->{config}{device_control}{$device->{id}}{recordpath}") };
+  unless(-d "$self->{device_control}{$device->{id}}{recordpath}") {
+    my $result = eval { make_path("$self->{device_control}{$device->{id}}{recordpath}") };
     
     if ($result) {
-      $logger->info("Path created for $device->{id}: $self->{config}{device_control}{$device->{id}}{recordpath}");
+      $logger->info("Path created for $device->{id}: $self->{device_control}{$device->{id}}{recordpath}");
+      post_config();
     } else {
 
       # if above threshold then slow down attempts to every 10 seconds
@@ -518,7 +521,7 @@ sub record {
         return;
       }
 
-      $logger->error("Path creation failed for $device->{id}: $self->{config}{device_control}{$device->{id}}{recordpath}");
+      $logger->error("Path creation failed for $device->{id}: $self->{device_control}{$device->{id}}{recordpath}");
       
       $self->{device_control}{$device->{id}}{runcount}++;
       # Set device status
@@ -533,7 +536,9 @@ sub record {
     }
   }
 
-  run_stop($device);
+  if ($self->{dvswitch}{running} == 1) {
+    run_stop($device);
+  }
   return;
 }
 
