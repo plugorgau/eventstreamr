@@ -31,7 +31,7 @@ var viewModel = {
 
 var availableDevices = function(options) {
   var innerModel = ko.mapping.fromJS(options.data);
-  availableDevices = [];
+  var availableDevices = [];
   console.log(options.data.devices,options.data.settings.devices);
   connected = ko.toJS(options.data.devices);
   configured = ko.toJS(options.data.settings.devices) || [];
