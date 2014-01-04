@@ -287,6 +287,7 @@ sub sig_exit {
       $daemons->{main}{run} = 0;
       $daemon->Kill_Daemon($self->{device_control}{api}{pid}); 
       $daemon->Kill_Daemon($self->{device_control}{devmon}{pid}); 
+      $daemon->Kill_Daemon($self->{device_control}{sync}{pid}); 
 }
 
 sub sig_pipe {
