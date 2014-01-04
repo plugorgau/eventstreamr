@@ -30,33 +30,35 @@ var viewModel = {
 }
 
 var availableDevices = function(options) {
-  var innerModel = ko.mapping.fromJS(options.data);
-  var availableDevices = [];
+  var innerModel = ko.mapping.fromJS(options.data)
+    , availableDevices = []
+    , connected = ko.toJS(options.data.devices)
+    , configured = ko.toJS(options.data.settings.devices) || [];
+
   console.log(options.data.devices,options.data.settings.devices);
-  connected = ko.toJS(options.data.devices);
-  configured = ko.toJS(options.data.settings.devices) || [];
+  
   if (typeof configured !== 'array') {
     configured = [];
   }
+
   console.log(connected,configured);
 
-  $.map(connected,function(v){
-    var availableDevice = {};
-    availableDevice.name = v.name || 'unknown';
-    availableDevice.id = v.id;
-    availableDevice.type = v.type;
+  $.map(connected,function(availableDevice){
+    availableDevice.name = availableDevice.name || 'unknown';
+
     for(var i in configured) {
       var id = configured[i].id;
       var test = availableDevice.id;
       var match = false;
+
       if (id == test) {
         match = true;
         break;
       }
-    }
-    if (!match) {
-      console.log(availableDevice,match);
-      availableDevices.push(availableDevice);
+      if (!match) {
+        console.log(availableDevice,match);
+        availableDevices.push(availableDevice);
+      }
     }
   });
   return availableDevices;
@@ -116,7 +118,7 @@ $.get( "/api/stations", function( data ) {
           return data.content._id === item._id();
         });
         if (match) {
-          viewModel.stations.splice(viewModel.stations.indexOf(match),1,ko.mapping.fromJS(data.content));
+          viewModel.stations.splice(viewModel.stations.indexOf(match),1,ko.mapping.fromJS(data.content, mapping));
         }
       }
       if (data.type == 'notify') {
