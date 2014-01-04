@@ -273,6 +273,7 @@ while ($daemons->{main}{run}) {
     $self->{date} = strftime "%Y%m%d", localtime;
     $self->{device_control}{record}{recordpath} = 0;
     $self->{config}{device_control}{record}{run} = 2;
+    $self->{config}{device_control}{sync}{run} = 2;
   }
   sleep 1;
 }
@@ -538,6 +539,27 @@ sub record {
 
   if ($self->{dvswitch}{running} == 1) {
     run_stop($device);
+  }
+  sync();
+  return;
+}
+
+## sync 
+sub sync {
+  my $device;
+  $self->{device_commands}{sync}{command} = "$Bin/station-sync.sh $self->{device_control}{record}{recordpath} $self->{config}{sync}{host} $self->{config}{sync}{path} $self->{config}{room}";
+  $device->{role} = "sync";
+  $device->{id} = "sync";
+  $device->{type} = "internal";
+  if ($self->{config}{sync}{host} && $self->{config}{sync}{path}) {
+    run_stop($device);
+  } else {
+    # set status
+    $self->{status}{$device->{id}}{type} = $device->{type};
+    $self->{status}{$device->{id}}{timestamp} = time;
+    $self->{status}{$device->{id}}{running} = 0;
+    $self->{status}{$device->{id}}{status} = "not_configured";
+    $self->{status}{$device->{id}}{state} = "hard";
   }
   return;
 }

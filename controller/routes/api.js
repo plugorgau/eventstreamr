@@ -22,6 +22,7 @@ var StationSettings = function(request) {
     record_path: request.record_path || null,
     mixer: request.mixer || null,
     stream: request.stream || null,
+    sync: request.sync || null,
     run: request.run || 0,
     device_control: request.device_control || null
   }

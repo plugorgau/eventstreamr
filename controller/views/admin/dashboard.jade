@@ -134,6 +134,12 @@ block content
                           dt Path 
                           dd(data-bind="with: {record_path: $parent.settings.record_path || '', macaddress: $parent.settings.macaddress() } ")
                             div(data-bind="editable: record_path, editableOptions: {pk: 'unused', name: 'unused', url: '/api/stations/' + macaddress + '/partial', params: {key: 'settings.record_path'}}")
+                          dt Sync Remote Host 
+                          dd(data-bind="with: {sync_host: $parent.settings.sync.host || '', macaddress: $parent.settings.macaddress() } ")
+                            div(data-bind="editable: sync_host, editableOptions: {pk: 'unused', name: 'unused', url: '/api/stations/' + macaddress + '/partial', params: {key: 'settings.sync.host'}}")
+                          dt Sync Remote Path 
+                          dd(data-bind="with: {remote_path: $parent.settings.sync.path || '', macaddress: $parent.settings.macaddress() } ")
+                            div(data-bind="editable: remote_path, editableOptions: {pk: 'unused', name: 'unused', url: '/api/stations/' + macaddress + '/partial', params: {key: 'settings.sync.path'}}")
                       dd
                       // /ko
                     dl(data-bind="with: {available: ko.observable(false)}")

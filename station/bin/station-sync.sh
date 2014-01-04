@@ -1,10 +1,10 @@
 #!/bin/bash
 
-ROOM=$1
+RECORD_BASE=$1
+STORAGE_SERVER=$2
+STORAGE_BASE=$3
+ROOM=$4
 
-STORAGE_SERVER=storage.local
-STORAGE_BASE="/storage"
-RECORD_BASE="/localbackup"
 RATE_LIMIT_KBPS="10240"
 
 while true; do
@@ -12,7 +12,7 @@ while true; do
     sleep 60
 
     DATE=`date +%Y%m%d`
-    RECORD_PATH="${RECORD_BASE}/${ROOM}/${DATE}"
+    RECORD_PATH="${RECORD_BASE}"
     
     if [ -z "${ROOM}" ]; then
         echo "no room specified"
