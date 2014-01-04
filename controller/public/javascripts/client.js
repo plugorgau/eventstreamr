@@ -33,8 +33,11 @@ var availableDevices = function(options) {
   var innerModel = ko.mapping.fromJS(options.data);
   availableDevices = [];
   console.log(options.data.devices,options.data.settings.devices);
-  connected = options.data.devices || {};
+  connected = options.data.devices;
   configured = options.data.settings.devices || [];
+  if (configured == 'all') {
+    configured = [];
+  }
   console.log(connected,configured);
 
   $.map(connected,function(v){
@@ -62,7 +65,9 @@ var availableDevices = function(options) {
 var mapping = {
   create: function(options) {
     var innerModel = ko.mapping.fromJS(options.data)
-    innerModel.availableDevices = availableDevices(options)
+    if (options.data.devices) {
+      innerModel.availableDevices = availableDevices(options)
+    }
     return innerModel;
   }
 };
@@ -113,7 +118,10 @@ $.get( "/api/stations", function( data ) {
 
 var availableDeviceClick = function (item, configured, macaddress) {
   var value = ko.toJS(item);
-  var devices = ko.toJS(configured);
+  var devices = ko.toJS(configured) || [];
+  if (devices == 'all') {
+    devices = [];
+  }
   devices.push(value);
   
   var post = {};
