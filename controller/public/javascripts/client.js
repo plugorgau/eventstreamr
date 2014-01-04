@@ -66,7 +66,13 @@ var mapping = {
   create: function(options) {
     var innerModel = ko.mapping.fromJS(options.data)
     if (options.data.devices) {
-      innerModel.availableDevices = availableDevices(options)
+      try {
+        innerModel.availableDevices = availableDevices(options)
+      }
+      catch(err) {
+        console.log(err)
+        console.log("station devices broken, update the station!")
+      }
     }
     return innerModel;
   }
