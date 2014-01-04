@@ -150,7 +150,7 @@ if ($response->{status} == 201) {
         headers => \%headers,
   );
 
-  $response =  $http->post("$localconfig->{controller}", \%post_data);
+  $response =  $http->post("$localconfig->{controller}/api/station", \%post_data);
   
   $logger->debug({filter => \&Data::Dumper::Dumper,
                   value  => $response}) if ($logger->is_debug());
@@ -364,6 +364,8 @@ sub post_config {
     $data->[1]{key} = "devices";
     $data->[1]{value} = $self->{devices}{all};
     delete $data->[1]{value}{all};
+    $logger->debug({filter => \&Data::Dumper::Dumper,
+                  value  => $data}) if ($logger->is_debug());
 
     # Post data
     $json = to_json($data);
