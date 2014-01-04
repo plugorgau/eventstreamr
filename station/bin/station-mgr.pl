@@ -15,9 +15,6 @@ use feature qw(switch);
 use Getopt::Long;
 use Data::Dumper;
 
-# set umask
-umask 0027;
-
 my $DEBUG  = 0;
 my $DAEMON = 1;
 
@@ -53,6 +50,9 @@ our $daemons;
 if ( $DAEMON ) {
   $daemon->Init();
 }
+
+# set umask
+umask 0027;
 
 # EventStremr Modules
 use EventStreamr::Devices;
