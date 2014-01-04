@@ -42,7 +42,7 @@ var availableDevices = function(options) {
 
   $.map(connected,function(v){
     var availableDevice = {};
-    availableDevice.name = v.name;
+    availableDevice.name = v.name || 'unknown';
     availableDevice.id = v.id;
     availableDevice.type = v.type;
     for(var i in configured) {
