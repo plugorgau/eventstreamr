@@ -7,6 +7,7 @@ CONTROLLER="$BASE/controller"
 IMAGE="$BASE/baseimage"
 HOSTNAME=`hostname`
 IPADDR=`ifdata -pa eth0`
+MACADDR=`ifdata -ph eth0`
 
 if [ -f "$STATION/settings.json" ]; then
     CTRL_HOST=`cat $STATION/settings.json | grep 'controller' | sed 's/^.*\/\/\([^:]*\):.*$/\1/'`
