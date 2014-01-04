@@ -879,7 +879,7 @@ sub getmac {
 
 sub blank_station {
   my $mixer_ipaddr = `ifdata -pa eth0`;
-  $mixer_ipaddr =~ s/.$/1/;
+  $mixer_ipaddr =~ s/.$/$1/;
   my $hostname = `hostname`;
   my $room = $hostname;
   $room =~ s/-\d+$//;
