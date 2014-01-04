@@ -7,24 +7,6 @@ var availableRoles = [
   {value: 'stream', text: 'stream'}
 ]
 
-var availableDevices = function(devices,configured) {
-  var dataArray = $.map(devices,function(v){
-    var availableDevice = {};
-    availableDevice.name = v.name;
-    availableDevice.id = v.id;
-    availableDevice.type = v.type;
-    for(var i in configured()) {
-      var id = configured()[i].id();
-      var test = availableDevice.id();
-      if (id == test) {
-        return;
-      }
-    }
-    return availableDevice;
-  });
-  return dataArray
-}
-
 var roleDisplay = function(value, sourceData) {
    var selectedRoles = "",
        checked = $.fn.editableutils.itemsByValue(value, sourceData);
@@ -46,11 +28,52 @@ function onlyUnique(value, index, self) {
 var viewModel = {
   stations: ko.mapping.fromJS([]),
 }
+
+var availableDevices = function(options) {
+  var innerModel = ko.mapping.fromJS(options.data);
+  availableDevices = [];
+  console.log(options.data.devices,options.data.settings.devices);
+  connected = options.data.devices || {};
+  configured = options.data.settings.devices || [];
+  console.log(connected,configured);
+
+  $.map(connected,function(v){
+    var availableDevice = {};
+    availableDevice.name = v.name;
+    availableDevice.id = v.id;
+    availableDevice.type = v.type;
+    for(var i in configured) {
+      var id = configured[i].id;
+      var test = availableDevice.id;
+      var match = false;
+      if (id == test) {
+        match = true;
+        break;
+      }
+    }
+    if (!match) {
+      console.log(availableDevice,match);
+      availableDevices.push(availableDevice);
+    }
+  });
+  return availableDevices;
+}
+
+var mapping = {
+  create: function(options) {
+    var innerModel = ko.mapping.fromJS(options.data)
+    innerModel.availableDevices = availableDevices(options)
+    return innerModel;
+  }
+};
+
+
 viewModel.roomDuplicates = ko.computed(function() {
   return viewModel.stations().map(function(item) {
     return (item.settings.room ? item.settings.room() : '')
   })
 })
+
 viewModel.rooms = ko.computed(function() {
   return viewModel.roomDuplicates().filter(onlyUnique)
 })
@@ -63,7 +86,7 @@ var socket = io.connect('//:5001')
 $.get( "/api/stations", function( data ) {
 })
   .done(function(data) {
-    ko.mapping.fromJS(data, viewModel.stations)
+    ko.mapping.fromJS(data, mapping, viewModel.stations)
     socket.on('change', function (data) {
       console.log(data);
       if (data.type == 'remove') {
@@ -72,7 +95,7 @@ $.get( "/api/stations", function( data ) {
         })
       }
       if (data.type == 'insert') {
-        viewModel.stations.push(ko.mapping.fromJS(data.content))
+        viewModel.stations.push(ko.mapping.fromJS(data.content, mapping))
       }
       if (data.type == 'update') {
         var match = ko.utils.arrayFirst(viewModel.stations(), function(item) {
@@ -87,6 +110,23 @@ $.get( "/api/stations", function( data ) {
 
     });
   })
+
+var availableDeviceClick = function (item, configured, macaddress) {
+  var value = ko.toJS(item);
+  var devices = ko.toJS(configured);
+  devices.push(value);
+  
+  var post = {};
+  post.key = "settings.devices";
+  post.value = devices;
+  
+  
+  $.ajax({
+    url: '/api/stations/' + macaddress() + '/partial',
+    type: 'POST',
+    data: post 
+  })
+};
 
 var actionStationManagers = function(roomId, action) {
   ko.utils.arrayForEach(viewModel.stations(), function(station) {
@@ -122,24 +162,6 @@ var actionStationManager = function(macaddress, action) {
   post.action = action;
   actionStationPost(post);
 }
-
-var availableDeviceClick = function (checked, configured, macaddress) {
-  var value = {};
-  value.id = checked.id();
-  value.type = checked.type();
-  value.name = checked.name();
-  configured.push(value);
-  
-  var post = {};
-  post.key = "settings.devices";
-  post.value = configured();
-  
-  $.ajax({
-    url: '/api/stations/' + macaddress() + '/partial',
-    type: 'POST',
-    data: post 
-  })
-};
 
 $("body").on("click", ".actionOnclick", function (e) {
   var post = new Object();

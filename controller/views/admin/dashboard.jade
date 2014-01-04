@@ -156,11 +156,9 @@ block content
                       dt Available Devices
                       dd
                         ul.list-unstyled
-                          div(data-bind="foreach: {data: availableDevices($parent.devices || [], $parent.settings.devices || []), as: 'availableDevice'}")
+                          div(data-bind="foreach: {data: $parent.availableDevices, as: 'availableDevice'}")
                             li
                               small(data-bind="click: availableDeviceClick.bind($data, availableDevice, $parents[1].settings.devices || [], $parents[1].settings.macaddress)") {{availableDevice.name}}
-                      // /ko
-                      // ko if: $parent.devices
                       // /ko
                       dt Roles
                       dd
