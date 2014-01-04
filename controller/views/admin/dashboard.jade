@@ -133,6 +133,9 @@ block content
                           dt Port
                           dd(data-bind="with: {port: $parent.settings.mixer.port || '', macaddress: $parent.settings.macaddress() } ")
                             div(data-bind="editable: port, editableOptions: {pk: 'unused', name: 'unused', url: '/api/stations/' + macaddress + '/partial', params: {key: 'settings.mixer.port'}}")
+                          dt Standy Loop 
+                          dd(data-bind="with: {loop: $parent.settings.mixer.loop || '', macaddress: $parent.settings.macaddress() } ")
+                            div(data-bind="editable: loop, editableOptions: {pk: 'unused', name: 'unused', url: '/api/stations/' + macaddress + '/partial', params: {key: 'settings.mixer.loop'}}")
                       dt Record 
                       dd
                         dl(style="margin-left: 10px;margin-top: 0px;" )

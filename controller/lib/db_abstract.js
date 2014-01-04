@@ -41,7 +41,10 @@ exports.remove = function(table, query, callback) {
 
 exports.update = function(table, query, partial, callback)  {
   db[table].update(query, { $set: partial }, {}, function(error, success) {
-    if (error) callback(err)
+    if (error) {
+      console.log(error)
+      callback(error)
+    }
     if (success) {
       db[table].findOne(query, function(error, original) {
         feed.emit('change', {type: 'update', content: original})

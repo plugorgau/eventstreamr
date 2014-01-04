@@ -352,6 +352,9 @@ sub post_config {
         'Content-Type' => 'application/json',
   );
 
+  $logger->debug({filter => \&Data::Dumper::Dumper,
+                value  => $status}) if ($logger->is_debug());
+
   # Status Post Data
   $json = to_json($status);
   my %post_data = ( 
@@ -374,15 +377,19 @@ sub post_config {
     $data->[1]{key} = "devices";
     $data->[1]{value} = $self->{devices}{all};
     delete $data->[1]{value}{all};
-    $logger->debug({filter => \&Data::Dumper::Dumper,
-                  value  => $data}) if ($logger->is_debug());
 
     # Post data
     $json = to_json($data);
+    # some bug and it's late this could cause hideous issues if 
+    # a device id has a / in it, but this should be unlikely
+    $json =~ s{/|\.}{}g;
+
     %post_data = ( 
           content => $json, 
           headers => \%headers, 
     );
+    $logger->debug({filter => \&Data::Dumper::Dumper,
+                  value  => $json}) if ($logger->is_debug());
     $post = $http->post("$localconfig->{controller}/api/stations/$self->{config}{macaddress}/partial", \%post_data);
     $logger->info("Status Posted to Controller API - $localconfig->{controller}/api/stations/$self->{config}{macaddress}/partial");
     $logger->debug({filter => \&Data::Dumper::Dumper,
@@ -483,6 +490,23 @@ sub mixer {
   $device->{id} = "dvswitch";
   $device->{type} = "mixer";
   run_stop($device);
+  
+  my $loop;
+  if ($self->{config}{mixer}{loop} && $self->{dvswitch}{running}) {
+    if (-e $self->{config}{mixer}{loop}) {
+      $loop->{role} = "ingest";
+      $loop->{id} = $self->{config}{mixer}{loop};
+      $loop->{type} = "file";
+      run_stop($loop);
+    } else {
+      # Set status
+      $self->{device_control}{$loop->{id}}{timestamp} = time;
+      $self->{status}{$loop->{id}}{running} = 0;
+      $self->{status}{$loop->{id}}{status} = "file_not_found";
+      $self->{status}{$loop->{id}}{state} = "hard";
+      post_config();
+    }
+  }
   return;
 }
 
@@ -857,13 +881,19 @@ sub blank_station {
   "roles" :
     [
     ],
-  "nickname" : "",
+  "nickname" : "change",
   "room" : "",
-  "record_path" : "/tmp/\$room/\$date",
+  "record_path" : "/localbackup/\$room/\$date",
   "mixer" :
     {
       "port":"1234",
-      "host":"0.0.0.0"
+      "host":"10.4.4.254",
+      "loop":"/home/av/eventstreamr/baseimage/video/standby.dv"
+    },
+  "sync" :
+    {
+      "host":"storage.local",
+      "path":"/storage"
     },
   "devices" : "all",
   "device_control" :
@@ -887,7 +917,7 @@ CONFIG
 sub blank_settings {
   my $json = <<CONFIG;
 {
-     "controller" : "http://localhost:5001"
+     "controller" : "http://10.4.4.10:5001"
 }
 CONFIG
 
