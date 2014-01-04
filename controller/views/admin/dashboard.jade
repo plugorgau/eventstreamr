@@ -162,9 +162,10 @@ block content
                                   a.btn.btn-success.btn-xs Start
                                   a.btn.btn-warning.btn-xs Restart
                                   a.btn.btn-danger.btn-xs Stop
-                              div.panel-body {{device.name}}
+                              div.panel-body {{ name}}
                         // /ko
                       // ko if: available
+                      // p(data-bind="text: ko.toJSON($parent)")
                       dt Available Devices
                       dd
                         ul.list-unstyled
