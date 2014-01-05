@@ -221,7 +221,7 @@ if ($self->{config}{run}) {
 }
 
 # Post start clearing of data
-$self->{config}{device_control}{record}{recordpath} = 0;
+$self->{device_control}{record}{recordpath} = 0;
 
 # Main Daemon Loop
 while ($daemons->{main}{run}) {
@@ -831,7 +831,7 @@ sub record_command {
                     host      => $self->{config}{mixer}{host},
                     port      => $self->{config}{mixer}{port},
                     room      => $self->{config}{room},
-                    path      => $self->{config}{device_control}{$id}{recordpath},
+                    path      => $self->{device_control}{$id}{recordpath},
                   );
 
   $command =~ s/\$(\w+)/$cmd_vars{$1}/g;
