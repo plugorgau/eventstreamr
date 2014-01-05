@@ -416,8 +416,6 @@ sub write_config {
   $stationconfig->{config} = $self->{config};
   $stationconfig->write;
   $logger->info("Config written to disk");
-  # should probably improve this logic, but it's late..
-  post_config();
   return;
 }
 
