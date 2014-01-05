@@ -26,21 +26,35 @@ my $getopts_rc = GetOptions(
 );
 
 # setup signal handlers and daemon stuff
-$SIG{INT}  = \&sig_exit;
-$SIG{TERM} = \&sig_exit;
-$SIG{PIPE} = \&sig_pipe;
-$SIG{CHLD} = 'IGNORE';
-$SIG{USR1} = \&get_config;
-$SIG{USR2} = \&post_config;
-
 # POSIX unmasks the sigprocmask properly
+$SIG{CHLD} = 'IGNORE';
 my $sigset = POSIX::SigSet->new();
-my $action = POSIX::SigAction->new( 'self_update',
+my $update = POSIX::SigAction->new( 'self_update',
                                     $sigset,
                                     &POSIX::SA_NODEFER);
-POSIX::sigaction(&POSIX::SIGHUP, $action);
+my $exit = POSIX::SigAction->new(   'sig_exit',
+                                    $sigset,
+                                    &POSIX::SA_NODEFER);
+my $pipe = POSIX::SigAction->new(   'sig_pipe',
+                                    $sigset,
+                                    &POSIX::SA_NODEFER);
+my $get = POSIX::SigAction->new(   'get_config',
+                                    $sigset,
+                                    &POSIX::SA_NODEFER);
+my $post = POSIX::SigAction->new(   'post_config',
+                                    $sigset,
+                                    &POSIX::SA_NODEFER);
+# Handle INT/Term
+POSIX::sigaction(&POSIX::SIGTERM, $exit);
+POSIX::sigaction(&POSIX::SIGINT, $exit);
 
-#$SIG{HUP} = \&self_update;
+# SIGHUP updates and execs
+POSIX::sigaction(&POSIX::SIGHUP, $update);
+POSIX::sigaction(&POSIX::SIGPIPE, $pipe);
+
+# USR1/2 for get/post config
+POSIX::sigaction(&POSIX::SIGUSR1, $get);
+POSIX::sigaction(&POSIX::SIGUSR2, $post);
 
 our $daemon = Proc::Daemon->new(
   work_dir => "$Bin/../",
