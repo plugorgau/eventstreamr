@@ -162,9 +162,9 @@ block content
                             div.panel.panel-default
                               div.panel-heading
                                 div.control-actions.btn-group
-                                  a.btn.btn-success.btn-xs Start
-                                  a.btn.btn-warning.btn-xs Restart
-                                  a.btn.btn-danger.btn-xs Stop
+                                  a.btn.btn-success.btn-xs(data-bind="click: actionDevice.bind($data, $parents[1].settings.macaddress(), id, 'start')") Start
+                                  a.btn.btn-warning.btn-xs(data-bind="click: actionDevice.bind($data, $parents[1].settings.macaddress(), id, 'restart')") Restart
+                                  a.btn.btn-danger.btn-xs(data-bind="click: actionDevice.bind($data, $parents[1].settings.macaddress(), id, 'stop')") Stop
                               div.panel-body {{ name}}
                         // /ko
                       // ko if: available
