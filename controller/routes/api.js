@@ -58,12 +58,58 @@ exports.registerStation = function(req, res) {
 
 exports.actionStation = function(req, res) {
   db.get('stations', { 'settings.macaddress': req.params.macaddress }, function (error, doc) {
+    var partial = {}
+    var dbwrite = '';
+    if (req.body.id == 'all' && req.body.command_url == 'command') {
+      req.body.key = 'settings.run'
+      dbwrite = '1'
+    } else if (req.body.command_url == 'command') {
+      req.body.key = 'settings.device_control.' + req.body.id  + '.run'
+      dbwrite = '1'
+    }
+    
+    if(dbwrite) {
+      switch(req.body.action) {
+        case 'start':
+          req.body.value = '1'
+          break;
+        case 'stop':
+          req.body.value = '0'
+          break;
+        case 'restart':
+          req.body.value = '2'
+          break;
+        default:
+          // if all else fails the room/device must run
+          console.log("Why did we hit the default on action???", req.body, doc)
+          req.body.value = '1'
+      }
+    }
+    
+    partial[req.body.key] = req.body.value
+    
     if (doc === null) {
       res.send(204)
     }
     if (doc) {
       station.action(req.body, doc)
-      res.send(200, doc)
+      if (dbwrite) {
+        console.log(partial)
+        console.log("Writing our state to the db")
+        db.update(req.params.db, query, partial, function (error, doc) {
+          if (error) {
+            res.send(500)
+          }
+          if (doc) {
+            res.send(200, partial)
+          }
+          if (!error && !doc) {
+            res.send(404)
+          }
+        })
+      } else {
+        res.send(200,true)
+      }
     }
   })
 }
