@@ -518,6 +518,7 @@ sub mixer {
       $self->{status}{$loop->{id}}{running} = 0;
       $self->{status}{$loop->{id}}{status} = "file_not_found";
       $self->{status}{$loop->{id}}{state} = "hard";
+      $self->{status}{$loop->{id}}{name} = "standby loop";
       post_config();
     }
   }
