@@ -131,7 +131,8 @@ post '/manager/update' => sub {
 # Trigger reboot
 post '/manager/reboot' => sub {
   info("triggering reboot");
-  system("sudo /sbin/shutdown -r -t 5 now &");
+  kill '10', $self->{config}{manager}{pid}; 
+  system("sudo /sbin/shutdown -r -t 10 now &");
   header 'Access-Control-Allow-Origin' => '*';
   return;
 };
