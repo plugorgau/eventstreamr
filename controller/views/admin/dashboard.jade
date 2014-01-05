@@ -202,6 +202,11 @@ block content
                               // ko if: !running
                               | - 
                               small {{status}}
+                              | 
+                              // /ko
+                              // ko if: status == 'starting'
+                              span.fa.fa-spinner.fa-spin
+                              | 
                               // /ko
                             //small 
                         //div(data-bind="editable: roles, editableOptions: {display: roleDisplay, type: 'checklist', source: availableRoles, pk: 'unused', name: 'unused', url: '/api/stations/' + macaddress + '/partial', params: {key: 'settings.roles'}}")
