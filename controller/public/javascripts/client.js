@@ -38,6 +38,17 @@ var statusArray = function(options) {
   for( var i in options.data.status ) {
     if (options.data.status.hasOwnProperty(i)){
       options.data.status[i].name = i;
+
+        // this is a hack, fix the manager so that running is populated properly
+        // done enough yak shaving for one conference...
+        if (typeof options.data.status[i].running == 'undefined') {
+          options.data.status[i].running = '0';
+        }
+        if (typeof options.data.status[i].type == 'undefined') {
+          options.data.status[i].type = 'internal';
+        }
+        // end nasty hack
+
       statusArray.push(options.data.status[i]);
     }
   }
