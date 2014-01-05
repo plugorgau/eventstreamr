@@ -168,7 +168,6 @@ block content
                               div.panel-body {{ name}}
                         // /ko
                       // ko if: available
-                      // p(data-bind="text: ko.toJSON($parent)")
                       dt Available Devices
                       dd
                         ul.list-unstyled
@@ -179,4 +178,31 @@ block content
                       dt Roles
                       dd(data-bind="with: {roles: $parent.settings.roles || [], macaddress: $parent.settings.macaddress()}")
                         div(data-bind="editable: roles, editableOptions: {display: roleDisplay, type: 'checklist', source: availableRoles, pk: 'unused', name: 'unused', url: '/api/stations/' + macaddress + '/partial', params: {key: 'settings.roles'}}")
+                      dt Status 
+                      dd
+                        ul.list-unstyled
+                          div(data-bind="foreach: {data: $parent.statusArray || [], as:status}")
+                            li
+                              // ko if: running
+                              span.glyphicon.glyphicon-thumbs-up
+                              | 
+                              // /ko
+                              // ko if: !running
+                              span.glyphicon.glyphicon-thumbs-down
+                              | 
+                              // /ko
+                              // ko if: type == 'internal'
+                              Strong {{name}}
+                              | 
+                              // /ko
+                              // ko if: type !== 'internal'
+                              Strong {{type}} 
+                              | 
+                              // /ko
+                              // ko if: !running
+                              | - 
+                              small {{status}}
+                              // /ko
+                            //small 
+                        //div(data-bind="editable: roles, editableOptions: {display: roleDisplay, type: 'checklist', source: availableRoles, pk: 'unused', name: 'unused', url: '/api/stations/' + macaddress + '/partial', params: {key: 'settings.roles'}}")
                       // p(data-bind="text: ko.toJSON($parents[1])")
