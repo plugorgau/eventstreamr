@@ -59,7 +59,10 @@ exports.registerStation = function(req, res) {
 exports.actionStation = function(req, res) {
   db.get('stations', { 'settings.macaddress': req.params.macaddress }, function (error, doc) {
     var partial = {}
+    var query = {}
     var dbwrite = '';
+    var tableInfo = tablesDocLookups['stations']
+    query[tableInfo.key] = req.params.macaddress;
     if (req.body.id == 'all' && req.body.command_url == 'command') {
       req.body.key = 'settings.run'
       dbwrite = '1'
@@ -96,12 +99,13 @@ exports.actionStation = function(req, res) {
       if (dbwrite) {
         console.log(partial)
         console.log("Writing our state to the db")
-        db.update(req.params.db, query, partial, function (error, doc) {
+        db.update('stations', query, partial, function (error, doc) {
           if (error) {
             res.send(500)
           }
           if (doc) {
-            res.send(200, partial)
+            console.log("Written")
+            res.send(200, doc)
           }
           if (!error && !doc) {
             res.send(404)
