@@ -42,7 +42,7 @@ var statusArray = function(options) {
     }
   }
 
-  return statusArray
+  return statusArray;
 }
 
 var availableDevices = function(options) {
@@ -106,8 +106,9 @@ var mapping = {
     if (options.data.status) {
       innerModel.statusArray = statusArray(options)
       console.log(options.data.status)
+    } else {
+      innerModel.statusArray = [];
     }
-
     return innerModel;
   }
 };
