@@ -29,7 +29,24 @@ var viewModel = {
   stations: ko.mapping.fromJS([]),
 }
 
+var statusArray = function(options) {
+  // makes interface easier to write if status is an array of objects, 
+  // but easier for the manager to keep it internally as an object of objects
+  // can later make this observable to prevent updating the full interface (push, match station, update just status)
+
+  var statusArray = []
+  for( var i in options.data.status ) {
+    if (options.data.status.hasOwnProperty(i)){
+      options.data.status[i].name = i;
+      statusArray.push(options.data.status[i]);
+    }
+  }
+
+  return statusArray
+}
+
 var availableDevices = function(options) {
+  // can later make this observable to prevent updating the full interface (push, match station, update just devices)
   // return array based on options.data.devices with options.data.settings.devices removed
   
   // create array based on options.data.devices
@@ -39,7 +56,6 @@ var availableDevices = function(options) {
       devicesArray.push(options.data.devices[i]);
     }
   }
-  
   
   if (options.data.settings.devices == "all") {
     return devicesArray
@@ -71,6 +87,8 @@ var availableDevices = function(options) {
 var mapping = {
   create: function(options) {
     var innerModel = ko.mapping.fromJS(options.data)
+
+    // availableDevices
     if (options.data.devices) {
       try {
         innerModel.availableDevices = availableDevices(options)
@@ -80,9 +98,16 @@ var mapping = {
         console.log("station devices broken, update the station!")
       }
       finally {
-        return innerModel;
+        console.log("Available devices populated successfully!")
       }
     }
+    
+    // statusArray
+    if (options.data.status) {
+      innerModel.statusArray = statusArray(options)
+      console.log(options.data.status)
+    }
+
     return innerModel;
   }
 };
