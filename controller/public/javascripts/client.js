@@ -168,6 +168,30 @@ $.get( "/api/stations", function( data ) {
     });
   })
 
+var removeDevice = function (configuredDevices, macaddress, id) {
+  configuredDevices = ko.toJS(configuredDevices);
+  // remove id from configured devices
+  for (var i in configuredDevices) {
+    if (configuredDevices[i].id == id) {
+      configuredDevices.splice(configuredDevices.indexOf(i), 1);
+    }
+  }
+
+  console.log(macaddress, configuredDevices, id)
+
+  $.ajax({
+    url: "/api/stations/"+ macaddress + '/partial',
+    type: 'POST',
+    data: {
+      key: 'settings.devices',
+      value: configuredDevices
+    }
+  })
+    .done(function(id) {
+      console.log( "removed device ", id );
+    })
+}
+
 var availableDeviceClick = function (item, configured, macaddress) {
   var value = ko.toJS(item);
   var devices = ko.toJS(configured) || [];

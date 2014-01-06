@@ -152,20 +152,28 @@ block content
                       // /ko
                     dl(data-bind="with: {available: ko.observable(false)}")
                       dt
+                        // ko if: $parent.availableDevices[0]
                         button.btn.btn-xs.btn-default.pull-right(data-bind="click: function(data) {data.available(!data.available());}") 
                           span(data-bind="text: (available() ? 'Close' : 'Available')")
+                        // /ko
                         | Devices
                       dd
+                        // ko if: $parent.settings.devices
                         // ko if: $parent.settings.devices() !== 'all'
                         div.row(data-bind="foreach: {data: $parent.settings.devices, as: 'device'}")
                           div.col-sm-6
                             div.panel.panel-default
                               div.panel-heading
+                                button.btn.btn-default.btn-xs.room-remove(data-bind="click: removeDevice.bind($data, $parents[1].settings.devices(), $parents[1].settings.macaddress(), id())", title="Remove Device", type="button")
+                                  small
+                                    i.glyphicon.glyphicon-remove
                                 div.control-actions.btn-group
                                   a.btn.btn-success.btn-xs(data-bind="click: actionDevice.bind($data, $parents[1].settings.macaddress(), id, 'start')") Start
                                   a.btn.btn-warning.btn-xs(data-bind="click: actionDevice.bind($data, $parents[1].settings.macaddress(), id, 'restart')") Restart
                                   a.btn.btn-danger.btn-xs(data-bind="click: actionDevice.bind($data, $parents[1].settings.macaddress(), id, 'stop')") Stop
-                              div.panel-body {{ name}}
+                              div.panel-body 
+                                small {{name}}
+                        // /ko
                         // /ko
                       // ko if: available
                       dt Available Devices
