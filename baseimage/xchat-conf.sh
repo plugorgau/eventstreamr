@@ -7,7 +7,7 @@ extra_join=""
 if [ -z "${ROOM}" ]; then
 	ROOM=$HOSTNAME
 else
-    extra_join=",AV_${ROOM}"
+    extra_join=",#AV_${ROOM}"
 fi 
 
 
