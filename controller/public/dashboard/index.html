@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Video Dashboard</title>
+    <link rel="stylesheet" href="./stylesheets/normalize.css">
+    <link rel="stylesheet" href="./stylesheets/dashboard.css">
+  </head>
+  <body bgcolor="#000000">
+    <div class="video-dash">
+      <video id="octagon" autoplay="autoplay" controls="controls" muted="muted" src="http://10.4.4.10:8000/octagon.ogg" type="video/ogg" style="width: 635px"></video>
+      <video id="webb" autoplay="autoplay" controls="controls" muted="muted" src="http://10.4.4.10:8000/webb.ogg" type="video/ogg" style="width: 635px"></video>
+      <video id="gentilli" autoplay="autoplay" controls="controls" muted="muted" src="http://10.4.4.10:8000/gentilli.ogg" type="video/ogg" style="width: 635px"></video>
+      <video id="wool" autoplay="autoplay" controls="controls" muted="muted" src="http://10.4.4.10:8000/wool.ogg" type="video/ogg" style="width: 635px"></video>
+      <video id="eng-lt1" autoplay="autoplay" controls="controls" muted="muted" src="http://10.4.4.10:8000/eng-lt1.ogg" type="video/ogg" style="width: 635px"></video>
+      <video id="eng-lt2" autoplay="autoplay" controls="controls" muted="muted" src="http://10.4.4.10:8000/eng-lt2.ogg" type="video/ogg" style="width: 635px"></video>
+    </div>
+    <script>
+      var rooms = ["octagon","webb","gentilli","wool","eng-lt1","eng-lt2"]
+        , roomVideos = []
+        
+      // mute an array of dom references
+      function muteRooms(rooms) {
+        for (var i in rooms) {
+          rooms[i].muted = true
+        }
+      }
+      
+      // setup event listeners on room
+      function monitor(room) {
+        var roomVideo = document.getElementById(room)
+        roomVideos.push(roomVideo)
+        console.log(room)
+        
+        // listen for volume change event and mutes other rooms
+        roomVideo.addEventListener("volumechange", function() {
+          if (roomVideo.muted == false) {
+            muteRooms(roomVideos.filter(function(element) {
+              return (element !== roomVideo)
+            }))
+          }
+        }, true)
+        
+        roomVideo.addEventListener("abort", function() {
+          console.log("abort")
+        }, true)
+        
+        roomVideo.addEventListener("error", function(error) {
+          console.log(error)
+        }, true)
+        
+      }
+      
+      // run monitor for each room
+      for (var i in rooms) {
+        monitor(rooms[i]);
+      }
+    </script>
+  </body>
+</html>

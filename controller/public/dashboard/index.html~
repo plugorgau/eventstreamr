@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Video Dashboard</title>
+    <link rel="stylesheet" href="./stylesheets/normalize.css">
+    <link rel="stylesheet" href="./stylesheets/dashboard.css">
+  </head>
+  <body>
+    <div class="video-dash">
+      <video id="octagon" controls="controls" muted="muted" src="http://10.4.4.10:8000/octagon.ogg"></video>
+      <video id="webb" controls="controls" muted="muted" src="http://10.4.4.10:8000/webb.ogg"></video>
+      <video id="gentilli" controls="controls" muted="muted" src="http://10.4.4.10:8000/gentilli.ogg"></video>
+      <video id="wool" controls="controls" muted="muted" src="http://10.4.4.10:8000/wool.ogg"></video>
+      <video id="eng-lt1" controls="controls" muted="muted" src="http://10.4.4.10:8000/eng-lt1.ogg"></video>
+      <video id="eng-lt2" controls="controls" muted="muted" src="http://10.4.4.10:8000/eng-lt2.ogg"></video>
+    </div>
+    <script>
+      var rooms = ["octagon","webb","gentilli","wool","eng-lt1","eng-lt2"]
+        , roomVideos = []
+        
+      function muteRooms(rooms) {
+        for (var i in rooms) {
+          rooms[i].muted = true
+        }
+      }
+      
+      function monitor(room) {
+        var roomVideo = document.getElementById(room)
+        roomVideos.push(roomVideo)
+        
+        roomVideo.addEventListener("volumechange", function() {
+          if (roomVideo.muted == false) {
+            muteRooms(roomVideos.filter(function(element) {
+              return (element !== roomVideo)
+            }))
+          }
+        }, true)
+        
+        roomVideo.addEventListener("abort", function() {
+          console.log("abort")
+        }, true)
+        
+        
+      }
+      
+      for (var i in rooms) {
+        setTimeout({
+          monitor(rooms[i]
+        )}, 10000);
+      }
+    </script>
+  </body>
+</html>

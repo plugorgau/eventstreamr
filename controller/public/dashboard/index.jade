@@ -1,0 +1,55 @@
+mixin video(server, room)
+  video(id="#{room}", autoplay, controls, muted, src="#{server}/#{room}.ogg", type="video/ogg",style="width: 635px")
+  //- poster
+
+doctype html
+html(lang="en")
+  head
+    title Video Dashboard
+    link(rel="stylesheet", href="/dashboard/stylesheets/normalize.css")
+    link(rel="stylesheet", href="/dashboard/stylesheets/dashboard.css")
+  body(bgcolor="#000000")
+    .video-dash
+      each room in rooms
+        mixin video(server, room)
+
+    script.
+      var rooms = !{JSON.stringify(rooms)}
+        , roomVideos = []
+      
+      // mute an array of dom references
+      function muteRooms(rooms) {
+        for (var i in rooms) {
+          rooms[i].muted = true
+        }
+      }
+       
+      // setup event listeners on room
+      function monitor(room) {
+        var roomVideo = document.getElementById(room)
+        roomVideos.push(roomVideo)
+        console.log(room)
+        
+        // listen for volume change event and mutes other rooms
+        roomVideo.addEventListener("volumechange", function() {
+          if (roomVideo.muted == false) {
+            muteRooms(roomVideos.filter(function(element) {
+              return (element !== roomVideo)
+            }))
+          }
+        }, true)
+        
+        roomVideo.addEventListener("abort", function() {
+          console.log("abort")
+        }, true)
+
+        roomVideo.addEventListener("error", function(error) {
+          console.log(error)
+        }, true)
+
+      }
+     
+      // run monitor for each room
+      for (var i in rooms) {
+        monitor(rooms[i]);
+      }

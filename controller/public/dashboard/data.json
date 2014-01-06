@@ -1,0 +1,12 @@
+{
+  "pretty": true,
+  "server": "http://10.4.4.10:8000",
+  "rooms": [
+    "octagon",
+    "webb",
+    "gentilli",
+    "wool",
+    "eng-lt1",
+    "eng-lt2"
+  ]
+}
