@@ -9,17 +9,24 @@ use DateTime::Format::Strptime;
 use Cache::FileCache;
 use File::Basename 'basename';
 use Image::Magick;
+use File::Path qw(make_path);
 
 # +- Range in seconds 
 our $self;
 $self->{range} = 1500;
 $self->{default_expires} = 300;
 $self->{cache_root} = '/tmp/schedule/';
+$self->{output_root} = '/tmp';
+$self->{output_tmp} = '/tmp';
+$self->{remote_storage} = 'av@10.4.4.10:/storage';
 
-# change this to make path if dealing with sub directories.
 if (! -d $self->{cache_root}) {
-  mkdir $self->{cache_root};
+  make_path($self->{cache_root});
 }
+
+my @dvfiles;
+my $start_cut;
+my $end_cut;
 
 #my $getopts_rc = GetOptions(
 #    "start-cut"     => \$start_cut,
@@ -67,6 +74,7 @@ my $selection = &Prompt("Select a venue: 0 - $count");
 say "";
 
 my @venue = @{$self->{schedule}{@venues[$selection]}};
+$self->{venue} = @venues[$selection];
 
 my $dvparse = DateTime::Format::Strptime->new(
   pattern => '%F_%H-%M-%S',
@@ -95,7 +103,6 @@ $count--;
 
 # Ask for Title info
 my $talk = &Prompt("Select the matching talk: 0 - $count");
-say "";
 
 my $title = @venue[$talk]->{title};
 my $presenters = @venue[$talk]->{presenters};
@@ -107,11 +114,25 @@ if ($presenters eq 'n') {
   $self->{title_text} = "+$title.txt";
 } else {
   $self->{title_text} = "$title\n$presenters";
+  $self->{title_file} = "\"$title - $presenters.dv\"";
+  $self->{title_mp4} = "\"$title - $presenters.mp4\"";
 }
 
 # Create titles
-$self->{output_file} = "/tmp/@venue[$talk]->{schedule_id}-title.png";
-create_title();
+room_translate();
+#create_title();
+$self->{output_file} = "$self->{output_tmp}/@venue[$talk]->{schedule_id}-title.png";
+
+my @transferred;
+print "mkdir -p $self->{output_root}/$self->{room}/\n";
+print "mkdir -p $self->{output_tmp}/$self->{room}/\n";
+foreach my $file (@dvfiles) {
+  print "scp $self->{remote_storage}/$self->{room}/$file\n";
+  push(@transferred, "$self->{output_tmp}/$file");
+}
+
+print "melt $self->{output_root}/lca2014-intro.dv -filter watermark:$self->{output_file} in=300 out=500 composite.progressive=1 producer.align=centre composite.valign=c composite.halign=c @transferred lca2014-exit.dv -consumer avformat:/tmp/$self->{title_file}\n";
+print "ffmpeg -i $self->{title_file} -vf yadif=1 -threads 0 -acodec libfdk_aac -ab 96k -ac 1 -ar 48000 -vcodec libx264 -preset slower -crf 26 $self->{title_mp4}"
 
 sub Prompt { # inspired from here: http://alvinalexander.com/perl/edu/articles/pl010005
   my ($question,$default) = @_;
@@ -141,10 +162,10 @@ sub create_title {
   $im->ReadImage('/tmp/blank_title.png');
   
   my $label=Image::Magick->new(size=>"700x200");
-  $label->Set(gravity => "Center", font => '/usr/share/fonts/truetype/ubuntu-font-family/Ubuntu-B.ttf', background => 'none');
+  $label->Set(gravity => "Center", font => '/usr/share/fonts/truetype/ubuntu-font-family/Ubuntu-B.ttf', background => 'none', fill => 'white');
   $label->Read("label:$self->{title_text}");
   $im->Composite(image => $label, gravity => 'Center');
-  $im->Write($self->{output_file});
+  $im->Write("$self->{output_file}");
 }
 
 sub retrieve_schedule {
@@ -167,3 +188,22 @@ sub retrieve_schedule {
   return;
 }
 
+# make this configurable
+sub room_translate {
+  given($self->{venue}) {
+    when  (/GGGL:GENTILLI Gentilli Lecture Theatre/) { $self->{room} = 'gentilli';}
+    when  (/Royal Perth Yacht Club - Australia II Drive, Crawley/) { $self->{room} = 'Royal Perth Yacht Club - Australia II Drive, Crawley';}
+    when  (/ENG:LT2/) { $self->{room} = 'eng-lt1';}
+    when  (/Hardware room - Physics Lab 1.28/) { $self->{room} = 'Hardware room - Physics Lab 1.28';}
+    when  (/Foyer/) { $self->{room} = 'Foyer';}
+    when  (/Octagon/) { $self->{room} = 'octagon';}
+    when  (/Prescott Court, UWA/) { $self->{room} = 'Prescott Court, UWA';}
+    when  (/GPB2:LT Robert Street Lecture Theatre/) { $self->{room} = 'roberts';}
+    when  (/uncatered/) { $self->{room} = 'uncatered';}
+    when  (/GGGL:WOOL Woolnough Lecture Theatre/) { $self->{room} = 'wool';}
+    when  (/Matilda Bay foreshore/) { $self->{room} = 'Matilda Bay foreshore';}
+    when  (/GGGL:WEBB Webb Lecture Theatre/) { $self->{room} = 'webb';}
+    when  (/All Lecture Theatres/) { $self->{room} = 'All Lecture Theatres';}
+    when  (/ENG:LT1/) { $self->{room} = 'eng-lt1';}
+  }
+}
