@@ -35,7 +35,7 @@ print "Parent PID: $$\n";
 
 # path details
 my $hostname = hostname;
-my $basepath = '/storage/queue';
+my $basepath = '/storage-server/queue';
 my $todo = "$basepath/todo";
 my $inprogress = "$basepath/wip";
 my $done = "$basepath/done";
@@ -77,20 +77,20 @@ my %options = (
                         #setting to yes causes $counters{start} to persist and other concurrency issues
 );
 
-my $counters;
-tie $counters, 'IPC::Shareable', $glue, { %options } or
+my %counters;
+tie %counters, 'IPC::Shareable', $glue, { %options } or
     die "server: tie failed\n";
 
 # forcefully clear
-$counters{runs} = $counters{kids} = $counters{test3} = 0;
+$counters{runs} = $counters{kids} = 0;
 
 $|=1; # do not buffer output
 
 #ignore child processes to prevent zombies
 $SIG{CHLD} = 'IGNORE';
 
-my $kids;
-tie $kids, 'IPC::Shareable', "render_kids", { %options } or
+my %kids;
+tie %kids, 'IPC::Shareable', "render_kids", { %options } or
     die "server: tie failed\n";
 
 # gracefully handle kill requests
@@ -110,8 +110,8 @@ sub cleanup_and_exit {
   }
   
   IPC::Shareable->clean_up; # remove shared memory structure - can make it persist without this though - may be faulty too!
-  $counters = (); # so we'll clear it this way too!
-  $kids = (); # so we'll clear it this way too!
+  %counters = (); # so we'll clear it this way too!
+  %kids = (); # so we'll clear it this way too!
   
   # it's a good idea to exit when we are told to
   $logger->info ("Daemon terminated");
@@ -143,8 +143,7 @@ unless ($options->{loglevel} = 'DEBUG' ) {
 # DAEMON HOLDING LOOP
 # use this to hold the progam open and spawn children from here
 
-my $child; my $runs = 1;
-
+my $child = 0; my $runs = 1;
 
 # spawn a child - this might be a loop to spawn a child for each temp probe etc.
 
@@ -159,20 +158,17 @@ while (1==1) {
     if ($child == 0) {   #i'm the child!
         print "child control hand-over point\n";
         $counters{runs}++;
-        childsub(@scripts);
+        my $kid = childsub(@scripts);
         
         #if the child returns, then just exit;
-        delete $kids{$child};
-        $runs--;
+        delete $kids{$kid};
         $counters{runs}--;
         exit 0;
       } else {   #i'm the parent!
         print "parent continuation point after fork of child $child\n";
-        $runs++;
         $kids{$child} = 1;
     }
   }
-  print Dumper(%kids);
 } # main holding loop
 
 #############
@@ -183,15 +179,15 @@ sub childsub {
   
   # IPC Stats
    use IPC::Shareable;
-   my $glue = 'demo-daemon';
+   my $glue = 'queue-manager';
    my %options = (
        create    => 0,
        exclusive => 0,
        mode      => 0644,
        destroy   => 0,
        );
-   my $counters;
-   tie $counters, 'IPC::Shareable', $glue, { %options } or
+   my %counters;
+   tie %counters, 'IPC::Shareable', $glue, { %options } or
        die "tie failed - abort";
   
   print "child spawned, I am talking from the child\n";
@@ -205,7 +201,7 @@ sub childsub {
       $logger->info("Processing $script");
       move("$todo/$script", $inprogress);
       print "Child Daemon $runs Processing... \n";
-      my $capture = `$inprogress/$script`; # Backticks are bad... IPC::System::Simple was failing though... FIXME
+      my $capture = `bash $inprogress/$script`; # Backticks are bad... IPC::System::Simple was failing though... FIXME
       print "$capture \n";
       move("$inprogress/$script", $done);
       print "Done...! \n";
@@ -217,5 +213,6 @@ sub childsub {
       $count++;
     }
   }
+  return $$;
 } # childsub
 

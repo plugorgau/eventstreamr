@@ -19,9 +19,9 @@ $self->{range} = 1500;
 $self->{default_expires} = 300;
 $self->{cache_root} = '/tmp/schedule/';
 # tmp on main disk, scp to.
-$self->{output_tmp} = '/encode_tmp';
+$self->{output_tmp} = '/encode-tmp';
 # secondary output
-$self->{output_root} = '/encode_final';
+$self->{output_root} = '/encode-final';
 # process queue
 $self->{queue} = '/storage/queue/todo';
 $self->{remote_storage} = 'av@10.4.4.20:';
