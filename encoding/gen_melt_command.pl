@@ -10,6 +10,8 @@ use Cache::FileCache;
 use File::Basename 'basename';
 use Image::Magick;
 use File::Path qw(make_path);
+use FindBin qw($Bin);
+use lib "$Bin/../lib";
 
 # +- Range in seconds 
 our $self;
@@ -21,7 +23,7 @@ $self->{output_tmp} = '/encode_tmp';
 # secondary output
 $self->{output_root} = '/encode_final';
 # process queue
-$self->{queue} = '/tmp';
+$self->{queue} = '/storage/queue/todo';
 $self->{remote_storage} = 'av@10.4.4.20:';
 
 if (! -d $self->{cache_root}) {
@@ -126,22 +128,27 @@ if ($presenters eq 'n') {
 
 # Create titles
 room_translate();
-$self->{output_file} = "/tmp/@venue[$talk]->{schedule_id}-title.png";
+$self->{title_overlay} = "/tmp/@venue[$talk]->{schedule_id}-title.png";
 create_title();
 
 my @transferred;
 open my $fh, ">", "$self->{queue}/@venue[$talk]->{schedule_id}.sh" or die $!;
 
 print $fh "#!/bin/bash\n";
+# Make pathes
 print $fh "mkdir -p $self->{output_root}/$self->{room}/\n";
 print $fh "mkdir -p $self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}\n\n";
+
+# Copy files off storage
 my $count;
 foreach my $file (@dvfiles) {
-  print $fh "scp $self->{remote_storage}$file $self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}/$file\n";
+  print $fh "scp $self->{remote_storage}$file $self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}/.\n";
   push(@transferred, "$self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}/$file");
   $count++;
 }
-print $fh "scp $self->{remote_storage}$self->{queue}/@venue[$talk]->{schedule_id}.sh $self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}/.\n";
+
+# Copy across title overlay
+print $fh "scp $self->{remote_storage}$self->{title_overlay} $self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}/.\n";
 print $fh "\n";
 $count--;
 my $startdv = $transferred[0];
@@ -149,23 +156,28 @@ my $enddv = $transferred[$count];
 shift(@transferred);
 pop(@transferred);
 
+# If there is a start cut, process it
 if ($start_cut) {
-  print $fh "dd if=$startdv ibs=36000000 skip=$start_cut of=$self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}/start-@venue[$talk]->{schedule_id}.dv\n";
-  $startdv = "$self->{output_tmp}/$self->{room}/start-@venue[$talk]->{schedule_id}.dv";
+  print $fh "dd if=$startdv ibs=3600000 skip=$start_cut of=$self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}/start-@venue[$talk]->{schedule_id}.dv\n";
+  $startdv = "$self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}/start-@venue[$talk]->{schedule_id}.dv";
 }
 
+# If there is an end cut, process it
 if ($end_cut) {
-  print $fh "dd if=$enddv ibs=36000000 count=$end_cut of=$self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}/end-@venue[$talk]->{schedule_id}.dv\n";
+  print $fh "dd if=$enddv ibs=3600000 count=$end_cut of=$self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}/end-@venue[$talk]->{schedule_id}.dv\n";
   #print $fh "tail -c \$(( 3515.625 * $end_cut )) $enddv $self->{output_tmp}/$self->{room}/end-@venue[$talk]->{schedule_id}.dv\n";
-  $enddv = "$self->{output_tmp}/$self->{room}/end-@venue[$talk]->{schedule_id}.dv";
+  $enddv = "$self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}/end-@venue[$talk]->{schedule_id}.dv";
 }
 
 
 print $fh "\n";
-
-print $fh "melt $self->{output_root}/lca2014-intro.dv -filter watermark:$self->{output_file} in=300 out=500 composite.progressive=1 producer.align=centre composite.valign=c composite.halign=c $startdv @transferred $enddv $self->{output_root}/lca2014-exit.dv -consumer avformat:\"$self->{output_root}/$self->{room}/$self->{title_file}\"\n";
+# Produce melt command
+print $fh "xvfb-run -a melt $self->{output_root}/lca2014-intro.dv -filter watermark:\"$self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}/@venue[$talk]->{schedule_id}-title.png\" in=300 out=500 composite.progressive=1 producer.align=centre composite.valign=c composite.halign=c $startdv @transferred $enddv $self->{output_root}/lca2014-exit.dv -consumer avformat:\"$self->{output_root}/$self->{room}/$self->{title_file}\"\n";
 print $fh "\n";
-print $fh "ffmpeg -i \"$self->{output_root}/$self->{room}/$self->{title_file}\" -vf yadif=1 -threads 0 -acodec libfdk_aac -ab 96k -ac 1 -ar 48000 -vcodec libx264 -preset slower -crf 26 \"$self->{output_root}/$self->{room}/$self->{title_mp4}\"\n";
+
+# produce mp4
+print $fh "ffmpeg -i \"$self->{output_root}/$self->{room}/$self->{title_file}\" -vf yadif=1 -threads 0 -acodec libfdk_aac -ab 96k -ac 1 -ar 48000 -vcodec libx264 -preset slower -crf 26 \"$self->{output_root}/$self->{room}/@venue[$talk]->{schedule_id}-$self->{title_mp4}\"\n";
+  print $fh "scp  $self->{output_root}/$self->{room}/@venue[$talk]->{schedule_id}-$self->{title_mp4} $self->{remote_storage}/storage/completed/.\n";
 close $fh;
 
 sub Prompt { # inspired from here: http://alvinalexander.com/perl/edu/articles/pl010005
@@ -192,13 +204,13 @@ sub create_title {
   $im = new Image::Magick;
   
   $im->Set( size => '768x200' );
-  $im->ReadImage('/tmp/blank_title.png');
+  $im->ReadImage("$Bin/blank_title.png");
   
   my $label=Image::Magick->new(size=>"700x200");
   $label->Set(gravity => "Center", font => '/usr/share/fonts/truetype/ubuntu-font-family/Ubuntu-B.ttf', background => 'none', fill => 'white');
   $label->Read("label:$self->{title_text}");
   $im->Composite(image => $label, gravity => 'Center');
-  $im->Write("$self->{output_file}");
+  $im->Write("$self->{title_overlay}");
 }
 
 sub retrieve_schedule {
