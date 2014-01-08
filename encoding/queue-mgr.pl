@@ -142,7 +142,6 @@ while (1==1) {
   sleep (int(rand($sleeprandom)) + 11);
   my @scripts = glob("$todo/*.sh");
   if ( $counters{runs} < $daemons) {
-    print "Counters: $counters{runs} - Runs: $daemons\n";
     die "Can't fork: $!" unless defined ($child = fork());
     if ($child == 0) {   #i'm the child!
         $counters{runs}++;
