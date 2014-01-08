@@ -184,7 +184,7 @@ print $fh "xvfb-run -a melt $self->{output_root}/lca2014-intro.dv -filter waterm
 print $fh "\n";
 
 # produce mp4
-print $fh "ffmpeg -i \"$self->{output_root}/$self->{room}/$self->{title_file}\" -vf yadif=1 -threads 0 -acodec libfdk_aac -ab 96k -ac 1 -ar 48000 -vcodec libx264 -preset slower -crf 26 \"$self->{output_root}/$self->{room}/@venue[$talk]->{schedule_id}-$self->{title_mp4}\"\n";
+print $fh "ffmpeg -i \"$self->{output_root}/$self->{room}/$self->{title_file}\" -vf yadif=1 -threads 0 -acodec libfdk_aac -ab 96k -ac 1 -ar 48000 -vcodec libx264 -preset slower -crf 26 -r 25 \"$self->{output_root}/$self->{room}/@venue[$talk]->{schedule_id}-$self->{title_mp4}\"\n";
   print $fh "scp  $self->{output_root}/$self->{room}/@venue[$talk]->{schedule_id}-$self->{title_mp4} $self->{remote_storage}/storage/completed/$self->{room}/$self->{date}/.\n";
 close $fh;
 
