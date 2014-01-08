@@ -31,7 +31,6 @@ if ( defined $options->{help} ) {
 open (MYFILE, '>/tmp/renderslave.pid');
 print MYFILE "$$";
 close (MYFILE); 
-print "Parent PID: $$\n";
 
 # path details
 my $hostname = hostname;
@@ -54,16 +53,10 @@ my $log_conf = qq(
 Log::Log4perl::init(\$log_conf);
 my $logger = Log::Log4perl->get_logger();
 
-if (! -d '/tmp/veyepar' ) {
-  $logger->info("Making /tmp/veyepar");
-  mkdir '/tmp/veyepar';
-}
-
 # number of children to spawn (parent + children)
 my $daemons = $options->{daemons};
 my $children = $daemons - 1;
 $logger->info("Starting Parent and $children Child(ren)");
-print "Starting Parent and $children Child(ren) \n";
 
 # session counters - setup IPC shareable memory space
 
@@ -103,7 +96,6 @@ sub cleanup_and_exit {
   foreach my $pid (keys %kids) {
     waitpid $pid, 0; # this will wait for all childen to die before killing the parent - if children will naturally exit as a course of their jobs
     $logger->info("Closing child $pid");
-    print "Closing child $pid \n";
     
     #forcefully clean up
     unless ( $pid =~ /test/ ) { kill(15, $pid); } # hacky, not sure why the test values get set... FIXME
@@ -115,7 +107,6 @@ sub cleanup_and_exit {
   
   # it's a good idea to exit when we are told to
   $logger->info ("Daemon terminated");
-  print "Daemon terminated \n";
   exit(0);
 }
 
@@ -148,15 +139,12 @@ my $child = 0; my $runs = 1;
 # spawn a child - this might be a loop to spawn a child for each temp probe etc.
 
 while (1==1) {
-  print "Sleeping... \n";
   sleep (int(rand($sleeprandom)) + 11);
   my @scripts = glob("$todo/*.sh");
-  print "looping...\n";
   if ( $counters{runs} < $daemons) {
     print "Counters: $counters{runs} - Runs: $daemons\n";
     die "Can't fork: $!" unless defined ($child = fork());
     if ($child == 0) {   #i'm the child!
-        print "child control hand-over point\n";
         $counters{runs}++;
         my $kid = childsub(@scripts);
         
@@ -165,7 +153,6 @@ while (1==1) {
         $counters{runs}--;
         exit 0;
       } else {   #i'm the parent!
-        print "parent continuation point after fork of child $child\n";
         $kids{$child} = 1;
     }
   }
@@ -190,9 +177,6 @@ sub childsub {
    tie %counters, 'IPC::Shareable', $glue, { %options } or
        die "tie failed - abort";
   
-  print "child spawned, I am talking from the child\n";
-
-  print "Child Daemon ID: $runs\n";
   my $count; 
   foreach my $script (@scripts) {
     if ( -e $script && $count < 1 ) {
@@ -200,13 +184,10 @@ sub childsub {
       $script = fileparse($script);
       $logger->info("Processing $script");
       move("$todo/$script", $inprogress);
-      print "Child Daemon $runs Processing... \n";
       my $capture = `bash $inprogress/$script`; # Backticks are bad... IPC::System::Simple was failing though... FIXME
       print "$capture \n";
       move("$inprogress/$script", $done);
-      print "Done...! \n";
-
-      #
+      
       # I will write some post sanity checking on the rendered file.
       #
       $logger->info("$script finished");
