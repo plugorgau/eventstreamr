@@ -95,6 +95,7 @@ my $zooparse = DateTime::Format::Strptime->new(
 );
 
 my $starttime = $dvparse->parse_datetime($self->{firstdv});
+$self->{date} = $starttime->ymd;
 
 # Find Closest schedules
 $count = 0;
@@ -149,6 +150,7 @@ print $fh "mkdir -p $self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_i
 my $count;
 foreach my $file (@dvfiles) {
   print $fh "scp $self->{remote_storage}$file $self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}/.\n";
+  $file = basename($file);
   push(@transferred, "$self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}/$file");
   $count++;
 }
@@ -183,7 +185,7 @@ print $fh "\n";
 
 # produce mp4
 print $fh "ffmpeg -i \"$self->{output_root}/$self->{room}/$self->{title_file}\" -vf yadif=1 -threads 0 -acodec libfdk_aac -ab 96k -ac 1 -ar 48000 -vcodec libx264 -preset slower -crf 26 \"$self->{output_root}/$self->{room}/@venue[$talk]->{schedule_id}-$self->{title_mp4}\"\n";
-  print $fh "scp  $self->{output_root}/$self->{room}/@venue[$talk]->{schedule_id}-$self->{title_mp4} $self->{remote_storage}/storage/completed/.\n";
+  print $fh "scp  $self->{output_root}/$self->{room}/@venue[$talk]->{schedule_id}-$self->{title_mp4} $self->{remote_storage}/storage/completed/$self->{room}/$self->{date}/.\n";
 close $fh;
 
 sub Prompt { # inspired from here: http://alvinalexander.com/perl/edu/articles/pl010005
