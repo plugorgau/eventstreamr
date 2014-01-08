@@ -61,11 +61,11 @@ Options:
 # HTTP
 our $http = HTTP::Tiny->new(timeout => 15);
 
-my $test = '/tmp/2014-01-06_13-40-26.dv';
-$test = basename($test);
-$test =~ s/\.dv$//;
+my $first_file = $files[0];
+$first_file = basename($first_file);
+$first_file =~ s/\.dv$//;
 
-$self->{firstdv} = $test;
+$self->{firstdv} = $first_file;
 
 retrieve_schedule();
 
@@ -119,12 +119,18 @@ $title = &Prompt("Alter title:", "$title");
 $presenters = &Prompt("Alter Prestenters", "$presenters");
 
 if ($presenters eq 'n') {
-  $self->{title_text} = "+$title.txt";
+  $self->{title_text} = "$title";
+  $self->{title_file_text} = "$title";
 } else {
   $self->{title_text} = "$title\n$presenters";
-  $self->{title_file} = "$title - $presenters.dv";
-  $self->{title_mp4} = "$title - $presenters.mp4";
+  $self->{title_file_text} = "$title - $presenters";
 }
+
+$self->{title_file} = "$title - $presenters.dv";
+$self->{title_mp4} = "$title - $presenters.mp4";
+
+$self->{title_file} =~ s/\s/_/g;
+$self->{title_mp4} =~ s/\s/_/g;
 
 # Create titles
 room_translate();
