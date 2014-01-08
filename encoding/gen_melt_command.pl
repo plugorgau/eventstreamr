@@ -132,8 +132,10 @@ if ($presenters eq 'n') {
 $self->{title_file} = "$title - $presenters.dv";
 $self->{title_mp4} = "$title - $presenters.mp4";
 
-$self->{title_file} =~ s/(?!\w)|(?!\d)/_/g;
-$self->{title_mp4} =~ s/(?!\w)|(?!\d)/_/g;
+$self->{title_file} =~ s/[ ~`!@#\$\%^&*\(\)_+{}|\\;:'",<>?\/]/_/g;
+$self->{title_file} =~ s/__/_/g;
+$self->{title_mp4} =~ s/[ ~`!@#\$\%^&*\(\)_+{}|\\;:'",<>?\/]/_/g;
+$self->{title_mp4} =~ s/__/_/g;
 
 # Create titles
 room_translate();
