@@ -182,7 +182,12 @@ if ($end_cut) {
 
 print $fh "\n";
 # Produce melt command
-print $fh "xvfb-run -a melt $self->{output_root}/lca2014-intro.dv -filter watermark:\"$self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}/@venue[$talk]->{schedule_id}-title.png\" in=300 out=500 composite.progressive=1 producer.align=centre composite.valign=c composite.halign=c $startdv @transferred $enddv $self->{output_root}/lca2014-exit.dv -consumer avformat:\"$self->{output_root}/$self->{room}/$self->{title_file}\"\n";
+# nasty hack for dealing with single files (it's late again..)
+if ($transferred[1]) {
+  print $fh "xvfb-run -a melt $self->{output_root}/lca2014-intro.dv -filter watermark:\"$self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}/@venue[$talk]->{schedule_id}-title.png\" in=300 out=500 composite.progressive=1 producer.align=centre composite.valign=c composite.halign=c $startdv @transferred $enddv $self->{output_root}/lca2014-exit.dv -consumer avformat:\"$self->{output_root}/$self->{room}/$self->{title_file}\"\n";
+} else {
+  print $fh "xvfb-run -a melt $self->{output_root}/lca2014-intro.dv -filter watermark:\"$self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}/@venue[$talk]->{schedule_id}-title.png\" in=300 out=500 composite.progressive=1 producer.align=centre composite.valign=c composite.halign=c $startdv $self->{output_root}/lca2014-exit.dv -consumer avformat:\"$self->{output_root}/$self->{room}/$self->{title_file}\"\n";
+}
 print $fh "\n";
 
 # produce mp4
