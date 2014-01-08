@@ -104,6 +104,7 @@ foreach my $presentation (@venue) {
   my $diff = $starttime->epoch - $time->epoch;
   if ($diff <= $self->{range} &&  $diff >= -$self->{range}) {
     say "$count) $presentation->{title}";
+    my $selection_default = $count;
   }
   $count++;
 }
@@ -111,7 +112,7 @@ foreach my $presentation (@venue) {
 $count--;
 
 # Ask for Title info
-my $talk = &Prompt("Select the matching talk: 0 - $count");
+my $talk = &Prompt("Select the matching talk: 0 - $count", "$selection_default");
 
 my $title = @venue[$talk]->{title};
 my $presenters = @venue[$talk]->{presenters};
