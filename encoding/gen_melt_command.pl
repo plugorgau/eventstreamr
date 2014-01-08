@@ -248,7 +248,7 @@ sub room_translate {
   given($self->{venue}) {
     when  (/GGGL:GENTILLI Gentilli Lecture Theatre/) { $self->{room} = 'gentilli';}
     when  (/Royal Perth Yacht Club - Australia II Drive, Crawley/) { $self->{room} = 'Royal Perth Yacht Club - Australia II Drive, Crawley';}
-    when  (/ENG:LT2/) { $self->{room} = 'eng-lt1';}
+    when  (/ENG:LT2/) { $self->{room} = 'eng-lt2';}
     when  (/Hardware room - Physics Lab 1.28/) { $self->{room} = 'Hardware room - Physics Lab 1.28';}
     when  (/Foyer/) { $self->{room} = 'Foyer';}
     when  (/Octagon/) { $self->{room} = 'octagon';}
