@@ -23,8 +23,8 @@ $self->{output_tmp} = '/encode-tmp';
 # secondary output
 $self->{output_root} = '/encode-final';
 # process queue
-#$self->{queue} = '/storage/queue/todo';
-$self->{queue} = '/storage/queue/manual';
+$self->{queue} = '/storage/queue/todo';
+#$self->{queue} = '/storage/queue/manual';
 $self->{remote_storage} = 'av@10.4.4.20:';
 
 if (! -d $self->{cache_root}) {
@@ -114,7 +114,7 @@ foreach my $presentation (@venue) {
 $count--;
 
 # Ask for Title info
-my $talk = &Prompt("Select the matching talk: 0 - $count");
+my $talk = &Prompt("Select the matching talk: 0 - $count","$selection_default");
 my $title = @venue[$talk]->{title};
 my $presenters = @venue[$talk]->{presenters};
 
