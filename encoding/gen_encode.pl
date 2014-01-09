@@ -19,11 +19,12 @@ $self->{range} = 1500;
 $self->{default_expires} = 300;
 $self->{cache_root} = '/tmp/schedule/';
 # tmp on main disk, scp to.
-$self->{output_tmp} = '/encode_tmp';
+$self->{output_tmp} = '/encode-tmp';
 # secondary output
-$self->{output_root} = '/encode_final';
+$self->{output_root} = '/encode-final';
 # process queue
-$self->{queue} = '/storage/queue/todo';
+#$self->{queue} = '/storage/queue/todo';
+$self->{queue} = '/storage/queue/manual';
 $self->{remote_storage} = 'av@10.4.4.20:';
 
 if (! -d $self->{cache_root}) {
@@ -95,6 +96,7 @@ my $zooparse = DateTime::Format::Strptime->new(
 );
 
 my $starttime = $dvparse->parse_datetime($self->{firstdv});
+$self->{date} = $starttime->ymd;
 
 # Find Closest schedules
 $count = 0;
@@ -115,7 +117,7 @@ my $title = @venue[$talk]->{title};
 my $presenters = @venue[$talk]->{presenters};
 
 $title = &Prompt("Alter title:", "$title");
-$presenters = &Prompt("Alter Prestenters", "$presenters");
+$presenters = &Prompt("Alter Presenters", "$presenters");
 
 if ($presenters eq 'n') {
   $self->{title_text} = "$title";
@@ -127,7 +129,8 @@ if ($presenters eq 'n') {
 
 # build output filenames and sanitize 
 my $file_part = "$title - $presenters";
-$file_part =~ s/[^A-Za-z0-9\-\.]//g;
+$file_part =~ s/\s+/_/g;
+$file_part =~ s/[^A-Za-z0-9\-_\.]//g;
 $self->{title_file} = $file_part . ".dv";
 $self->{title_mp4} = $file_part . ".mp4";
 
@@ -137,6 +140,8 @@ $self->{title_overlay} = "/tmp/@venue[$talk]->{schedule_id}-title.png";
 create_title();
 
 open my $fh, ">", "$self->{queue}/@venue[$talk]->{schedule_id}.sh" or die $!;
+#open my $fh, ">", "$venue[$talk]->{schedule_id}.sh" or die $!;
+
 
 print $fh "#!/bin/bash\n";
 # Make pathes
@@ -152,6 +157,7 @@ print $fh "scp $self->{remote_storage}$self->{title_overlay} $self->{output_tmp}
 my @transferred;
 foreach my $file ( @dvfiles ) {
     print $fh "scp $self->{remote_storage}$file $self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}/.\n";
+    $file = basename($file);
     push @transferred, "$self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}/$file";
 }
 print $fh "\n";
@@ -180,8 +186,9 @@ print $fh "\n";
 
 # produce mp4
 print $fh "rm -f $self->{output_root}/$self->{room}/@venue[$talk]->{schedule_id}-$self->{title_mp4}\n";
-print $fh "ffmpeg -i \"$self->{output_root}/$self->{room}/$self->{title_file}\" -vf yadif=1 -threads 0 -acodec libfdk_aac -ab 96k -ac 1 -ar 48000 -vcodec libx264 -preset slower -crf 26 \"$self->{output_root}/$self->{room}/@venue[$talk]->{schedule_id}-$self->{title_mp4}\"\n";
-print $fh "scp $self->{output_root}/$self->{room}/@venue[$talk]->{schedule_id}-$self->{title_mp4} $self->{remote_storage}/storage/completed/.\n";
+print $fh "ffmpeg -i \"$self->{output_root}/$self->{room}/$self->{title_file}\" -vf yadif=1 -threads 0 -acodec libfdk_aac -ab 96k -ac 1 -ar 48000 -vcodec libx264 -preset slower -crf 26 -r 25 \"$self->{output_root}/$self->{room}/@venue[$talk]->{schedule_id}-$self->{title_mp4}\"\n";
+print $fh "scp  $self->{output_root}/$self->{room}/@venue[$talk]->{schedule_id}-$self->{title_mp4} $self->{remote_storage}/storage/completed/$self->{room}/$self->{date}/.\n";
+print $fh "(cd $self->{output_tmp}/$self->{room}/ && rm -Rvf @venue[$talk]->{schedule_id})\n";
 close $fh;
 
 sub Prompt { # inspired from here: http://alvinalexander.com/perl/edu/articles/pl010005
@@ -242,7 +249,7 @@ sub room_translate {
   given($self->{venue}) {
     when  (/GGGL:GENTILLI Gentilli Lecture Theatre/) { $self->{room} = 'gentilli';}
     when  (/Royal Perth Yacht Club - Australia II Drive, Crawley/) { $self->{room} = 'Royal Perth Yacht Club - Australia II Drive, Crawley';}
-    when  (/ENG:LT2/) { $self->{room} = 'eng-lt1';}
+    when  (/ENG:LT2/) { $self->{room} = 'eng-lt2';}
     when  (/Hardware room - Physics Lab 1.28/) { $self->{room} = 'Hardware room - Physics Lab 1.28';}
     when  (/Foyer/) { $self->{room} = 'Foyer';}
     when  (/Octagon/) { $self->{room} = 'octagon';}
