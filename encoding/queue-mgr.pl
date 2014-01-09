@@ -40,7 +40,7 @@ my $basepath = '/storage-server/queue';
 my $todo = "$basepath/todo";
 my $inprogress = "$basepath/wip";
 my $done = "$basepath/done";
-my $sleeprandom = 30;
+my $sleeprandom = 10;
 $options->{loglevel} = uc $options->{loglevel};
 
 my $log_conf = qq(
@@ -114,8 +114,7 @@ if ($options->{loglevel} ne 'DEBUG') {
 my $counter;
 my $child;
 while (1==1) {
-  #sleep (int(rand($sleeprandom)) + 11);
-  sleep 5;
+  sleep (int(rand($sleeprandom)) + 5);
   if ( $counter < $daemons) {
     die "Can't fork: $!" unless defined ($child = fork());
     $counter++;
