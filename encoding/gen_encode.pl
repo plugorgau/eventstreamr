@@ -100,11 +100,13 @@ $self->{date} = $starttime->ymd;
 
 # Find Closest schedules
 $count = 0;
+my $selection_default;
 foreach my $presentation (@venue) {
   my $time = $zooparse->parse_datetime($presentation->{start});
   my $diff = $starttime->epoch - $time->epoch;
   if ($diff <= $self->{range} &&  $diff >= -$self->{range}) {
-    say "$count) $presentation->{title}";
+    say "$count) $presentation->{title} - $presentation->{schedule_id}";
+    $selection_default = $count;
   }
   $count++;
 }
