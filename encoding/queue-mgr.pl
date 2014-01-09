@@ -111,22 +111,21 @@ if ($options->{loglevel} ne 'DEBUG') {
 
 
 # spawn a child - this might be a loop to spawn a child for each temp probe etc.
-my $counter;
 my $child;
 while (1==1) {
   sleep (int(rand($sleeprandom)) + 5);
-  if ( $counter < $daemons) {
+  if ( $kids{counter} < $daemons) {
     die "Can't fork: $!" unless defined ($child = fork());
-    $counter++;
     if ($child == 0) {   #i'm the child!
-        my $kid = childsub();
-        
-        #if the child returns, then just exit;
-        delete $kids{$kid};
-        $counter--;
-        exit 0;
-      } else {   #i'm the parent!
-        $kids{$child} = 1;
+      $kids{counter}++;
+      my $kid = childsub();
+      
+      #if the child returns, then just exit;
+      delete $kids{$kid};
+      $kids{counter}--;
+      exit 0;
+    } else {   #i'm the parent!
+      $kids{$child} = 1;
     }
   }
 } # main holding loop
