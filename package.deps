@@ -16,3 +16,7 @@ moreutils
 libfile-tail-perl
 libplack-perl
 twiggy
+perlmagick
+libdatetime-format-strptime-perl
+xvfb
+libipc-shareable-perl

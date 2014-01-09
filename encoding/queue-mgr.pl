@@ -1,22 +1,24 @@
 #!/usr/bin/perl
 #
-# daemon -Ryan Armanasco - 2012-10-12
+# daemon -Ryan Armanasco - 2012-10-12 - much hacked from that base...
 # queue processing -Leon Wright - 2013-01-30
 #
 # Over-engineering a Perl threaded queue daemon.
 
+# FIXME - Need to rewrite sanely from scratch, it only works in foreground, not as an actual daemon...
+
 use strict;
 use Data::Dumper;
 use POSIX ":sys_wait_h";
-#use IPC::System::Simple qw(capture $EXITVAL EXIT_ANY);
 use Sys::Hostname;
 use File::Copy;
 use File::Basename;
 use Log::Log4perl;
+use Proc::Daemon;
 
 # CLI Options
 use Getopt::Long;
-my $options = {daemons => '3', logfile => '/tmp/queue-mgr.log', loglevel => 'INFO' };
+my $options = {daemons => '2', logfile => '/tmp/queue-mgr.log', loglevel => 'INFO' };
 GetOptions($options, "daemons=i", "logfile=s", "loglevel=s", "help");
 
 if ( defined $options->{help} ) {
@@ -70,21 +72,14 @@ my %options = (
                         #setting to yes causes $counters{start} to persist and other concurrency issues
 );
 
-my %counters;
-tie %counters, 'IPC::Shareable', $glue, { %options } or
+my %kids;
+tie %kids, 'IPC::Shareable', $glue, { %options } or
     die "server: tie failed\n";
-
-# forcefully clear
-$counters{runs} = $counters{kids} = 0;
 
 $|=1; # do not buffer output
 
 #ignore child processes to prevent zombies
 $SIG{CHLD} = 'IGNORE';
-
-my %kids;
-tie %kids, 'IPC::Shareable', "render_kids", { %options } or
-    die "server: tie failed\n";
 
 # gracefully handle kill requests
 $SIG{"INT"} = $SIG{"TERM"} = \&cleanup_and_exit;
@@ -102,7 +97,6 @@ sub cleanup_and_exit {
   }
   
   IPC::Shareable->clean_up; # remove shared memory structure - can make it persist without this though - may be faulty too!
-  %counters = (); # so we'll clear it this way too!
   %kids = (); # so we'll clear it this way too!
   
   # it's a good idea to exit when we are told to
@@ -110,46 +104,27 @@ sub cleanup_and_exit {
   exit(0);
 }
 
-
-use POSIX 'setsid';
-sub daemonize {
-  # detach from console
-  $logger->info("Running as daemon");
-  chdir '/'               or die "Can't chdir to /: $!";
-  open STDIN, '/dev/null' or die "Can't read /dev/null: $!";
-  open STDOUT, '>/dev/null'
-                          or die "Can't write to /dev/null: $!";
-  defined(my $pid = fork) or die "Can't fork: $!";
-  exit if $pid;
-  die "Can't start a new session: $!" if setsid == -1;
-  open STDERR, '>&STDOUT' or die "Can't dup stdout: $!";
+if ($options->{loglevel} ne 'DEBUG') {
+  Proc::Daemon->init;
 }
 
-# comment below out to not daemonise and see what is going on
-##
-unless ($options->{loglevel} = 'DEBUG' ) {
-  &daemonize;  open STDOUT, '>/dev/null' or $logger->logdie("Can't write to /dev/null: $!");
-}
 
-# DAEMON HOLDING LOOP
-# use this to hold the progam open and spawn children from here
-
-my $child = 0; my $runs = 1;
 
 # spawn a child - this might be a loop to spawn a child for each temp probe etc.
-
+my $counter;
+my $child;
 while (1==1) {
-  sleep (int(rand($sleeprandom)) + 11);
-  my @scripts = glob("$todo/*.sh");
-  if ( $counters{runs} < $daemons) {
+  #sleep (int(rand($sleeprandom)) + 11);
+  sleep 5;
+  if ( $counter < $daemons) {
     die "Can't fork: $!" unless defined ($child = fork());
+    $counter++;
     if ($child == 0) {   #i'm the child!
-        $counters{runs}++;
-        my $kid = childsub(@scripts);
+        my $kid = childsub();
         
         #if the child returns, then just exit;
         delete $kids{$kid};
-        $counters{runs}--;
+        $counter--;
         exit 0;
       } else {   #i'm the parent!
         $kids{$child} = 1;
@@ -161,22 +136,21 @@ while (1==1) {
 # CHILD SUB
 #############
 sub childsub {
-  my @scripts = shift;
-  
   # IPC Stats
-   use IPC::Shareable;
-   my $glue = 'queue-manager';
-   my %options = (
-       create    => 0,
-       exclusive => 0,
-       mode      => 0644,
-       destroy   => 0,
-       );
-   my %counters;
-   tie %counters, 'IPC::Shareable', $glue, { %options } or
-       die "tie failed - abort";
+  use IPC::Shareable;
+  my $glue = 'queue-manager';
+  my %options = (
+      create    => 0,
+      exclusive => 0,
+      mode      => 0644,
+      destroy   => 0,
+      );
+  my %kids;
+  tie %kids, 'IPC::Shareable', $glue, { %options } or
+      die "tie failed - abort";
   
   my $count; 
+  my @scripts = glob("$todo/*.sh");
   foreach my $script (@scripts) {
     if ( -e $script && $count < 1 ) {
       # Quick and Dirty way to hopefully avoid multiple nodes locking the same render job.
