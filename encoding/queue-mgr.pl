@@ -155,7 +155,7 @@ sub childsub {
       $script = fileparse($script);
       $logger->info("Processing $script");
       move("$todo/$script", $inprogress);
-      my $capture = `bash $inprogress/$script`; # Backticks are bad... IPC::System::Simple was failing though... FIXME
+      my $capture = `nice -n 20 bash $inprogress/$script`; # Backticks are bad... IPC::System::Simple was failing though... FIXME
       print "$capture \n";
       move("$inprogress/$script", $done);
       
