@@ -46,7 +46,7 @@ my @dvfiles = split(/[\s,]+/,join(',' , @files));
 
 sub print_usage {
   say "
-Usage: station-mgr.pl [OPTIONS]
+Usage: gen_melt_command.pl [OPTIONS]
 
 Options:
   --start-cut   Seconds to cut from the start
