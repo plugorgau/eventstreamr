@@ -164,6 +164,13 @@ foreach my $file ( @dvfiles ) {
 }
 print $fh "\n";
 
+# deal with end cut
+my $enddv = $transferred[$#transferred];
+if ($end_cut) {
+  print $fh "dd if=$enddv ibs=3600000 count=$end_cut of=$self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}/end-@venue[$talk]->{schedule_id}.dv\n";
+  #print $fh "tail -c \$(( 3515.625 * $end_cut )) $enddv $self->{output_tmp}/$self->{room}/end-@venue[$talk]->{schedule_id}.dv\n";
+  $transferred[$#transferred] = "$self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}/end-@venue[$talk]->{schedule_id}.dv";
+}
 
 # deal with start cut
 my $startdv = $transferred[0];
@@ -172,13 +179,6 @@ if ($start_cut) {
     $transferred[0] = "$self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}/start-@venue[$talk]->{schedule_id}.dv";
 }
 
-# deal with end cut
-my $enddv = $transferred[$#transferred];
-if ($end_cut) {
-  print $fh "dd if=$enddv ibs=3600000 count=$end_cut of=$self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}/end-@venue[$talk]->{schedule_id}.dv\n";
-  #print $fh "tail -c \$(( 3515.625 * $end_cut )) $enddv $self->{output_tmp}/$self->{room}/end-@venue[$talk]->{schedule_id}.dv\n";
-  $transferred[$#transferred] = "$self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}/end-@venue[$talk]->{schedule_id}.dv";
-}
 print $fh "\n";
 
 # Produce melt command
