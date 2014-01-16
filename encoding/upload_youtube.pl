@@ -54,8 +54,14 @@ if (!$self->{matched_schedule}) {
   exit 0;
 }
 
-## Build video meta data
-$self->{metadata}{snippet}{title} = $self->{matched_schedule}{title};
+## Build video meta data - truncate to 100 characters as that is the title limit
+if (length($self->{matched_schedule}{title}) > 100) {
+  $self->{metadata}{snippet}{title} = substr($self->{matched_schedule}{title}, 0, 100);
+  $self->{metadata}{snippet}{description} .= "Full Title: $self->{matched_schedule}{title}\n";
+} else {
+  $self->{metadata}{snippet}{title} = $self->{matched_schedule}{title};
+}
+
 
 # Some presenters is empty
 if ($self->{matched_schedule}{presenters}) {
