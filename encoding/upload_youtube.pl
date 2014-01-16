@@ -12,10 +12,10 @@ use strict;
 use Config::YAML;
 use Data::Dumper;
 use HTTP::Tiny;
-use HTTP::Request::Common 'POST';
 use File::Basename;
 use JSON;
 use File::MimeInfo::Magic;
+use LWP::UserAgent;
 use LWP::Authen::OAuth2;
 use Cache::FileCache;
 use File::Path 'make_path';
@@ -121,9 +121,20 @@ if (! $googleapi->{token_string}) {
 # Inspiration here: http://lithostech.com/2013/10/upload-google-youtube-api-v3-cors/
 my $json = to_json($self->{metadata});
 
+###### Blargle: Here be dragons! 
+## Either I misunderstand something or there is a bug in the oauth2 module (likely the former..)
+## https://rt.cpan.org/Public/Bug/Display.html?id=92194
+ 
+$HTTP::Request::Common::DYNAMIC_FILE_UPLOAD = 1;
+my $ua = LWP::UserAgent->new;
+$ua->show_progress('1');
+$oauth2->set_user_agent($ua);
+
 my $response = $oauth2->post(
        'https://www.googleapis.com/upload/youtube/v3/videos?part=snippet,status',
        Content_Type => 'multipart/form-data',
+       client_id => $googleapi->{client_id},
+       client_secret => $googleapi->{client_secret},
        Authorization => "Bearer $googleapi->{auth_token}",
        Host => 'www.googleapis.com',
        setAccessType => 'offline',
@@ -134,7 +145,6 @@ my $response = $oauth2->post(
             file => [ $self->{file}, $self->{filename}, Content_Type => $self->{mimetype}, 'Content-Transfer-Encoding' => 'binary' ], 
         });
 
-# Debug
 $self->{youtube} = from_json($response->decoded_content);
 
 if ($self->{youtube}{status}{uploadStatus} eq 'uploaded') {
@@ -143,7 +153,7 @@ if ($self->{youtube}{status}{uploadStatus} eq 'uploaded') {
   close $fh;
   print "Success: $self->{filename} -> http://youtu.be/$self->{youtube}{id}\n";
 } else {
-  print "Failed: $self->{youtube}{status}{uploadStatus}\n";
+  print "Failed: $self->{filename} -> $self->{youtube}{error}{errors}[0]{reason}\n";
 }
 
 sub Prompt { # inspired from here: http://alvinalexander.com/perl/edu/articles/pl010005
