@@ -17,6 +17,7 @@ use JSON;
 use File::MimeInfo::Magic;
 use LWP::UserAgent;
 use LWP::Authen::OAuth2;
+use HTTP::Request::StreamingUpload;
 use Cache::FileCache;
 use File::Path 'make_path';
 
@@ -125,25 +126,48 @@ my $json = to_json($self->{metadata});
 ## Either I misunderstand something or there is a bug in the oauth2 module (likely the former..)
 ## https://rt.cpan.org/Public/Bug/Display.html?id=92194
  
-$HTTP::Request::Common::DYNAMIC_FILE_UPLOAD = 1;
 my $ua = LWP::UserAgent->new;
 $ua->show_progress('1');
 $oauth2->set_user_agent($ua);
 
 my $response = $oauth2->post(
-       'https://www.googleapis.com/upload/youtube/v3/videos?part=snippet,status',
-       Content_Type => 'multipart/form-data',
+       'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status',
+       Content_Type => 'application/json; charset=UTF-8',
        client_id => $googleapi->{client_id},
        client_secret => $googleapi->{client_secret},
        Authorization => "Bearer $googleapi->{auth_token}",
        Host => 'www.googleapis.com',
        setAccessType => 'offline',
        setApprovalPrompt => 'force',
-       Content      => 
-        {
-            snippet => [ undef, "file.json", Content_Type => "application/json", Content => $json ], 
-            file => [ $self->{file}, $self->{filename}, Content_Type => $self->{mimetype}, 'Content-Transfer-Encoding' => 'binary' ], 
-        });
+       'X-Upload-Content-Length' => -s $self->{file},
+       'X-Upload-Content-Type' => $self->{mimetype},
+       Content      => $json, 
+       );
+
+$self->{upload_location} = $response->header("Location");
+
+if (! $self->{upload_location}) {
+  print "Failed: $self->{filename} -> $response->{_msg}\n";
+  exit 0;
+}
+
+# HTTP::Request::Common dynamic file uploads only work for post, resumeable uploads require put :-(
+my $req = HTTP::Request::StreamingUpload->new(
+      PUT     => $self->{upload_location},
+      path    => $self->{file},
+      headers => HTTP::Headers->new(
+        'Content-Type'   => $self->{mimetype},
+        'Content-Length' => -s $self->{file},
+        client_id => $googleapi->{client_id},
+        client_secret => $googleapi->{client_secret},
+        Authorization => "Bearer $googleapi->{auth_token}",
+        Host => 'www.googleapis.com',
+        setAccessType => 'offline',
+        setApprovalPrompt => 'force',
+      ),
+  );
+
+$response = $oauth2->request($req);
 
 $self->{youtube} = from_json($response->decoded_content);
 
