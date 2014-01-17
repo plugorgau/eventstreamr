@@ -27,8 +27,8 @@ $self->{default_expires} = 300;
 $self->{cache_root} = '/tmp/schedule/';
 
 # CSV results
-$self->{upload_csv} = "$ENV{HOME}/youtube_upload.csv"
-$self->{failed_csv} = "$ENV{HOME}/youtube_failed.csv"
+$self->{upload_csv} = "$ENV{HOME}/youtube_upload.csv";
+$self->{failed_csv} = "$ENV{HOME}/youtube_failed.csv";
 
 ## Match video to ZooKeeper Data
 $self->{file} = $ARGV[0];
