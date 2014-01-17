@@ -26,6 +26,10 @@ my $self;
 $self->{default_expires} = 300;
 $self->{cache_root} = '/tmp/schedule/';
 
+# CSV results
+$self->{upload_csv} = "$ENV{HOME}/youtube_upload.csv"
+$self->{failed_csv} = "$ENV{HOME}/youtube_failed.csv"
+
 ## Match video to ZooKeeper Data
 $self->{file} = $ARGV[0];
 
@@ -172,11 +176,14 @@ $response = $oauth2->request($req);
 $self->{youtube} = from_json($response->decoded_content);
 
 if ($self->{youtube}{status}{uploadStatus} eq 'uploaded') {
-  open my $fh, ">>", "./youtube_upload.csv";
-  print $fh "$self->{matched_schedule}{schedule_id},http://youtu.be/$self->{youtube}{id}\n";
+  open my $fh, ">>", "$self->{upload_csv}";
+  print $fh "$self->{matched_schedule}{schedule_id},$self->{youtube}{id}\n";
   close $fh;
   print "Success: $self->{filename} -> http://youtu.be/$self->{youtube}{id}\n";
 } else {
+  open my $fh, ">>", "$self->{failed_csv}";
+  print $fh "$self->{matched_schedule}{schedule_id},$self->{youtube}{id}\n";
+  close $fh;
   print "Failed: $self->{filename} -> $self->{youtube}{error}{errors}[0]{reason}\n";
 }
 
