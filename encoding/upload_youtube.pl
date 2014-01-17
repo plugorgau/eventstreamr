@@ -20,6 +20,7 @@ use LWP::Authen::OAuth2;
 use HTTP::Request::StreamingUpload;
 use Cache::FileCache;
 use File::Path 'make_path';
+use Encode 'encode_utf8';
 
 # Cache defaults
 my $self;
@@ -134,9 +135,11 @@ my $ua = LWP::UserAgent->new;
 $ua->show_progress('1');
 $oauth2->set_user_agent($ua);
 
+# Even if you state utf-8, LWP downgrades it to latin1 unless you specifically encode it as such
+# http://blogs.perl.org/users/domm/2010/11/posting-utf8-data-using-lwpuseragent.html
 my $response = $oauth2->post(
        'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status',
-       Content_Type => 'application/json; charset=UTF-8',
+       Content_Type => 'application/json;charset=utf-8',
        client_id => $googleapi->{client_id},
        client_secret => $googleapi->{client_secret},
        Authorization => "Bearer $googleapi->{auth_token}",
@@ -145,7 +148,7 @@ my $response = $oauth2->post(
        setApprovalPrompt => 'force',
        'X-Upload-Content-Length' => -s $self->{file},
        'X-Upload-Content-Type' => $self->{mimetype},
-       Content      => $json, 
+       Content      => encode_utf8($json), 
        );
 
 $self->{upload_location} = $response->header("Location");
