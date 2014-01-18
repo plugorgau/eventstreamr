@@ -25,7 +25,7 @@ $self->{output_root} = '/encode-final';
 # process queue
 $self->{queue} = '/storage/queue/todo';
 #$self->{queue} = '/storage/queue/manual';
-$self->{remote_storage} = 'av@10.4.4.20:';
+$self->{remote_storage} = 'av@storage.local:';
 
 if (! -d $self->{cache_root}) {
   make_path($self->{cache_root});
@@ -42,6 +42,9 @@ my $getopts_rc = GetOptions(
 
     "help|?"        => \&print_usage,
 );
+
+# print usage if no files passed in
+print_usage() if ( int(@files) == 0 );
 
 my @dvfiles = split(/[\s,]+/,join(',' , @files));
 
@@ -146,7 +149,7 @@ open my $fh, ">", "$self->{queue}/@venue[$talk]->{schedule_id}.sh" or die $!;
 
 
 print $fh "#!/bin/bash\n";
-# Make pathes
+# Make paths
 print $fh "mkdir -p $self->{output_root}/$self->{room}/\n";
 print $fh "mkdir -p $self->{output_tmp}/$self->{room}/@venue[$talk]->{schedule_id}\n\n";
 
