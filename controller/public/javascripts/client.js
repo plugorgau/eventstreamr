@@ -159,7 +159,7 @@ $.get( "/api/stations", function( data ) {
           return data.content._id === item._id();
         });
         if (match) {
-          viewModel.stations.splice(viewModel.stations.indexOf(match),1,ko.mapping.fromJS(data.content, mapping));
+          ko.mapping.fromJS(data.content, mapping, match)
         }
       }
       if (data.type == 'notify') {
@@ -169,13 +169,6 @@ $.get( "/api/stations", function( data ) {
   })
 
 var removeDevice = function (configuredDevices, macaddress, id) {
-  configuredDevices = ko.toJS(configuredDevices);
-  // remove id from configured devices
-  for (var i in configuredDevices) {
-    if (configuredDevices[i].id == id) {
-      configuredDevices.splice(configuredDevices.indexOf(i), 1);
-    }
-  }
 
   console.log(macaddress, configuredDevices, id)
 
@@ -314,4 +307,3 @@ var macRewrite = function(macaddress) {
   if (!macaddress) { return false }
   return macaddress.replace(/-\s*/g, ":")
 }
-
