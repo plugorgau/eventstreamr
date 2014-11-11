@@ -82,7 +82,8 @@ block content
               |  
               span(data-bind="text: roomId")
           .panel-body
-            .row(data-bind="foreach: viewModel.stations().filter(function(item) { return roomId == item.settings.room() })")
+            .row(data-bind="foreach: { data: viewModel.stations(), as: 'station' }")
+              // ko if: roomId == station.settings.room()
               .col-md-4
                 .panel.panel-primary
                   .panel-heading
@@ -152,7 +153,7 @@ block content
                       // /ko
                     dl(data-bind="with: {available: ko.observable(false)}")
                       dt
-                        // ko if: $parent.availableDevices[0]
+                        // ko if: $parent.availableDevices && $parent.availableDevices[0]
                         button.btn.btn-xs.btn-default.pull-right(data-bind="click: function(data) {data.available(!data.available());}") 
                           span(data-bind="text: (available() ? 'Close' : 'Available')")
                         // /ko
@@ -219,3 +220,4 @@ block content
                             //small 
                         //div(data-bind="editable: roles, editableOptions: {display: roleDisplay, type: 'checklist', source: availableRoles, pk: 'unused', name: 'unused', url: '/api/stations/' + macaddress + '/partial', params: {key: 'settings.roles'}}")
                       // p(data-bind="text: ko.toJSON($parents[1])")
+              // /ko
