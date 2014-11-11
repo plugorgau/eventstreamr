@@ -119,6 +119,10 @@ exports.actionStation = function(req, res) {
 }
 
 exports.storeStation = function(req, res) {
+  if (!req.body.macaddress) {
+    var error = new Error('Mac Address required');
+    return res.send(400, error)
+  }
   db.get('stations', { 'settings.macaddress': req.body.macaddress }, function (error, doc) {
 
     if (req.headers['station-mgr']) {
