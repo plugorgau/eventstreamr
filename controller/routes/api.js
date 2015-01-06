@@ -24,7 +24,7 @@ var StationSettings = function(request) {
     stream: request.stream || null,
     sync: request.sync || null,
     run: request.run || 0,
-    device_control: request.device_control || null
+    control: request.control || null
   }
 }
 
